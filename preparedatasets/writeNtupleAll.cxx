@@ -10,7 +10,7 @@ void writeAllNtuples (TString inputfilename,
                       TString inputfilename2,
                       TString inputfilename3,
                       TString inputfilename4,
-                      bool forNN=false) 
+                      bool forNN) 
 {
   vector<TString> collectionsToProcess=getCollectionsToProcess();
 

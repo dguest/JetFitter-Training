@@ -76,70 +76,70 @@ FOPT=-ffixed-form -ffixed-line-length-none -u -Wall -fPIC -O
 all: $(EXE) lib
 
 TNeuralDataSetDict.h TNeuralDataSetDict.cxx : TNeuralDataSet.cxx TNeuralDataSet.h
-	$(RM) TNeuralDataSetDict.*
+	@$(RM) TNeuralDataSetDict.*
 	@echo Making Dictionary for TNeuralDataSet...
-	rootcint TNeuralDataSetDict.cxx -c TNeuralDataSet.h
+	@rootcint TNeuralDataSetDict.cxx -c TNeuralDataSet.h
 
 TJetNetDict.h TJetNetDict.cxx : TJetNet.cxx TJetNet.h
-	$(RM) TJetNetDict.*
+	@$(RM) TJetNetDict.*
 	@echo Making Dictionary for TJetNet
-	rootcint TJetNetDict.cxx -c TJetNet.h
+	@rootcint TJetNetDict.cxx -c TJetNet.h
 
 TTrainedNetworkDict.h TTrainedNetworkDict.cxx : TTrainedNetwork.cxx TTrainedNetwork.h
-	$(RM) TTrainedNetworkDict.*
+	@$(RM) TTrainedNetworkDict.*
 	@echo Making Dictionary for TTrainedNetwork
-	rootcint TTrainedNetworkDict.cxx -c TTrainedNetwork.h
+	@rootcint TTrainedNetworkDict.cxx -c TTrainedNetwork.h
 
 TNetworkToHistoToolDict.h TNetworkToHistoToolDict.cxx : TNetworkToHistoTool.cxx TNetworkToHistoTool.h
-	$(RM) TNetworkToHistoToolDict.*
+	@$(RM) TNetworkToHistoToolDict.*
 	@echo Making Dictionary for TNetworkToHistoTool
-	rootcint TNetworkToHistoToolDict.cxx -c TNetworkToHistoTool.h
+	@rootcint TNetworkToHistoToolDict.cxx -c TNetworkToHistoTool.h
 
 
 $(OBJS): $(JETNET_SRC) 
 #	@echo Building JetNet Library
-	$(FC) $(FOPT) -c $(JETNET_SRC) -o $(JETNET_LIB)
-	$(RM) TNeuralDataSetDict.*
+	@$(FC) $(FOPT) -c $(JETNET_SRC) -o $(JETNET_LIB)
+	@$(RM) TNeuralDataSetDict.*
 	@echo Making Dictionary for TNeuralDataSet...
-	rootcint TNeuralDataSetDict.cxx -c TNeuralDataSet.h
-	$(CC) $(COPT) -c TNeuralDataSetDict.cxx $(INC) -o TNeuralDataSetDict.o
-	$(CC) $(COPT) -c TNeuralDataSet.cxx $(INC) -o TNeuralDataSet.o
-	$(RM) TJetNetDict.*
+	@rootcint TNeuralDataSetDict.cxx -c TNeuralDataSet.h
+	@$(CC) $(COPT) -c TNeuralDataSetDict.cxx $(INC) -o TNeuralDataSetDict.o
+	@$(CC) $(COPT) -c TNeuralDataSet.cxx $(INC) -o TNeuralDataSet.o
+	@$(RM) TJetNetDict.*
 	@echo Making Dictionary for TJetNet
-	rootcint TJetNetDict.cxx -c TJetNet.h
-	$(CC) $(COPT) -c TJetNetDict.cxx $(INC) -o TJetNetDict.o
-	$(CC) $(COPT) -c TJetNet.cxx $(INC) -o TJetNet.o
-	$(CC) -c -o $@ $<
+	@rootcint TJetNetDict.cxx -c TJetNet.h
+	@$(CC) $(COPT) -c TJetNetDict.cxx $(INC) -o TJetNetDict.o
+	@$(CC) $(COPT) -c TJetNet.cxx $(INC) -o TJetNet.o
+	@$(CC) -c -o $@ $<
 	@echo Making Dictionary for TTrainedNetwork
-	rootcint TTrainedNetworkDict.cxx -c TTrainedNetwork.h
-	$(CC) $(COPT) -c TTrainedNetworkDict.cxx $(INC) -o TTrainedNetworkDict.o
-	$(CC) $(COPT) -c TTrainedNetwork.cxx $(INC) -o TTrainedNetwork.o
-	$(CC) -c -o $@ $<
+	@rootcint TTrainedNetworkDict.cxx -c TTrainedNetwork.h
+	@$(CC) $(COPT) -c TTrainedNetworkDict.cxx $(INC) -o TTrainedNetworkDict.o
+	@$(CC) $(COPT) -c TTrainedNetwork.cxx $(INC) -o TTrainedNetwork.o
+	@$(CC) -c -o $@ $<
 	@echo Making Dictionary for TNetworkToHistoTool
-	rootcint TNetworkToHistoToolDict.cxx -c TNetworkToHistoTool.h
-	$(CC) $(COPT) -c TNetworkToHistoToolDict.cxx $(INC) -o TNetworkToHistoToolDict.o
-	$(CC) $(COPT) -c TNetworkToHistoTool.cxx $(INC) -o TNetworkToHistoTool.o
-	$(CC) $(COPT) -c -o $@ $<
+	@rootcint TNetworkToHistoToolDict.cxx -c TNetworkToHistoTool.h
+	@$(CC) $(COPT) -c TNetworkToHistoToolDict.cxx $(INC) -o TNetworkToHistoToolDict.o
+	@$(CC) $(COPT) -c TNetworkToHistoTool.cxx $(INC) -o TNetworkToHistoTool.o
+	@$(CC) $(COPT) -c -o $@ $<
 
 $(EXE): $(OBJS) $(SRCS)
-	$(CC) $(COPT) $(SRCS) $(JETNET_LIB) TNeuralDataSetDict.o TNeuralDataSet.o TJetNetDict.o TJetNet.o TTrainedNetwork.o TTrainedNetworkDict.o TNetworkToHistoTool.o TNetworkToHistoToolDict.o $(INC) $(LIBS) -o $(EXE)
+	@$(CC) $(COPT) $(SRCS) $(JETNET_LIB) TNeuralDataSetDict.o TNeuralDataSet.o TJetNetDict.o TJetNet.o TTrainedNetwork.o TTrainedNetworkDict.o TNetworkToHistoTool.o TNetworkToHistoToolDict.o $(INC) $(LIBS) -o $(EXE)
 
 lib: $(OBJS) $(SRCS)
-	$(CC) -shared -Wl,-soname,libTJetNet.so.0 -o libTJetNet.so $(JETNET_LIB) TNeuralDataSetDict.o TNeuralDataSet.o TJetNetDict.o TJetNet.o TTrainedNetwork.o TTrainedNetworkDict.o TNetworkToHistoTool.o TNetworkToHistoToolDict.o $(INC) $(LIBS_SO)
+	@$(CC) -shared -Wl,-soname,libTJetNet.so.0 -o libTJetNet.so $(JETNET_LIB) TNeuralDataSetDict.o TNeuralDataSet.o TJetNetDict.o TJetNet.o TTrainedNetwork.o TTrainedNetworkDict.o TNetworkToHistoTool.o TNetworkToHistoToolDict.o $(INC) $(LIBS_SO)
 #-g
 
 cint : TNeuralDataSetDict.h TJetNetDict.h TTrainedNetworkDict.hT NetworkToHistoToolDict.h
 
 $(OBJS1) : %.o : %.cxx $(JETNET_SRC)
-	$(FC) $(FOPT) -c $(JETNET_SRC) -o $(JETNET_LIB)
-	$(CC) -c -o $@ $<
+	@$(FC) $(FOPT) -c $(JETNET_SRC) -o $(JETNET_LIB)
+	@$(CC) -c -o $@ $<
 
 jetnet: $(OBJS1)
-	$(CC) $(SRCS) $(INC) $(LIBS) -s -o $@ $(OBJS1)
+	@$(CC) $(SRCS) $(INC) $(LIBS) -s -o $@ $(OBJS1)
 
 clean:
-	$(RM) $(EXE) *~ $(JETNET_LIB) libTJetNet.so *.o *.bak core *Dict.h *Dict.cxx gauss.exe
+	@$(RM) $(EXE) *~ $(JETNET_LIB) libTJetNet.so *.o *.bak core *Dict.h *Dict.cxx gauss.exe
 backup:
-	$(RM) backup.tar.gz
+	@$(RM) backup.tar.gz
 	@tar czvf backup.tar.gz *.cxx *.h *.c *.C Makefile* *.f
 

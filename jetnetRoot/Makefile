@@ -12,6 +12,7 @@ JETNET_SRC=jetnet_35.f
 
 ROOTLIBS=$(shell root-config --libs)
 ROOTGLIBS=$(shell root-config --glibs)
+ROOTCFLAGS=$(shell root-config --cflags)
 
 SUBDIRS = mbase mastro \
           mmain mfbase \
@@ -64,8 +65,8 @@ SOCMD=ld
 FC=gfortran
 CC=g++
 #CC=gcc
-INC=-I$(ROOTSYS)/include $(INCLUDES)
-LIBS=-lgfortran $(ROOTLIBS) $(ROOTGLIBS) -lstdc++ -lgcc -lc 
+INC := $(INCLUDES) $(ROOTCFLAGS)
+LIBS=-lgfortran $(ROOTLIBS) -lstdc++ -lgcc -lc 
 LIBS_SO=-lgfortran $(ROOTLIBS) -lstdc++ -lgcc -lc
 COPT=-O3 -fPIC
 # -g

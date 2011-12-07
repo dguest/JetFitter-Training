@@ -1,0 +1,6 @@
+*Dict.cxx
+*Dict.h
+*.o
+*.so
+*.exe
+*.d

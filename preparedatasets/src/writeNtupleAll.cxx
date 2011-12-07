@@ -1,15 +1,15 @@
-#include "writeNtuple_Official.h"
-#include "collectionsToProcess.h"
-#include <TString.h>
+#include "writeNtuple_Official.hh"
+#include "collectionsToProcess.hh"
+#include <string>
 #include <iostream>
 
 using namespace std;
 
 
-void writeAllNtuples (TString inputfilename,
-                      TString inputfilename2,
-                      TString inputfilename3,
-                      TString inputfilename4,
+void writeAllNtuples (std::string inputfilename,
+                      std::string inputfilename2,
+                      std::string inputfilename3,
+                      std::string inputfilename4,
                       bool forNN) 
 {
   vector<TString> collectionsToProcess=getCollectionsToProcess();
@@ -23,10 +23,10 @@ void writeAllNtuples (TString inputfilename,
   {
     
     cout << " Writing ALL Ntuples: processing " << *collectionsToProcessIter << endl;
-    writeNtuple_Official(inputfilename,
-                         inputfilename2,
-                         inputfilename3,
-                         inputfilename4,
+    writeNtuple_Official(TString(inputfilename.c_str()),
+                         TString(inputfilename2.c_str()),
+                         TString(inputfilename3.c_str()),
+                         TString(inputfilename4.c_str()),
                          *collectionsToProcessIter,
                          "AOD",
                          forNN,

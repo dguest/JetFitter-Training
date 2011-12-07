@@ -1,4 +1,6 @@
-#include "writeNtupleAll.h"
+#include "writeNtupleAll.hh"
+
+#include <string>
 
 int main (int narg, char* argv[]) { 
 

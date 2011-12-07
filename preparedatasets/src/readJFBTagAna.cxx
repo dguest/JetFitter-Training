@@ -1,5 +1,5 @@
 #define readJFBTagAna_cxx
-#include "readJFBTagAna.h"
+#include "readJFBTagAna.hh"
 #include <TH2.h>
 #include <TStyle.h>
 #include <TCanvas.h>

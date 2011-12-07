@@ -1,10 +1,10 @@
-#include "readBaseBTagAnaTree.h"
-#include "readJFBTagAna.h"
+#include "readBaseBTagAnaTree.hh"
+#include "readJFBTagAna.hh"
 #include <TFile.h>
 #include <TTree.h>
 #include <iostream>
-#include "writeNtuple_Official.h"
-#include "getPtEtaCategoryLikelihood.h"
+#include "writeNtuple_Official.hh"
+#include "getPtEtaCategoryLikelihood.hh"
 #include "TRandom.h"
 #include <cmath>
 #include <vector>

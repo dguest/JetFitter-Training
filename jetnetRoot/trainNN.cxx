@@ -21,12 +21,26 @@
 #include "TMatrixD.h"
 #include "TVectorD.h"
 
+#include <boost/python.hpp>
+
 using namespace std;
 
 Double_t sigmoid(Double_t x)
 {
   return 1./(1.+exp(-2*x));
 }
+
+
+char const* greet()
+{
+   return "hello, world";
+}
+
+std::string printString(TString in_str)
+{
+  return std::string(in_str); 
+}
+
 
 using namespace std;
 
@@ -40,8 +54,17 @@ void trainNN(TString inputfile,
              int nodesSecondLayer=9,
              int restartTrainingFrom=0);
 
+BOOST_PYTHON_MODULE(train_py)
+{
+    using namespace boost::python;
+    def("trainNNraw", trainNN);
+    def("printString", printString);
+    def("greet", greet);
+}
 
-int main()
+
+
+int doIt()
 {
   trainNN(
       "../reduceddatasets/reduceddataset_Cone4H1TopoParticleJets_forNN.root",
@@ -57,19 +80,18 @@ int main()
 }
 
 
-int doIt() 
+int main() 
 {
 
-  trainNN(
-      "../reduceddatasets/reduceddataset_Cone4H1TopoParticleJets_forNN.root",
-      "dummy",
-      10000,
-      200,
-      false,
-      false,//withIP3D
-      10,
-      10,
-      0);
+  trainNN("../reduceddatasets/reduceddataset_AntiKt4TopoEMJets_forNN.root", 
+	  "dummy",
+	  10000,
+	  200,
+	  false,
+	  false,//withIP3D
+	  10,
+	  10,
+	  0);
   return 0;
 
 }

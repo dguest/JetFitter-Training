@@ -45,7 +45,9 @@ void trainNN(TString inputfile,
              int restartTrainingFrom=0);
 
 static char* doc_string = 
-  "run the neural net. Keywords:\ninput_file\noutput_class\nn_iterations\ndilution_factor\nuse_sd\nwith_ip3d\nnodes_first_layer\nnodes_second_layer\nrestart_training_from\ndebug"; 
+  "run the neural net. \nKeywords:\ninput_file\noutput_class\n\
+n_iterations\ndilution_factor\nuse_sd\nwith_ip3d\n\
+nodes_first_layer\nnodes_second_layer\nrestart_training_from\ndebug"; 
 
 static PyObject* train_py(PyObject *self, 
 			  PyObject *args, 
@@ -109,20 +111,13 @@ const char* getDocString(const char* kw_list[], int n_entries){
 
 
 static PyMethodDef keywdarg_methods[] = {
-    /* The cast of the function is necessary since PyCFunction values
-     * only take two PyObject* parameters, and keywdarg_parrot() takes
-     * three.
-     */
+  // The cast of the function is necessary since PyCFunction values
+  // only take two PyObject* parameters, and keywdarg() takes
+  // three.
   {"trainNN", (PyCFunction)train_py, 
    METH_VARARGS | METH_KEYWORDS,
    doc_string},
-  // {"parrot", (PyCFunction)keywdarg_parrot,
-  //  METH_VARARGS | METH_KEYWORDS,
-  //  "Print a lovely skit to standard output."},
-  // {"system",  spam_system, METH_VARARGS,
-  //  "Execute a shell command."},
-
-    {NULL, NULL, 0, NULL}   /* sentinel */
+  {NULL, NULL, 0, NULL}   /* sentinel */
 };
 
 extern "C" PyMODINIT_FUNC initpynn(void)

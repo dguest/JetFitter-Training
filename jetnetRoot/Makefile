@@ -10,52 +10,15 @@ JETNET_LIB=jetnet.o
 #JETNET_SRC=jetnet34.f
 JETNET_SRC=jetnet_35.f
 
-PYFLAGS := -lpython2.6 -I/usr/include/python2.6/ -shared
+PYFLAGS := -lpython2.6 -shared -I/usr/include/python2.6/ 
 
 ROOTLIBS=$(shell root-config --libs)
-ROOTGLIBS=$(shell root-config --glibs)
 ROOTCFLAGS=$(shell root-config --cflags)
 
-SUBDIRS = mbase mastro \
-          mmain mfbase \
-          mfilter mdata \
-          mhbase mhvstime \
-          mhist manalysis \
-          msignal \
-          mbadpixels \
-          mhcalib \
-          mhflux \
-          mflux \
-          mcalib \
-          mpedestal \
-          mfileio \
-          mreflector \
-          mgeom \
-          msql \
-          mimage \
-          mmontecarlo \
-          mhft \
-          mmc \
-          mraw \
-          mcamera \
-          mtrigger \
-	  mpointing \
-          mreport \
-          mgui \
-          mranforest \
-          mhistmc \
-          mjobs \
-          mtools \
-          mstarcam \
-          msupercuts \
-          mdisp
-
 PROJECT_S  := $(wildcard *.$(SrcSuf))
-INCLUDES = -I. $(SUBDIRS:%=-I$(MARSSYS)/%)
+# INCLUDES = -I. $(SUBDIRS:%=-I$(MARSSYS)/%)
 CINTLIST_H := $(addsuffix .h, $(basename $(PROJECT_S)))
 CINTLIST_O := $(addsuffix .$(ObjSuf), $(basename $(CINTLIST_H)))
-
-SOLIBS = -lgfortran -L/home/vasoto/Projects/cern/root_v3.10.2/lib/root -lCore -lCint -lHist -lGraf -lGraf3d -lGpad -lTree -lRint -lPostscript -lMatrix -lPhysics -lpthread -lm -ldl -L/home/vasoto/Projects/cern/root_v3.10.2/lib/root -lCore -lCint -lHist -lGraf -lGraf3d -lGpad -lTree -lRint -lPostscript -lMatrix -lPhysics -lGui -lpthread -lm -ldl
 
 SRCS=trainNN.cxx
 
@@ -123,10 +86,6 @@ $(OBJS): $(JETNET_SRC)
 	@$(CC) $(COPT) -c TNetworkToHistoTool.cxx $(INC) -o TNetworkToHistoTool.o
 	@$(CC) $(COPT) -c -o $@ $<
 
-$(EXE): $(OBJS) $(SRCS)
-	@echo making executable
-	@$(CC) $(COPT) $(SRCS) $(JETNET_LIB) $(PYFLAGS) TNeuralDataSetDict.o TNeuralDataSet.o TJetNetDict.o TJetNet.o TTrainedNetwork.o TTrainedNetworkDict.o TNetworkToHistoTool.o TNetworkToHistoToolDict.o $(INC) $(LIBS) -o $(EXE)
-
 pynn.so: $(OBJS) $(SRCS)
 	@echo making executable
 	@$(CC) $(COPT) $(SRCS) $(JETNET_LIB) $(PYFLAGS) TNeuralDataSetDict.o TNeuralDataSet.o TJetNetDict.o TJetNet.o TTrainedNetwork.o TTrainedNetworkDict.o TNetworkToHistoTool.o TNetworkToHistoToolDict.o $(INC) $(LIBS) -o $@
@@ -136,7 +95,6 @@ lib: $(OBJS) $(SRCS)
 	@$(CC) -shared -Wl,-soname,libTJetNet.so.0 -o libTJetNet.so $(JETNET_LIB) TNeuralDataSetDict.o TNeuralDataSet.o TJetNetDict.o TJetNet.o TTrainedNetwork.o TTrainedNetworkDict.o TNetworkToHistoTool.o TNetworkToHistoToolDict.o $(INC) $(LIBS_SO)
 #-g
 
-cint : TNeuralDataSetDict.h TJetNetDict.h TTrainedNetworkDict.hT NetworkToHistoToolDict.h
 
 $(OBJS1) : %.o : %.cxx $(JETNET_SRC)
 	@$(FC) $(FOPT) -c $(JETNET_SRC) -o $(JETNET_LIB)

@@ -22,6 +22,8 @@
 #include "TMatrixD.h"
 #include "TVectorD.h"
 
+// ignore const char * -> char * conversion 
+#pragma GCC diagnostic ignored "-Wwrite-strings" 
 
 using namespace std;
 
@@ -44,7 +46,7 @@ void trainNN(TString inputfile,
              int nodesSecondLayer=9,
              int restartTrainingFrom=0);
 
-static char* doc_string = 
+static const char* doc_string = 
   "run the neural net. \nKeywords:\ninput_file\noutput_class\n\
 n_iterations\ndilution_factor\nuse_sd\nwith_ip3d\n\
 nodes_first_layer\nnodes_second_layer\nrestart_training_from\ndebug"; 
@@ -53,8 +55,8 @@ static PyObject* train_py(PyObject *self,
 			  PyObject *args, 
 			  PyObject *keywds)
 {
-  char* input_file; 
-  char* output_class = "JetFitterNN"; 
+  const char* input_file; 
+  const char* output_class = "JetFitterNN"; 
   int n_iterations = 10; 
   int dilution_factor = 2; 
   bool use_sd = false; 

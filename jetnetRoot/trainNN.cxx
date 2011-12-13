@@ -22,8 +22,6 @@
 #include "TMatrixD.h"
 #include "TVectorD.h"
 
-// ignore const char * -> char * conversion 
-#pragma GCC diagnostic ignored "-Wwrite-strings" 
 
 using namespace std;
 
@@ -66,12 +64,15 @@ static PyObject* train_py(PyObject *self,
   int restart_training_from = 0; 
   bool debug = false; 
 
-  static char *kwlist[] = {"input_file", "output_class", "n_iterations", 
-			   "dilution_factor","use_sd","with_ip3d",
-			   "nodes_first_layer","nodes_second_layer", 
-			   "restart_training_from", "debug", NULL};
+  static const char *kwlist[] = {"input_file", "output_class", "n_iterations", 
+				 "dilution_factor","use_sd","with_ip3d",
+				 "nodes_first_layer","nodes_second_layer", 
+				 "restart_training_from", "debug", NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s|siibbiiib", kwlist,
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s|siibbiiib", 
+				   // this function should take a const, and 
+				   // may be changed, until then we'll cast
+				   const_cast<char**>(kwlist),
 				   &input_file, &output_class, 
 				   &n_iterations, &dilution_factor, 
 				   &use_sd, &with_ip3d, &nodes_first_layer, 

@@ -10,7 +10,7 @@ JETNET_LIB=jetnet.o
 #JETNET_SRC=jetnet34.f
 JETNET_SRC=jetnet_35.f
 
-PYFLAGS := -lboost_python -lpython2.6 -I/usr/include/python2.6/ -shared
+PYFLAGS := -lpython2.6 -I/usr/include/python2.6/ -shared
 
 ROOTLIBS=$(shell root-config --libs)
 ROOTGLIBS=$(shell root-config --glibs)
@@ -75,7 +75,7 @@ COPT=-O3 -fPIC
 FOPT=-ffixed-form -ffixed-line-length-none -u -Wall -fPIC -O
 # -g
 
-all:  lib train_py.so
+all:  lib pynn.so
 
 TNeuralDataSetDict.h TNeuralDataSetDict.cxx : TNeuralDataSet.cxx TNeuralDataSet.h
 	@$(RM) TNeuralDataSetDict.*
@@ -127,7 +127,7 @@ $(EXE): $(OBJS) $(SRCS)
 	@echo making executable
 	@$(CC) $(COPT) $(SRCS) $(JETNET_LIB) $(PYFLAGS) TNeuralDataSetDict.o TNeuralDataSet.o TJetNetDict.o TJetNet.o TTrainedNetwork.o TTrainedNetworkDict.o TNetworkToHistoTool.o TNetworkToHistoToolDict.o $(INC) $(LIBS) -o $(EXE)
 
-train_py.so: $(OBJS) $(SRCS)
+pynn.so: $(OBJS) $(SRCS)
 	@echo making executable
 	@$(CC) $(COPT) $(SRCS) $(JETNET_LIB) $(PYFLAGS) TNeuralDataSetDict.o TNeuralDataSet.o TJetNetDict.o TJetNet.o TTrainedNetwork.o TTrainedNetworkDict.o TNetworkToHistoTool.o TNetworkToHistoToolDict.o $(INC) $(LIBS) -o $@
 

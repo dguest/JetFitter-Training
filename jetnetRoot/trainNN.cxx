@@ -1,3 +1,4 @@
+#include <Python.h>
 #include <TTree.h>
 #include <TFile.h>
 #include <TCanvas.h>
@@ -21,7 +22,6 @@
 #include "TMatrixD.h"
 #include "TVectorD.h"
 
-#include <boost/python.hpp>
 
 using namespace std;
 
@@ -30,16 +30,6 @@ Double_t sigmoid(Double_t x)
   return 1./(1.+exp(-2*x));
 }
 
-
-char const* greet()
-{
-   return "hello, world";
-}
-
-std::string printString(TString in_str)
-{
-  return std::string(in_str); 
-}
 
 
 using namespace std;
@@ -54,14 +44,95 @@ void trainNN(TString inputfile,
              int nodesSecondLayer=9,
              int restartTrainingFrom=0);
 
-BOOST_PYTHON_MODULE(train_py)
+static char* doc_string = "run the nn\n"; 
+
+static PyObject* train_py(PyObject *self, 
+			  PyObject *args, 
+			  PyObject *keywds)
 {
-    using namespace boost::python;
-    def("trainNNraw", trainNN);
-    def("printString", printString);
-    def("greet", greet);
+  int voltage;
+  char *state = "a stiff";
+  char *action = "voom";
+  char *type = "Norwegian Blue";
+
+  char* input_file; 
+  char* output_class = "JetFitterNN"; 
+  int n_iterations = 10; 
+  int dilution_factor = 2; 
+  bool use_sd = false; 
+  bool with_ip3d = true; 
+  int nodes_first_layer = 10; 
+  int nodes_second_layer = 9; 
+  int restart_training_from = 0; 
+  bool debug = false; 
+
+  static char *kwlist[] = {"input_file", "output_class", "n_iterations", 
+			   "dilution_factor","use_sd","with_ip3d",
+			   "nodes_first_layer","nodes_second_layer", 
+			   "restart_training_from", "debug", NULL};
+
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s|siibbiiib", kwlist,
+				   &input_file, &output_class, 
+				   &n_iterations, &dilution_factor, 
+				   &use_sd, &with_ip3d, &nodes_first_layer, 
+				   &nodes_second_layer, 
+				   &restart_training_from, 
+				   &debug))
+    return NULL;
+
+  if (debug){ 
+    printf("in = %s, out = %s, itr = %i, rest from = %i\n", 
+  	   input_file, output_class, n_iterations, restart_training_from); 
+  }
+
+  else{ 
+    trainNN(TString(input_file), 
+	    TString(output_class),
+	    n_iterations,
+	    dilution_factor,
+	    use_sd,
+	    with_ip3d,
+	    nodes_first_layer,
+	    nodes_second_layer,
+	    restart_training_from);
+  }
+
+  Py_INCREF(Py_None);
+
+  return Py_None;
 }
 
+const char* getDocString(const char* kw_list[], int n_entries){ 
+  std::string doc = "run the neural net, inputs:\n"; 
+  for (int entry_n = 0; entry_n < n_entries; entry_n++){ 
+    doc.append(kw_list[entry_n]);
+    doc.append("\n"); 
+  }
+  return doc.c_str(); 
+}
+
+
+static PyMethodDef keywdarg_methods[] = {
+    /* The cast of the function is necessary since PyCFunction values
+     * only take two PyObject* parameters, and keywdarg_parrot() takes
+     * three.
+     */
+  {"trainNN", (PyCFunction)train_py, 
+   METH_VARARGS | METH_KEYWORDS,
+   doc_string},
+  // {"parrot", (PyCFunction)keywdarg_parrot,
+  //  METH_VARARGS | METH_KEYWORDS,
+  //  "Print a lovely skit to standard output."},
+  // {"system",  spam_system, METH_VARARGS,
+  //  "Execute a shell command."},
+
+    {NULL, NULL, 0, NULL}   /* sentinel */
+};
+
+extern "C" PyMODINIT_FUNC initpynn(void)
+{
+  Py_InitModule("pynn", keywdarg_methods);
+}
 
 
 int doIt()

@@ -44,17 +44,13 @@ void trainNN(TString inputfile,
              int nodesSecondLayer=9,
              int restartTrainingFrom=0);
 
-static char* doc_string = "run the nn\n"; 
+static char* doc_string = 
+  "run the neural net. Keywords:\ninput_file\noutput_class\nn_iterations\ndilution_factor\nuse_sd\nwith_ip3d\nnodes_first_layer\nnodes_second_layer\nrestart_training_from\ndebug"; 
 
 static PyObject* train_py(PyObject *self, 
 			  PyObject *args, 
 			  PyObject *keywds)
 {
-  int voltage;
-  char *state = "a stiff";
-  char *action = "voom";
-  char *type = "Norwegian Blue";
-
   char* input_file; 
   char* output_class = "JetFitterNN"; 
   int n_iterations = 10; 

@@ -41,20 +41,6 @@ void trainNN(TString inputfile,
              int restartTrainingFrom=0);
 
 
-int main()
-{
-  trainNN(
-      "../reduceddatasets/reduceddataset_Cone4H1TopoParticleJets_forNN.root",
-      "dummy",
-      10000,
-      200,
-      false,
-      false,//withIP3D
-      10,
-      10,
-      0);
-  return 0;
-}
 
 
 int main() 

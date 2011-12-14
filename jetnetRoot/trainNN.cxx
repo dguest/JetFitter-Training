@@ -129,22 +129,6 @@ extern "C" PyMODINIT_FUNC initpynn(void)
 }
 
 
-int doIt()
-{
-  trainNN(
-      "../reduceddatasets/reduceddataset_Cone4H1TopoParticleJets_forNN.root",
-      "dummy",
-      10000,
-      200,
-      false,
-      false,//withIP3D
-      10,
-      10,
-      0);
-  return 0;
-}
-
-
 int main() 
 {
 

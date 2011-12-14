@@ -148,6 +148,7 @@ void writeNtuple_Official(TString inputFileName,
 
   //for the NN you need to get the number of b,c or light jets
 
+  printf("counting entries, will take a while"); 
   Int_t num_entries=readTreeJF->fChain->GetEntries();
 
   int numberb=0;
@@ -158,10 +159,10 @@ void writeNtuple_Official(TString inputFileName,
   {
 
     for (Long64_t i=0;i<num_entries;i++) {
-      
+
       readTreeJF->GetEntry(i);
       
-      if (readTreeJF->mass>-100)
+      if (readTreeJF->mass > -100)
       {
         if (abs(readTreeJF->Flavour)==5){
           numberb+=1;
@@ -423,7 +424,9 @@ void writeNtuple_Official(TString inputFileName,
     readTreeJF->GetEntry(i);
 
 
-    if (fabs(readTreeJF->JetEta)<2.5&&readTreeJF->JetPt>15.&&readTreeJF->mass>-100) {
+    if (fabs(readTreeJF->JetEta) < 2.5 &&
+	readTreeJF->JetPt > 15.0 &&
+	readTreeJF->mass > -100) {
 
 
       JetPt=readTreeJF->JetPt;

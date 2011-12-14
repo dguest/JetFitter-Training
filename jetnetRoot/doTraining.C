@@ -11,8 +11,8 @@ void doTraining(TString nameCollection,bool withIP3D) {
   TString classname("JetFitterNN_");
   classname+=nameCollection;
   
-  if (withIP3D)
-  {
+  if (withIP3D){
+
     trainNN(path,classname,
             10000,//trainingEpoches
             2,//dilution

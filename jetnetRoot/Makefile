@@ -3,22 +3,13 @@
 # Created: 22.01.2005 @ 17:52
 #
 
-#HOST := $(shell echo $HOSTNAME)
-
-#JETNET_LIB=libJetNet.$(HOSTNAME).o
 JETNET_LIB=jetnet.o
-#JETNET_SRC=jetnet34.f
 JETNET_SRC=jetnet_35.f
 
 PYFLAGS := -lpython2.6 -shared -I/usr/include/python2.6/ 
 
-ROOTLIBS=$(shell root-config --libs)
+ROOTLIBS=$(shell root-config --glibs)
 ROOTCFLAGS=$(shell root-config --cflags)
-
-PROJECT_S  := $(wildcard *.$(SrcSuf))
-# INCLUDES = -I. $(SUBDIRS:%=-I$(MARSSYS)/%)
-CINTLIST_H := $(addsuffix .h, $(basename $(PROJECT_S)))
-CINTLIST_O := $(addsuffix .$(ObjSuf), $(basename $(CINTLIST_H)))
 
 SRCS=trainNN.cxx
 
@@ -30,10 +21,10 @@ SOCMD=ld
 FC=gfortran
 CC=g++
 #CC=gcc
-INC := $(INCLUDES) $(ROOTCFLAGS)
-LIBS=-lgfortran $(ROOTLIBS) -lstdc++ -lgcc -lc 
-LIBS_SO=-lgfortran $(ROOTLIBS) -lstdc++ -lgcc -lc
-COPT=-O3 -fPIC
+INC := $(ROOTCFLAGS)
+LIBS=-lgfortran $(ROOTLIBS) # -lstdc++ -lgcc -lc 
+# LIBS_SO=-lgfortran $(ROOTLIBS) # -lstdc++ -lgcc -lc
+COPT=-O2 -fPIC
 # -g
 FOPT=-ffixed-form -ffixed-line-length-none -u -Wall -fPIC -O
 # -g
@@ -42,27 +33,27 @@ all:  lib pynn.so
 
 TNeuralDataSetDict.h TNeuralDataSetDict.cxx : TNeuralDataSet.cxx TNeuralDataSet.h
 	@$(RM) TNeuralDataSetDict.*
-	@echo Making Dictionary for TNeuralDataSet...
+	@echo Making Dictionary for TNeuralDataSet... by call
 	@rootcint TNeuralDataSetDict.cxx -c TNeuralDataSet.h
 
 TJetNetDict.h TJetNetDict.cxx : TJetNet.cxx TJetNet.h
 	@$(RM) TJetNetDict.*
-	@echo Making Dictionary for TJetNet
+	@echo Making Dictionary for TJetNet by call
 	@rootcint TJetNetDict.cxx -c TJetNet.h
 
 TTrainedNetworkDict.h TTrainedNetworkDict.cxx : TTrainedNetwork.cxx TTrainedNetwork.h
 	@$(RM) TTrainedNetworkDict.*
-	@echo Making Dictionary for TTrainedNetwork
+	@echo Making Dictionary for TTrainedNetwork by call
 	@rootcint TTrainedNetworkDict.cxx -c TTrainedNetwork.h
 
 TNetworkToHistoToolDict.h TNetworkToHistoToolDict.cxx : TNetworkToHistoTool.cxx TNetworkToHistoTool.h
 	@$(RM) TNetworkToHistoToolDict.*
-	@echo Making Dictionary for TNetworkToHistoTool
+	@echo Making Dictionary for TNetworkToHistoTool by call
 	@rootcint TNetworkToHistoToolDict.cxx -c TNetworkToHistoTool.h
 
 
 $(OBJS): $(JETNET_SRC) 
-#	@echo Building JetNet Library
+	@echo Building JetNet Library
 	@$(FC) $(FOPT) -c $(JETNET_SRC) -o $(JETNET_LIB)
 	@$(RM) TNeuralDataSetDict.*
 	@echo Making Dictionary for TNeuralDataSet...

@@ -20,7 +20,7 @@ class_name = 'JetFitterNN_' + input_ds
 
 pynn.trainNN(input_file = full_path, 
              output_class = class_name, 
-             n_iterations = 1000, 
+             n_iterations = 10, 
              dilution_factor = 2, 
              use_sd = False, 
              with_ip3d = with_ip3d, 

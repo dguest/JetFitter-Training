@@ -787,7 +787,6 @@ void trainNN(TString inputfile,
   histoTraining->Draw("l");
   histoTesting->Draw("lsame");
   trainingCanvas->SaveAs("weights/trainingCurve.eps");
-
  
   TCanvas* mlpa_canvas = new TCanvas("jetnet_canvas","Network analysis");
   mlpa_canvas->Divide(2,4);
@@ -810,9 +809,6 @@ void trainNN(TString inputfile,
   TH1F *bgtest = new TH1F("bghtest", "NN output", 50, -.5, 1.5);
   TH1F *sigtest = new TH1F("sightest", "NN output", 50, -.5, 1.5);
 
-
-
-      
   for (Int_t i = 0; i < simu->GetEntries(); i++) {
     
     if (i % 100000 == 0 ) {
@@ -893,7 +889,6 @@ void trainNN(TString inputfile,
     }
   }
 
-
   bg2->SetLineColor(kYellow);
   bg2->SetFillStyle(3008);   bg2->SetFillColor(kYellow);
   bg->SetLineColor(kBlue);
@@ -945,6 +940,7 @@ void trainNN(TString inputfile,
  legendtest->AddEntry(sigtest, "Signal (bottom)");
  legendtest->Draw();
 
+  std::cout << "drawing fith pad\n";
  mlpa_canvas->cd(5);
  gPad->SetLogy();
  bg->DrawNormalized();
@@ -952,6 +948,7 @@ void trainNN(TString inputfile,
  sig->DrawNormalized("same");
  legend->Draw();
  
+  std::cout << "drawing sixth pad\n";
  mlpa_canvas->cd(6);
  gPad->SetLogy();
  bgtest->DrawNormalized();

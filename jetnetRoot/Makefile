@@ -26,6 +26,9 @@ LIBS := -lgfortran $(ROOTLIBS)
 COPT=-O2 -fPIC
 FOPT=-ffixed-form -ffixed-line-length-none -u -Wall -fPIC -O
 
+PY_LINKER_OPTS :=  -lTJetNet -L. -Wl,-rpath,.
+# PY_LINKER_OPTS += -Wl,-no-undefined 
+
 
 all:  libTJetNet.so pynn.so test.exe
 
@@ -50,8 +53,6 @@ test.exe: $(T_OBJ) $(T_DICTS) $(JETNET_LIB)
 	@echo making executable
 	@$(CC) $(COPT) $(SRCS) $^ $(INC) $(LIBS) -o $@
 
-PY_LINKER_OPTS :=  -lTJetNet -L. -Wl,-rpath,.
-# PY_LINKER_OPTS += -Wl,-no-undefined 
 
 pynn.so: pynn.cxx trainNN.cxx trainNN.hh
 	@echo making python lib
@@ -60,13 +61,8 @@ pynn.so: pynn.cxx trainNN.cxx trainNN.hh
 libTJetNet.so pynn.cxx: trainNN.hh
 
 libTJetNet.so: $(T_OBJ) $(T_DICTS) $(JETNET_LIB)
-#	@echo tobjects: $(T_OBJ)
-#	@echo dicts: $(T_DICTS)
 	@echo building $@
 	@$(CC) -shared -o $@ $^ $(INC) $(LIBS) #-Wl,-soname,libTJetNet.so.0
-#-g
-
-
 
 clean:
 	@$(RM) $(EXE) *~ $(JETNET_LIB) libTJetNet.so *.o *.bak core *Dict.h *Dict.cxx gauss.exe

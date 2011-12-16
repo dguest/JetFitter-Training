@@ -1,6 +1,8 @@
 #!/usr/bin/env python2.6
+import sys, dl
 
-import sys
+# without this root has trouble
+sys.setdlopenflags(dl.RTLD_NOW | dl.RTLD_GLOBAL)
 import pynn
 
 input_ds = 'AntiKt4TopoEMJets'
@@ -20,8 +22,8 @@ class_name = 'JetFitterNN_' + input_ds
 
 pynn.trainNN(input_file = full_path, 
              output_class = class_name, 
-             n_iterations = 10, 
-             dilution_factor = 2, 
+             n_iterations = 1000, 
+             dilution_factor = 200, 
              use_sd = False, 
              with_ip3d = with_ip3d, 
              nodes_first_layer = 10, 

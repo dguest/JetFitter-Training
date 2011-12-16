@@ -2,6 +2,8 @@
 # Author: Vassil Verguilov
 # Created: 22.01.2005 @ 17:52
 #
+# Simplified by Daniel Guest (dguest@cern.ch)
+# on: Fri Dec 16 21:00:00 CET 2011
 
 JETNET_LIB=jetnet.o
 JETNET_SRC=jetnet_35.f

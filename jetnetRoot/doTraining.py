@@ -2,7 +2,8 @@
 import sys, dl
 
 # without this root has trouble
-sys.setdlopenflags(dl.RTLD_NOW | dl.RTLD_GLOBAL)
+binding_rules =  dl.RTLD_GLOBAL | dl.RTLD_NOW
+sys.setdlopenflags(binding_rules)
 import pynn
 
 input_ds = 'AntiKt4TopoEMJets'

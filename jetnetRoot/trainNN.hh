@@ -3,16 +3,6 @@
 
 #include "TString.h"
 
-void trainNN_no_root(const char* inputfile,
-				const char* outputclass,
-				int nIterations,
-				int dilutionFactor,
-				bool useSD,
-				bool withIP3D,
-				int nodesFirstLayer,
-				int nodesSecondLayer,
-				int restartTrainingFrom);
-
 
 void trainNN(TString inputfile,
              TString outputclass="JetFitterNN",

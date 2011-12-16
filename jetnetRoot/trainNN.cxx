@@ -54,27 +54,27 @@ int main()
 
 
 
-void trainNN_no_root(const char* inputfile,
-		     const char* outputclass,
-		     int nIterations,
-		     int dilutionFactor,
-		     bool useSD,
-		     bool withIP3D,
-		     int nodesFirstLayer,
-		     int nodesSecondLayer, 
-		     int restartTrainingFrom) {
+// void trainNN_no_root(const char* inputfile,
+// 		     const char* outputclass,
+// 		     int nIterations,
+// 		     int dilutionFactor,
+// 		     bool useSD,
+// 		     bool withIP3D,
+// 		     int nodesFirstLayer,
+// 		     int nodesSecondLayer, 
+// 		     int restartTrainingFrom) {
 
-  trainNN(TString(inputfile), 
-	  TString(outputclass),
-	  nIterations,
-	  dilutionFactor,
-	  useSD,
-	  withIP3D,
-	  nodesFirstLayer,
-	  nodesSecondLayer,
-	  restartTrainingFrom);
+//   trainNN(TString(inputfile), 
+// 	  TString(outputclass),
+// 	  nIterations,
+// 	  dilutionFactor,
+// 	  useSD,
+// 	  withIP3D,
+// 	  nodesFirstLayer,
+// 	  nodesSecondLayer,
+// 	  restartTrainingFrom);
 
-}
+// }
 
 
 void trainNN(TString inputfile,

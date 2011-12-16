@@ -16,8 +16,8 @@ SRCS=trainNN.cxx
 EXE=test.exe
 LIB=libTJetNet.so
 
-OBJS := $(JETNET_LIB) TNeuralDataSet.o TJetNet.o
-# T_OBJ := 
+T_OBJ := TNeuralDataSet.o TJetNet.o TTrainedNetwork.o TNetworkToHistoTool.o
+T_DICTS := $(T_OBJ:.o=Dict.o)
 FC := gfortran
 CC := g++
 INC := $(ROOTCFLAGS)
@@ -29,31 +29,26 @@ FOPT=-ffixed-form -ffixed-line-length-none -u -Wall -fPIC -O
 
 all:  libTJetNet.so pynn.so test.exe
 
-$(OBJS): $(JETNET_SRC) 
+%Dict.cxx: %.h
+	@echo making dict $@
+	@rootcint $@ -c $*.h	
+
+T%Dict.o: T%Dict.cxx 
+	@echo building dict $@
+	@$(CC) $(COPT) $(INC) -c $< -o $@
+
+T%.o: T%.cxx T%.h
+	@echo building $@
+	@$(CC) $(COPT) $(INC) -c $< -o $@
+
+
+$(JETNET_LIB): $(JETNET_SRC) 
 	@echo Building JetNet Library
 	@$(FC) $(FOPT) -c $(JETNET_SRC) -o $(JETNET_LIB)
-	@$(RM) TNeuralDataSetDict.*
-	@echo Making Dictionary for TNeuralDataSet...
-	@rootcint TNeuralDataSetDict.cxx -c TNeuralDataSet.h
-	@$(CC) $(COPT) -c TNeuralDataSetDict.cxx $(INC) -o TNeuralDataSetDict.o
-	@$(CC) $(COPT) -c TNeuralDataSet.cxx $(INC) -o TNeuralDataSet.o
-	@$(RM) TJetNetDict.*
-	@echo Making Dictionary for TJetNet
-	@rootcint TJetNetDict.cxx -c TJetNet.h
-	@$(CC) $(COPT) -c TJetNetDict.cxx $(INC) -o TJetNetDict.o
-	@$(CC) $(COPT) -c TJetNet.cxx $(INC) -o TJetNet.o
-	@echo Making Dictionary for TTrainedNetwork
-	@rootcint TTrainedNetworkDict.cxx -c TTrainedNetwork.h
-	@$(CC) $(COPT) -c TTrainedNetworkDict.cxx $(INC) -o TTrainedNetworkDict.o
-	@$(CC) $(COPT) -c TTrainedNetwork.cxx $(INC) -o TTrainedNetwork.o
-	@echo Making Dictionary for TNetworkToHistoTool
-	@rootcint TNetworkToHistoToolDict.cxx -c TNetworkToHistoTool.h
-	@$(CC) $(COPT) -c TNetworkToHistoToolDict.cxx $(INC) -o TNetworkToHistoToolDict.o
-	@$(CC) $(COPT) -c TNetworkToHistoTool.cxx $(INC) -o TNetworkToHistoTool.o
 
-test.exe: $(OBJS) $(SRCS)
+test.exe: $(T_OBJ) $(T_DICTS) $(JETNET_LIB)
 	@echo making executable
-	@$(CC) $(COPT) $(SRCS) $(JETNET_LIB) TNeuralDataSetDict.o TNeuralDataSet.o TJetNetDict.o TJetNet.o TTrainedNetwork.o TTrainedNetworkDict.o TNetworkToHistoTool.o TNetworkToHistoToolDict.o $(INC) $(LIBS) -o $@
+	@$(CC) $(COPT) $(SRCS) $^ $(INC) $(LIBS) -o $@
 
 PY_LINKER_OPTS :=  -lTJetNet -L. -Wl,-rpath,.
 # PY_LINKER_OPTS += -Wl,-no-undefined 
@@ -64,8 +59,11 @@ pynn.so: pynn.cxx trainNN.cxx trainNN.hh
 
 libTJetNet.so pynn.cxx: trainNN.hh
 
-libTJetNet.so: $(OBJS) $(SRCS)
-	@$(CC) -shared -o libTJetNet.so $(JETNET_LIB) TNeuralDataSetDict.o TNeuralDataSet.o TJetNetDict.o TJetNet.o TTrainedNetwork.o TTrainedNetworkDict.o TNetworkToHistoTool.o TNetworkToHistoToolDict.o $(INC) $(LIBS) #-Wl,-soname,libTJetNet.so.0
+libTJetNet.so: $(T_OBJ) $(T_DICTS) $(JETNET_LIB)
+#	@echo tobjects: $(T_OBJ)
+#	@echo dicts: $(T_DICTS)
+	@echo building $@
+	@$(CC) -shared -o $@ $^ $(INC) $(LIBS) #-Wl,-soname,libTJetNet.so.0
 #-g
 
 

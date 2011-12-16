@@ -1,7 +1,7 @@
 #!/usr/bin/env python2.6
 # Author: Daniel Guest (dguest@cern.ch)
 
-import sys, dl, os
+import sys, dl, os, glob
 
 # without this root has trouble
 binding_rules =  dl.RTLD_GLOBAL | dl.RTLD_NOW

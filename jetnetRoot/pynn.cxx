@@ -1,3 +1,5 @@
+// python wrapper for JetNet based training algorythem
+// Author: Daniel Guest (dguest@cern.ch)
 #include <Python.h>
 #include "TString.h"
 

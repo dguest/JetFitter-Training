@@ -1,4 +1,11 @@
+
 #include <cmath>
+#include "doNormalization.hh"
+
+double sigmoid(double x)
+{
+  return 1./(1.+exp(-2*x));
+}
 
 double norm_nVTX(int nVTX)
 {
@@ -91,7 +98,6 @@ int back_cat_eta(int cat_eta)
 {
   return (int)std::floor(cat_eta+1.+0.5);
 }
-
 
 
 

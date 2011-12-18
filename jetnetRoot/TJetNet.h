@@ -1,3 +1,4 @@
+// this be -*- c++ -*-
 /* 
  ROOT Interface to JETNET
  Author: Vassil Verguilov
@@ -35,7 +36,7 @@ class TTrainedNetwork;
 
 class TJetNet : public TObject
 {
- public:
+public:
   
   TJetNet( void );
 
@@ -106,46 +107,46 @@ class TJetNet : public TObject
   void SelectiveFields( Int_t aLayerA, Int_t aNodeA1, Int_t aNodeA2, Int_t aNodeB1, Int_t aNodeB2, Int_t aSwitch = 0 );
   
   void SetUpdatesPerEpoch( Int_t aValue );
-    void SetUpdatingProcedure( Int_t aValue );
-    void SetErrorMeasure( Int_t aValue );
-    void SetActivationFunction( Int_t aValue );
-    void SetPatternsPerUpdate( Int_t aValue );
-    void SetLearningRate( Double_t aValue );
-    void SetMomentum( Double_t aValue );
-    void SetInitialWeightsWidth( Double_t aValue );
-    void SetLearningRateDecrease( Double_t aValue );
+  void SetUpdatingProcedure( Int_t aValue );
+  void SetErrorMeasure( Int_t aValue );
+  void SetActivationFunction( Int_t aValue );
+  void SetPatternsPerUpdate( Int_t aValue );
+  void SetLearningRate( Double_t aValue );
+  void SetMomentum( Double_t aValue );
+  void SetInitialWeightsWidth( Double_t aValue );
+  void SetLearningRateDecrease( Double_t aValue );
 
 
-    Int_t GetUpdatesPerEpoch( void );
-    Int_t GetUpdatingProcedure( void );
-    Int_t GetErrorMeasure( void );
-    Int_t GetActivationFunction( void );
-    Int_t GetPatternsPerUpdate( void );
-    Double_t GetLearningRate( void );
-    Double_t GetMomentum( void );
-    Double_t GetInitialWeightsWidth( void );
-    Double_t GetLearningRateDecrease( void );
+  Int_t GetUpdatesPerEpoch( void );
+  Int_t GetUpdatingProcedure( void );
+  Int_t GetErrorMeasure( void );
+  Int_t GetActivationFunction( void );
+  Int_t GetPatternsPerUpdate( void );
+  Double_t GetLearningRate( void );
+  Double_t GetMomentum( void );
+  Double_t GetInitialWeightsWidth( void );
+  Double_t GetLearningRateDecrease( void );
     
-    void LockInit( void ){ mInitLocked = kTRUE; };
-    void UnlockInit( void ){ mInitLocked = kFALSE; };
-    Int_t GetMSTJN( Int_t aIndex );
-    Double_t GetPARJN( Int_t aIndex );
-    void SetMSTJN( Int_t aIndex, Int_t aValue );
-    void SetPARJN( Int_t aIndex, Double_t aValue );
+  void LockInit( void ){ mInitLocked = kTRUE; };
+  void UnlockInit( void ){ mInitLocked = kFALSE; };
+  Int_t GetMSTJN( Int_t aIndex );
+  Double_t GetPARJN( Int_t aIndex );
+  void SetMSTJN( Int_t aIndex, Int_t aValue );
+  void SetPARJN( Int_t aIndex, Double_t aValue );
   
-    void Normalize( void );
-    void Randomize( void );
+  void Normalize( void );
+  void Randomize( void );
 
-    TTrainedNetwork* createTrainedNetwork() const;
-    void readBackTrainedNetwork(const TTrainedNetwork*);
+  TTrainedNetwork* createTrainedNetwork() const;
+  void readBackTrainedNetwork(const TTrainedNetwork*);
 
-    enum TActivationFunction {
-      afSigmoid = 1,
-      afTanh    = 2,
-      afExp     = 3,
-      afLinear  = 4,
-      afSigmoidEntropy = 5
-    };
+  enum TActivationFunction {
+    afSigmoid = 1,
+    afTanh    = 2,
+    afExp     = 3,
+    afLinear  = 4,
+    afSigmoidEntropy = 5
+  };
     
 private:
   

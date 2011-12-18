@@ -54,29 +54,6 @@ int main()
 
 
 
-// void trainNN_no_root(const char* inputfile,
-// 		     const char* outputclass,
-// 		     int nIterations,
-// 		     int dilutionFactor,
-// 		     bool useSD,
-// 		     bool withIP3D,
-// 		     int nodesFirstLayer,
-// 		     int nodesSecondLayer, 
-// 		     int restartTrainingFrom) {
-
-//   trainNN(TString(inputfile), 
-// 	  TString(outputclass),
-// 	  nIterations,
-// 	  dilutionFactor,
-// 	  useSD,
-// 	  withIP3D,
-// 	  nodesFirstLayer,
-// 	  nodesSecondLayer,
-// 	  restartTrainingFrom);
-
-// }
-
-
 void trainNN(TString inputfile,
              TString outputclass,
              int nIterations,
@@ -146,44 +123,36 @@ void trainNN(TString inputfile,
   int nlayer=3;
 
   int numberinputs=8;
-  if (withIP3D)
-  {
+  if (withIP3D) {
     numberinputs=9;
   }
   int numberoutputs=3;
 
-  if (nodesSecondLayer!=0)
-  {
+  if (nodesSecondLayer!=0){
     nlayer=4;
   }
 
-  if (nodesSecondLayer!=0)
-  {
+  if (nodesSecondLayer!=0){
     nneurons=new int[4];
   }
-  else
-  {
+  else {
     nneurons=new int[3];
   }
   
-  if (withIP3D)
-  {
+  if (withIP3D) {
     nneurons[0]=9;
   }
-  else
-  {
+  else {
     nneurons[0]=8;
   }
   
   nneurons[1]=nodesFirstLayer;
 
-  if (nodesSecondLayer!=0)
-  {
-    nneurons[2]=nodesSecondLayer;
-    nneurons[3]=3;
+  if (nodesSecondLayer!=0)  {
+      nneurons[2]=nodesSecondLayer;
+      nneurons[3]=3;
   }
-  else
-  {
+  else {
     nneurons[2]=3;
   }
 
@@ -201,22 +170,26 @@ void trainNN(TString inputfile,
   for (Int_t i = 0; i < simu->GetEntries(); i++) {
 
     if (i % 100000 == 0 ) {
-      std::cout << " Counting training / testing events in sample. Looping over event " << i << std::endl;
+      std::cout << " Counting training / testing events in sample."
+	" Looping over event " << i << std::endl;
     }
     
     if (i%dilutionFactor==0) numberTrainingEvents+=1;
-//    if (i%dilutionFactor==1||i%dilutionFactor==2) numberTestingEvents+=1;
+    //    if (i%dilutionFactor==1||i%dilutionFactor==2) numberTestingEvents+=1;
     if (i%dilutionFactor==1) numberTestingEvents+=1;
 
   }
   
   cout << " N. training events: " << numberTrainingEvents << 
-      " N. testing events: " << numberTestingEvents << endl;
+    " N. testing events: " << numberTestingEvents << endl;
 
   cout << "now start to setup the network..." << endl;
   
  
-  TJetNet* jn = new TJetNet( numberTestingEvents, numberTrainingEvents, nlayer, nneurons );
+  TJetNet* jn = new TJetNet( numberTestingEvents, 
+			     numberTrainingEvents, 
+			     nlayer, 
+			     nneurons );
 
   cout <<  " setting learning method... " << endl;
 
@@ -225,22 +198,21 @@ void trainNN(TString inputfile,
   int nPatternsPerUpdate=200;// || _2 = 200 (before 100) _3,_4=20
   
   jn->SetPatternsPerUpdate( nPatternsPerUpdate );
-  jn->SetUpdatesPerEpoch( (int)std::floor((float)numberTrainingEvents/(float)nPatternsPerUpdate) );
+  jn->SetUpdatesPerEpoch( (int)std::floor((float)numberTrainingEvents/
+					  (float)nPatternsPerUpdate) );
   jn->SetUpdatingProcedure( 0 );
   jn->SetErrorMeasure( 0 );
   jn->SetActivationFunction( 1 );
-//  jn->SetLearningRate( 0.5);//0.8 || _2 =0.5 _3=0.05 _4=0.15
+  //  jn->SetLearningRate( 0.5);//0.8 || _2 =0.5 _3=0.05 _4=0.15
   jn->SetLearningRate( 0.5);//0.8 //move to 20 for _3 _4 = 0.15
-//  jn->SetMomentum( 0.3 );//0.3 //is now 0.5 || _2 = 0.3 _3 = 0.03 _4 = 0.05
+  //  jn->SetMomentum( 0.3 );//0.3 //is now 0.5 || _2 = 0.3 _3 = 0.03 _4 = 0.05
   jn->SetMomentum( 0.03 );//0.3 //is now 0.5
   jn->SetInitialWeightsWidth( 1. );
   //  jn->SetLearningRateDecrease( 0.992 );
-//  jn->SetLearningRateDecrease( 0.99 );//0.992 || _2 = 0.99 _3 = 0.98 _4=0.99
+  //  jn->SetLearningRateDecrease( 0.99 );//0.992 || _2 = 0.99 _3 = 0.98 _4=0.99
   jn->SetLearningRateDecrease( 0.99 );//0.992
   
-
   cout << " setting pattern for training events " << endl;
-
   int trainSampleNumber=0;
   int testSampleNumber=1;
   
@@ -265,14 +237,12 @@ void trainNN(TString inputfile,
     jn->SetInputTrainSet( counter, 3, norm_energyFraction(energyFraction) );
     jn->SetInputTrainSet( counter, 4, norm_mass(mass) );
     jn->SetInputTrainSet( counter, 5, norm_significance3d(significance3d ) );
-    if (withIP3D)
-    {
+    if (withIP3D){
       jn->SetInputTrainSet( counter, 6, norm_IP3D(discriminatorIP3D) );
       jn->SetInputTrainSet( counter, 7, norm_cat_pT(cat_pT) );
       jn->SetInputTrainSet( counter, 8, norm_cat_eta(cat_eta) );
     }
-    else
-    {
+    else {
       jn->SetInputTrainSet( counter, 6, norm_cat_pT(cat_pT) );
       jn->SetInputTrainSet( counter, 7, norm_cat_eta(cat_eta) );
     }
@@ -281,16 +251,13 @@ void trainNN(TString inputfile,
     jn->SetOutputTrainSet( counter, 1, charm );
     jn->SetOutputTrainSet( counter, 2, light );
 
-    if (fabs(bottom-1)<1e-4)
-    {
+    if (fabs(bottom-1) < 1e-4) {
       jn->SetEventWeightTrainSet(  counter, weight*bweight );
     }
-    else if (fabs(charm-1)<1e-4)
-    {
+    else if (fabs(charm-1) < 1e-4){
       jn->SetEventWeightTrainSet(  counter, weight*cweight);
     }
-    else if (fabs(light-1)<1e-4)
-    {
+    else if (fabs(light-1) < 1e-4) {
       jn->SetEventWeightTrainSet(  counter, weight*lweight );
     }
      
@@ -302,9 +269,10 @@ void trainNN(TString inputfile,
 
   }
 
-  if (counter!=numberTrainingEvents)
-  {
-    cout << " counter up to: " << counter << " while events in training sample are " << numberTrainingEvents << endl;
+  if (counter!=numberTrainingEvents){
+    cout << " counter up to: " << counter << 
+      " while events in training sample are " << 
+      numberTrainingEvents << endl;
     return;
   }
 
@@ -318,7 +286,8 @@ void trainNN(TString inputfile,
   for (Int_t i = 0; i < simu->GetEntries(); i++) {
     
     if (i % 100000 == 0 ) {
-      std::cout << " Copying over testing events. Looping over event " << i << std::endl;
+      std::cout << " Copying over testing events."
+	" Looping over event " << i << std::endl;
     }
     
     if (i%dilutionFactor!=1) continue;
@@ -334,14 +303,12 @@ void trainNN(TString inputfile,
     jn->SetInputTestSet( counter, 3, norm_energyFraction(energyFraction) );
     jn->SetInputTestSet( counter, 4, norm_mass(mass) );
     jn->SetInputTestSet( counter, 5, norm_significance3d(significance3d ) );
-    if (withIP3D)
-    {
-      jn->SetInputTestSet( counter, 6, norm_IP3D(discriminatorIP3D) );
-      jn->SetInputTestSet( counter, 7, norm_cat_pT(cat_pT) );
-      jn->SetInputTestSet( counter, 8, norm_cat_eta(cat_eta) );
+    if (withIP3D){
+	jn->SetInputTestSet( counter, 6, norm_IP3D(discriminatorIP3D) );
+	jn->SetInputTestSet( counter, 7, norm_cat_pT(cat_pT) );
+	jn->SetInputTestSet( counter, 8, norm_cat_eta(cat_eta) );
     }
-    else
-    {
+    else {
       jn->SetInputTestSet( counter, 6, norm_cat_pT(cat_pT) );
       jn->SetInputTestSet( counter, 7, norm_cat_eta(cat_eta) );
     }
@@ -350,16 +317,13 @@ void trainNN(TString inputfile,
     jn->SetOutputTestSet( counter, 1, charm );
     jn->SetOutputTestSet( counter, 2, light );
 
-    if (fabs(bottom-1)<1e-4)
-    {
-      jn->SetEventWeightTestSet(  counter, weight*bweight );
-    }
-    else if (fabs(charm-1)<1e-4)
-    {
+    if (fabs(bottom-1) < 1e-4) {
+	jn->SetEventWeightTestSet(  counter, weight*bweight );
+      }
+    else if (fabs(charm-1) < 1e-4) {
       jn->SetEventWeightTestSet(  counter, weight*cweight );
     }
-    else if (fabs(light-1)<1e-4)
-    {
+    else if (fabs(light-1) < 1e-4){
       jn->SetEventWeightTestSet(  counter, weight*lweight );
     }
     counter+=1;
@@ -368,23 +332,23 @@ void trainNN(TString inputfile,
     //    eventWeight=weight;
   }
     
-  if (counter!=numberTestingEvents)
-  {
- cout << " counter up to: " << counter << " while events in testing sample are " << numberTestingEvents << ". Normal due to cuts..." << endl;
-    return;  }
+  if (counter!=numberTestingEvents){
+    cout << " counter up to: " << counter << 
+      " while events in testing sample are " << numberTestingEvents << 
+      ". Normal due to cuts..." << endl;
+    return;  
+  }
 
   //normalize inputvariables?
   //jn->Normalize();
 
   jn->Shuffle(true,false);
   
-  if (restartTrainingFrom==0)
-  {
+  if (restartTrainingFrom==0) {
     jn->Init();
     //    jn->DumpToFile("WeightsInitial.w");
   }
-  else
-  {
+  else {
     TString name("Weights");
     name+=restartTrainingFrom;
     name+=".w";
@@ -392,13 +356,11 @@ void trainNN(TString inputfile,
     jn->ReadFromFile(name);
   }
   
+  float minimumError = 1e10;
+  int epochesWithRisingError = 0;
+  int epochWithMinimum = 0;
 
-
-  float minimumError=1e10;
-  int epochesWithRisingError=0;
-  int epochWithMinimum=0;
-
-  int updatesPerEpoch=jn->GetUpdatesPerEpoch();
+  int updatesPerEpoch = jn->GetUpdatesPerEpoch();
 
   //prepare output stream
 
@@ -407,23 +369,27 @@ void trainNN(TString inputfile,
   cronology << "-------------SETTINGS----------------" << endl;
   cronology << "Epochs: " << jn->GetEpochs() << std::endl;
   cronology << "Updates Per Epoch: " << jn->GetUpdatesPerEpoch() << std::endl;
-  cronology << "Updating Procedure: " << jn->GetUpdatingProcedure() << std::endl;
+  cronology << "Updating Procedure: " << jn->GetUpdatingProcedure() 
+	    << std::endl;
   cronology << "Error Measure: " << jn->GetErrorMeasure() << std::endl;
-  cronology << "Patterns Per Update: " << jn->GetPatternsPerUpdate() << std::endl;
+  cronology << "Patterns Per Update: " << jn->GetPatternsPerUpdate() 
+	    << std::endl;
   cronology << "Learning Rate: " << jn->GetLearningRate() << std::endl;
   cronology << "Momentum: " << jn->GetMomentum() << std::endl;
-  cronology << "Initial Weights Width: " << jn->GetInitialWeightsWidth() << std::endl;
-  cronology << "Learning Rate Decrease: " << jn->GetLearningRateDecrease() << std::endl;
-  cronology << "Activation Function: " << jn->GetActivationFunction() << std::endl;
+  cronology << "Initial Weights Width: " << jn->GetInitialWeightsWidth() 
+	    << std::endl;
+  cronology << "Learning Rate Decrease: " << jn->GetLearningRateDecrease() 
+	    << std::endl;
+  cronology << "Activation Function: " << jn->GetActivationFunction() 
+	    << std::endl;
   cronology << "-------------LAYOUT------------------" << endl;
   cronology << "Input variables: " << jn->GetInputDim() << endl;
   cronology << "Output variables: " << jn->GetOutputDim() << endl;
   cronology << "Hidden layers: " << jn->GetHiddenLayerDim() << endl;
   cronology << "Layout : ";
-  for (Int_t s=0;s<jn->GetHiddenLayerDim()+2;++s)
-  {
+  for (Int_t s=0; s < jn->GetHiddenLayerDim() + 2; ++s) {
     cronology << jn->GetHiddenLayerSize(s);
-    if (s<jn->GetHiddenLayerDim()+1) cronology << "-";
+    if (s < jn->GetHiddenLayerDim()+1) cronology << "-";
   }
   cronology << endl;
   cronology << "--------------HISTORY-----------------" << endl;
@@ -431,64 +397,62 @@ void trainNN(TString inputfile,
   cronology.close();
 
   //prepare training histo
-  TH1F* histoTraining=new TH1F("training","training",(int)std::floor((float)nIterations/10.+0.5),1,std::floor((float)nIterations/10.+1.5));
-  TH1F* histoTesting=new TH1F("testing","testing",(int)std::floor((float)nIterations/10.+0.5),1,std::floor((float)nIterations/10.+1.5));
+  TH1F* histoTraining=new TH1F("training","training",
+			       (int)std::floor((float)nIterations/10.+0.5),
+			       1,std::floor((float)nIterations/10.+1.5));
+
+  TH1F* histoTesting=new TH1F("testing","testing",
+			      (int)std::floor((float)nIterations/10.+0.5),
+			      1,std::floor((float)nIterations/10.+1.5));
 
   double maximumTrain=0;
   double minimumTrain=1e10;
 
-  for(int epoch=restartTrainingFrom+1;epoch<=nIterations;++epoch)
-  {
-    if (epoch!=restartTrainingFrom+1)
-    {
+  for(int epoch=restartTrainingFrom+1;epoch<=nIterations;++epoch){
+    if (epoch!=restartTrainingFrom+1) {
       trainingError = jn->Train();
     }
 
-    if (epoch%10==0 || epoch==restartTrainingFrom+1)
-    {
+    if (epoch%10==0 || epoch==restartTrainingFrom+1) {
 
       cronology.open("weights/trainingCronology.txt",ios_base::app);
 
       testError = jn->TestBTAG();
 
-      if (trainingError>maximumTrain) maximumTrain=trainingError;
-      if (testError>maximumTrain) maximumTrain=testError;
-      if (trainingError<minimumTrain) minimumTrain=trainingError;
-      if (testError<minimumTrain) minimumTrain=testError;
+      if (trainingError > maximumTrain) maximumTrain=trainingError;
+      if (testError > maximumTrain) maximumTrain=testError;
+      if (trainingError < minimumTrain) minimumTrain=trainingError;
+      if (testError < minimumTrain) minimumTrain=testError;
 
-      
-      histoTraining->Fill(epoch/10.,trainingError);
-      histoTesting->Fill(epoch/10.,testError);
+      histoTraining->Fill(epoch/10.0,trainingError);
+      histoTesting->Fill(epoch/10.0,testError);
 
-      if (testError<minimumError)
-      {
-        minimumError=testError;
-        epochesWithRisingError=0;
-        epochWithMinimum=epoch;
+      if (testError<minimumError) {
+	minimumError=testError;
+	epochesWithRisingError=0;
+	epochWithMinimum=epoch;
       }
-      else
-      {
-        epochesWithRisingError+=10;
-        if (trainingError>testError)
-        {
-          epochWithMinimum=epoch;
-        }
+      else {
+	epochesWithRisingError+=10;
+	if (trainingError>testError) {
+	  epochWithMinimum=epoch;
+	}
       }
       
       
-      if (epochesWithRisingError>300)
-      {
-	if (trainingError<minimumError)
-	{
-	  cout << " End of training. Minimum already on epoch: " << epochWithMinimum << endl;
-          cronology << " End of training. Minimum already on epoch: " << epochWithMinimum << endl;
+      if (epochesWithRisingError>300) {
+	if (trainingError<minimumError) {
+	  cout << " End of training. Minimum already on epoch: " 
+	       << epochWithMinimum << endl;
+	  cronology << " End of training. Minimum already on epoch: " 
+		    << epochWithMinimum << endl;
 	  break;
 	} 
       }
       
       cronology << "Epoch: [" << epoch <<
-          "] Error: " << trainingError << 
-          " Test: " << testError << endl;
+	"] Error: " << trainingError << 
+	" Test: " << testError << endl;
 
       cout << "Epoch: [" << epoch <<
 	"] Error: " << trainingError << 
@@ -503,16 +467,16 @@ void trainNN(TString inputfile,
       TFile* file=new TFile(name,"recreate");
       TTrainedNetwork* trainedNetwork=jn->createTrainedNetwork();
       trainedNetwork->Write();
-      file->Write();
+      file->Write(); //*** SUSPICIOUS: may result in two copies in the file
       file->Close();
       delete file;
 
       /*
-      TFile* file2=new TFile(name);
-      trainedNetwork=(TTrainedNetwork*)file2->Get("TTrainedNetwork");
-      cout <<" hid lay 1 size: " << trainedNetwork->getnHiddenLayerSize()[0] << endl;
-      file2->Close();
-      delete file2;
+	TFile* file2=new TFile(name);
+	trainedNetwork=(TTrainedNetwork*)file2->Get("TTrainedNetwork");
+	cout <<" hid lay 1 size: " << trainedNetwork->getnHiddenLayerSize()[0] << endl;
+	file2->Close();
+	delete file2;
       */
 
       //      jn->DumpToFile(name);
@@ -525,37 +489,33 @@ void trainNN(TString inputfile,
   //  jn->writeNetworkInfo(4);
   //  jn->writeNetworkInfo(5);
 
+  // ==================================================================
+  // ======== end of training (good place to chop in half) ============
+  // ==================================================================
 
-  //  cout << " Now try to understand how to get the weights..." << endl;
-
-  ////////////WWWWWAAAAASSSSSS HERE
   Int_t nInput=jn->GetInputDim();
   
   cout << " create Trained Network object..." << endl;
   
-  TTrainedNetwork* trainedNetwork=jn->createTrainedNetwork();
+  TTrainedNetwork* trainedNetwork = jn->createTrainedNetwork();
 
   cout << " now getting value with trained Network ";
 
-  
+  double inputexample[9] = {norm_nVTX(1),
+			    norm_nTracksAtVtx(2),
+			    norm_nSingleTracks(0),
+			    norm_energyFraction(0.6),
+			    norm_mass(2500),
+			    norm_significance3d(4 ),
+			    norm_IP3D(3),
+			    norm_cat_pT(3),
+			    norm_cat_eta(1)};
 
-
-  double inputexample[9]={norm_nVTX(1),
-			  norm_nTracksAtVtx(2),
-			  norm_nSingleTracks(0),
-			  norm_energyFraction(0.6),
-			  norm_mass(2500),
-			  norm_significance3d(4 ),
-			  norm_IP3D(3),
-			  norm_cat_pT(3),
-			  norm_cat_eta(1)};
-
-  for (Int_t i=0;i<nInput;++i)
-  {
+  for (Int_t i=0;i<nInput;++i){
     jn->SetInputs(i,inputexample[i]);
   }
 
-  cronology.open("weights/trainingCronology.txt",ios_base::app);
+  cronology.open("weights/trainingCronology.txt", ios_base::app);
 
   jn->Evaluate();
 
@@ -571,8 +531,7 @@ void trainNN(TString inputfile,
   jn->readBackTrainedNetwork(trainedNetwork);
 
   cout <<" resetting input " << endl;
-  for (Int_t i=0;i<nInput;++i)
-  {
+  for (Int_t i=0;i<nInput;++i) {
     jn->SetInputs(i,inputexample[i]);
   }
 
@@ -594,17 +553,18 @@ void trainNN(TString inputfile,
   TNetworkToHistoTool myHistoTool;
 
   cout << " From network to histo..." << endl;
-  std::vector<TH1*> myHistos=myHistoTool.fromTrainedNetworkToHisto(trainedNetwork);
+  std::vector<TH1*> myHistos = myHistoTool.
+    fromTrainedNetworkToHisto(trainedNetwork);
 
   cout << " From histo to network back..." << endl;
-  TTrainedNetwork* trainedNetwork2=myHistoTool.fromHistoToTrainedNetwork(myHistos);
+  TTrainedNetwork* trainedNetwork2 = myHistoTool.
+    fromHistoToTrainedNetwork(myHistos);
   
   cout << " reading back " << endl;
   jn->readBackTrainedNetwork(trainedNetwork2);
    
   cout <<" resetting input " << endl;
-  for (Int_t i=0;i<nInput;++i)
-  {
+  for (Int_t i=0;i<nInput;++i) {
     jn->SetInputs(i,inputexample[i]);
   }
 
@@ -623,76 +583,69 @@ void trainNN(TString inputfile,
   cout << " Directly from the trainedNetwork read back from HISTOS...!" << endl;
 
   std::vector<Double_t> inputData;
-  for (Int_t u=0;u<nInput;++u)
-  {
+  for (Int_t u=0;u<nInput;++u) {
     inputData.push_back(inputexample[u]);
   }
 
-  std::vector<Double_t> outputData=trainedNetwork2->calculateOutputValues(inputData);
+  std::vector<Double_t> outputData=trainedNetwork2->
+    calculateOutputValues(inputData);
 
   cout << "After reading back - Result 0:" << outputData[0] << endl;
   cout << " After reading back - Result 1:" << outputData[1] << endl;
   cout << " After reading back - Result 2:" << outputData[2] << endl;
    
 
-  
-
-
-  if (epochWithMinimum!=0)
-  {
+  if (epochWithMinimum!=0) {
     cronology << "Minimum stored from Epoch: " << epochWithMinimum << endl;
-  }  else
-  {
+  }  
+  else {
     cronology << "Minimum not reached" << endl;
   }
 
   cronology.close();
 
-  if (epochWithMinimum!=0)
-  {
+  if (epochWithMinimum != 0) {
     
-      TString name("weights/Weights");
-      name+=epochWithMinimum;
-      name+=".root";
+    TString name("weights/Weights");
+    name += epochWithMinimum;
+    name += ".root";
 
-      std::cout << " reading back from minimum " << endl;
+    std::cout << " reading back from minimum " << endl;
 
 
-      TFile *_file0 = new TFile(name);
-      TTrainedNetwork* trainedNetwork=(TTrainedNetwork*)_file0->Get("TTrainedNetwork");
+    TFile *_file0 = new TFile(name);
+    TTrainedNetwork* trainedNetwork=(TTrainedNetwork*)_file0->
+      Get("TTrainedNetwork");
+    
+    cout << " Reading back network with minimum" << endl;
+    jn->readBackTrainedNetwork(trainedNetwork);
 
-      cout << " Reading back network with minimum" << endl;
-      jn->readBackTrainedNetwork(trainedNetwork);
+    TFile* file=new TFile("weights/weightMinimum.root","recreate");
+    trainedNetwork->Write();
+    file->Write();
+    file->Close();
+    delete file;
 
-      TFile* file=new TFile("weights/weightMinimum.root","recreate");
-      trainedNetwork->Write();
-      file->Write();
-      file->Close();
-      delete file;
+    cout << " -------------------- " << endl;
+    cout << " Writing OUTPUT histos " << endl;
+    TFile* fileHistos=new TFile("weights/histoWeights.root","recreate");
+    TNetworkToHistoTool histoTool;
+    std::vector<TH1*> myHistos=histoTool.
+      fromTrainedNetworkToHisto(trainedNetwork);
 
-      cout << " -------------------- " << endl;
-      cout << " Writing OUTPUT histos " << endl;
-      TFile* fileHistos=new TFile("weights/histoWeights.root","recreate");
-      TNetworkToHistoTool histoTool;
-      std::vector<TH1*> myHistos=histoTool.fromTrainedNetworkToHisto(trainedNetwork);
-      std::vector<TH1*>::const_iterator histoBegin=myHistos.begin();
-      std::vector<TH1*>::const_iterator histoEnd=myHistos.end();
-      for (std::vector<TH1*>::const_iterator histoIter=histoBegin;
-           histoIter!=histoEnd;++histoIter)
-      {
-        (*histoIter)->Write();
-      }
-      fileHistos->Write();
-      fileHistos->Close();
-      delete fileHistos;
+    for (std::vector<TH1*>::const_iterator histoIter = myHistos.begin();
+	 histoIter != myHistos.end(); 
+	 ++histoIter) {
+      (*histoIter)->Write();
+    }
 
-      //        " filename: " << name << endl;
-      
-    //    jn->ReadFromFile(name);
+    // SUSPICIOUS: may be writing twice here too
+    fileHistos->Write();
+    fileHistos->Close();
+    delete fileHistos;
 
   } 
-  else
-  {
+  else {
     cout << " using network at last iteration (minimum not reached..." << endl;
   }
   
@@ -711,6 +664,11 @@ void trainNN(TString inputfile,
   histoTraining->SetLineColor(2);
   histoTesting->SetLineColor(4);
 
+  // ===================================================================
+  // ========== draw routine (this should be a new function) ===========
+  // ===================================================================
+
+
   histoTraining->GetYaxis()->SetRangeUser(minimumTrain,maximumTrain);
   histoTraining->Draw("l");
   histoTesting->Draw("lsame");
@@ -721,8 +679,8 @@ void trainNN(TString inputfile,
 
 
   
-//  TCanvas* mlpa_canvas_5=gDirectory->Get("mlpa_canvas_5");
-//  mlpa_canvas_5->SetLogy(kTrue);
+  //  TCanvas* mlpa_canvas_5=gDirectory->Get("mlpa_canvas_5");
+  //  mlpa_canvas_5->SetLogy(kTrue);
   gPad->SetLogy();
 
   // Use the NN to plot the results for each sample
@@ -753,14 +711,12 @@ void trainNN(TString inputfile,
     jn->SetInputs(3, norm_energyFraction(energyFraction) );
     jn->SetInputs(4, norm_mass(mass) );
     jn->SetInputs(5, norm_significance3d(significance3d ) );
-    if (withIP3D)
-    {
-      jn->SetInputs(6, norm_IP3D(discriminatorIP3D) );
-      jn->SetInputs(7, norm_cat_pT(cat_pT) );
-      jn->SetInputs(8, norm_cat_eta(cat_eta) );
+    if (withIP3D) {
+	jn->SetInputs(6, norm_IP3D(discriminatorIP3D) );
+	jn->SetInputs(7, norm_cat_pT(cat_pT) );
+	jn->SetInputs(8, norm_cat_eta(cat_eta) );
     }
-    else
-    {
+    else {
       jn->SetInputs(6, norm_cat_pT(cat_pT) );
       jn->SetInputs(7, norm_cat_eta(cat_eta) );
     }
@@ -770,49 +726,37 @@ void trainNN(TString inputfile,
     float bvalue=jn->GetOutput(0);
     float lvalue=jn->GetOutput(2);
 
-
-
-    if (bottom==1)
-    {
-      if (i%dilutionFactor==0)
-      {
-        sig->Fill(bvalue/(bvalue+lvalue),weight);
+    // TODO: this is where we need to play with the plot values
+    if (bottom==1) {
+      if (i%dilutionFactor==0) {
+	sig->Fill(bvalue/(bvalue+lvalue),weight);
       }
-      else if (i%dilutionFactor==1)
-      {
-        sigtest->Fill(bvalue/(bvalue+lvalue),weight);
+      else if (i%dilutionFactor==1) {
+	sigtest->Fill(bvalue/(bvalue+lvalue),weight);
       }
     }
-    if (light==1)
-    {
-      if (i%dilutionFactor==0)
-      {
-        bg->Fill(bvalue/(bvalue+lvalue),weight);
+    if (light==1) {
+      if (i%dilutionFactor==0) {
+	bg->Fill(bvalue/(bvalue+lvalue),weight);
       }
-      else if (i%dilutionFactor==1)
-      {
-        bgtest->Fill(bvalue/(bvalue+lvalue),weight);
+      else if (i%dilutionFactor==1) {
+	bgtest->Fill(bvalue/(bvalue+lvalue),weight);
       }
     }
-    if (charm==1)
-    {
-      if (i%dilutionFactor==0)
-      {
-        bg2->Fill(bvalue/(bvalue+lvalue),weight);
+    if (charm==1) {
+      if (i%dilutionFactor==0) {
+	bg2->Fill(bvalue/(bvalue+lvalue),weight);
       }
-      else  if (i%dilutionFactor==1)
-      {
-        bg2test->Fill(bvalue/(bvalue+lvalue),weight);
+      else if (i%dilutionFactor==1) {
+	bg2test->Fill(bvalue/(bvalue+lvalue),weight);
       }
     }
-  }
+  } // end of hist filling loop  
 
   //now you need the maximum
   float maximum=1;
-  for (Int_t a=0;a<bg->GetNbinsX();a++)
-  {
-    if (bg->GetBinContent(a)>maximum)
-    {
+  for (Int_t a=0;a<bg->GetNbinsX();a++) {
+    if (bg->GetBinContent(a)>maximum) {
       maximum=1.2*bg->GetBinContent(a);
     }
   }
@@ -838,78 +782,78 @@ void trainNN(TString inputfile,
   bgtest->SetStats(0);
   sigtest->SetStats(0);
 
- mlpa_canvas->cd(1);
- gPad->SetLogy();
+  mlpa_canvas->cd(1);
+  gPad->SetLogy();
 
- bg->GetYaxis()->SetRangeUser(1,maximum);
- bgtest->GetYaxis()->SetRangeUser(1,maximum);
+  bg->GetYaxis()->SetRangeUser(1,maximum);
+  bgtest->GetYaxis()->SetRangeUser(1,maximum);
 
- mlpa_canvas->cd(1);
- bg->Draw();
- bg2->Draw("same");
- sig->Draw("same");
+  mlpa_canvas->cd(1);
+  bg->Draw();
+  bg2->Draw("same");
+  sig->Draw("same");
 
- TLegend *legend = new TLegend(.75, .80, .95, .95);
- legend->AddEntry(bg2, "Background2 (charm)");
- legend->AddEntry(bg, "Background (light)");
- legend->AddEntry(sig, "Signal (bottom)");
- legend->Draw();
+  TLegend *legend = new TLegend(.75, .80, .95, .95);
+  legend->AddEntry(bg2, "Background2 (charm)");
+  legend->AddEntry(bg, "Background (light)");
+  legend->AddEntry(sig, "Signal (bottom)");
+  legend->Draw();
  
- mlpa_canvas->cd(2);
- gPad->SetLogy();
+  mlpa_canvas->cd(2);
+  gPad->SetLogy();
 
- bgtest->Draw();
- bg2test->Draw("same");
- sigtest->Draw("same");
+  bgtest->Draw();
+  bg2test->Draw("same");
+  sigtest->Draw("same");
 
- TLegend *legendtest = new TLegend(.75, .80, .95, .95);
- legendtest->AddEntry(bg2test, "Background2 (charm)");
- legendtest->AddEntry(bgtest, "Background (light)");
- legendtest->AddEntry(sigtest, "Signal (bottom)");
- legendtest->Draw();
+  TLegend *legendtest = new TLegend(.75, .80, .95, .95);
+  legendtest->AddEntry(bg2test, "Background2 (charm)");
+  legendtest->AddEntry(bgtest, "Background (light)");
+  legendtest->AddEntry(sigtest, "Signal (bottom)");
+  legendtest->Draw();
 
   std::cout << "drawing fith pad\n";
- mlpa_canvas->cd(5);
- gPad->SetLogy();
- bg->DrawNormalized();
- bg2->DrawNormalized("same");
- sig->DrawNormalized("same");
- legend->Draw();
+  mlpa_canvas->cd(5);
+  gPad->SetLogy();
+  bg->DrawNormalized();
+  bg2->DrawNormalized("same");
+  sig->DrawNormalized("same");
+  legend->Draw();
  
   std::cout << "drawing sixth pad\n";
- mlpa_canvas->cd(6);
- gPad->SetLogy();
- bgtest->DrawNormalized();
- bg2test->DrawNormalized("same");
- sigtest->DrawNormalized("same");
- legendtest->Draw();
+  mlpa_canvas->cd(6);
+  gPad->SetLogy();
+  bgtest->DrawNormalized();
+  bg2test->DrawNormalized("same");
+  sigtest->DrawNormalized("same");
+  legendtest->Draw();
 
 
  
- mlpa_canvas->cd(3);
- gPad->SetLogy();
+  mlpa_canvas->cd(3);
+  gPad->SetLogy();
  
- // Use the NN to plot the results for each sample
- // This will give approx. the same result as DrawNetwork.
- // All entries are used, while DrawNetwork focuses on 
- // the test sample. Also the xaxis range is manually set.
- TH1F *c_bg2 = new TH1F("c_bg2h", "NN output", 50, -.5, 1.5);
- TH1F *c_bg = new TH1F("c_bgh", "NN output", 50, -.5, 1.5);
- TH1F *c_sig = new TH1F("c_sigh", "NN output", 50, -.5, 1.5);
+  // Use the NN to plot the results for each sample
+  // This will give approx. the same result as DrawNetwork.
+  // All entries are used, while DrawNetwork focuses on 
+  // the test sample. Also the xaxis range is manually set.
+  TH1F *c_bg2 = new TH1F("c_bg2h", "NN output", 50, -.5, 1.5);
+  TH1F *c_bg = new TH1F("c_bgh", "NN output", 50, -.5, 1.5);
+  TH1F *c_sig = new TH1F("c_sigh", "NN output", 50, -.5, 1.5);
 
- TH1F *c_bg2test = new TH1F("c_bg2htest", "NN output", 50, -.5, 1.5);
- TH1F *c_bgtest = new TH1F("c_bghtest", "NN output", 50, -.5, 1.5);
- TH1F *c_sigtest = new TH1F("c_sightest", "NN output", 50, -.5, 1.5);
+  TH1F *c_bg2test = new TH1F("c_bg2htest", "NN output", 50, -.5, 1.5);
+  TH1F *c_bgtest = new TH1F("c_bghtest", "NN output", 50, -.5, 1.5);
+  TH1F *c_sigtest = new TH1F("c_sightest", "NN output", 50, -.5, 1.5);
 
- for (Int_t i = 0; i < simu->GetEntries(); i++) {
+  for (Int_t i = 0; i < simu->GetEntries(); i++) {
    
-   if (i % 100000 == 0 ) {
-     std::cout << " Second plot. Looping over event " << i << std::endl;
-   }
+    if (i % 100000 == 0 ) {
+      std::cout << " Second plot. Looping over event " << i << std::endl;
+    }
    
-   if (i%dilutionFactor!=0&&i%dilutionFactor!=1) continue;
+    if (i%dilutionFactor!=0&&i%dilutionFactor!=1) continue;
    
-   simu->GetEntry(i);
+    simu->GetEntry(i);
 
     jn->SetInputs(0, norm_nVTX(nVTX) );
     jn->SetInputs(1, norm_nTracksAtVtx(nTracksAtVtx) );
@@ -917,135 +861,125 @@ void trainNN(TString inputfile,
     jn->SetInputs(3, norm_energyFraction(energyFraction) );
     jn->SetInputs(4, norm_mass(mass) );
     jn->SetInputs(5, norm_significance3d(significance3d ) );
-    if (withIP3D)
-    {
+    if (withIP3D) {
       jn->SetInputs(6, norm_IP3D(discriminatorIP3D) );
       jn->SetInputs(7, norm_cat_pT(cat_pT) );
       jn->SetInputs(8, norm_cat_eta(cat_eta) );
     }
-    else
-    {
+    else {
       jn->SetInputs(6, norm_cat_pT(cat_pT) );
       jn->SetInputs(7, norm_cat_eta(cat_eta) );
     }
 
     jn->Evaluate();
 
-   float bvalue=jn->GetOutput(0);
-   float cvalue=jn->GetOutput(1);
+    float bvalue=jn->GetOutput(0);
+    float cvalue=jn->GetOutput(1);
 
-    if (bottom==1)
-    {
-      if (i%dilutionFactor==0)
-      {
-        c_sig->Fill(bvalue/(bvalue+cvalue),weight);
+    if (bottom==1) {
+      if (i%dilutionFactor==0) {
+	c_sig->Fill(bvalue/(bvalue+cvalue),weight);
       }
-      else if (i%dilutionFactor==1)
-      {
-        c_sigtest->Fill(bvalue/(bvalue+cvalue),weight);
+      else if (i%dilutionFactor==1) {
+	c_sigtest->Fill(bvalue/(bvalue+cvalue),weight);
       }
     }
-    if (light==1)
-    {
-      if (i%dilutionFactor==0)
-      {
-        c_bg->Fill(bvalue/(bvalue+cvalue),weight);
+    if (light==1) {
+      if (i%dilutionFactor==0) {
+	c_bg->Fill(bvalue/(bvalue+cvalue),weight);
       }
-      else if (i%dilutionFactor==1)
-      {
-        c_bgtest->Fill(bvalue/(bvalue+cvalue),weight);
+      else if (i%dilutionFactor==1) {
+	c_bgtest->Fill(bvalue/(bvalue+cvalue),weight);
       }
     }
-    if (charm==1)
-    {
-      if (i%dilutionFactor==0)
-      {
-        c_bg2->Fill(bvalue/(bvalue+cvalue),weight);
+    if (charm==1) {
+      if (i%dilutionFactor==0) {
+	c_bg2->Fill(bvalue/(bvalue+cvalue),weight);
       }
-      else  if (i%dilutionFactor==1)
-      {
-        c_bg2test->Fill(bvalue/(bvalue+cvalue),weight);
+      else if (i%dilutionFactor==1) {
+	c_bg2test->Fill(bvalue/(bvalue+cvalue),weight);
       }
     }
-   }
+  } // end of hist filling loop 
 
   //now you need the maximum
- maximum=1;
-  for (Int_t a=0;a<c_bg->GetNbinsX();a++)
-  {
-    if (c_bg->GetBinContent(a)>maximum)
-    {
+  maximum=1;
+  for (Int_t a=0;a<c_bg->GetNbinsX();a++) {
+    if (c_bg->GetBinContent(a)>maximum) {
       maximum=1.2*c_bg->GetBinContent(a);
     }
   }
 
-   c_bg2->SetLineColor(kYellow);
-   c_bg2->SetFillStyle(3008);   c_bg2->SetFillColor(kYellow);
-   c_bg->SetLineColor(kBlue);
-   c_bg->SetFillStyle(3008);   c_bg->SetFillColor(kBlue);
-   c_sig->SetLineColor(kRed);
-   c_sig->SetFillStyle(3003); c_sig->SetFillColor(kRed);
-   c_bg2->SetStats(0);
-   c_bg->SetStats(0);
-   c_sig->SetStats(0);
+  // TODO: this is needless repetition (it's done above, shoud just have a
+  // formatting function ) 
+
+  c_bg2->SetLineColor(kYellow);
+  c_bg2->SetFillStyle(3008);   c_bg2->SetFillColor(kYellow);
+  c_bg->SetLineColor(kBlue);
+  c_bg->SetFillStyle(3008);   c_bg->SetFillColor(kBlue);
+  c_sig->SetLineColor(kRed);
+  c_sig->SetFillStyle(3003); c_sig->SetFillColor(kRed);
+  c_bg2->SetStats(0);
+  c_bg->SetStats(0);
+  c_sig->SetStats(0);
  
-   c_bg2test->SetLineColor(kYellow);
-   c_bg2test->SetFillStyle(3008);   c_bg2test->SetFillColor(kYellow);
-   c_bgtest->SetLineColor(kBlue);
-   c_bgtest->SetFillStyle(3008);   c_bgtest->SetFillColor(kBlue);
-   c_sigtest->SetLineColor(kRed);
-   c_sigtest->SetFillStyle(3003); c_sigtest->SetFillColor(kRed);
-   c_bg2test->SetStats(0);
-   c_bgtest->SetStats(0);
-   c_sigtest->SetStats(0);
+  c_bg2test->SetLineColor(kYellow);
+  c_bg2test->SetFillStyle(3008);   c_bg2test->SetFillColor(kYellow);
+  c_bgtest->SetLineColor(kBlue);
+  c_bgtest->SetFillStyle(3008);   c_bgtest->SetFillColor(kBlue);
+  c_sigtest->SetLineColor(kRed);
+  c_sigtest->SetFillStyle(3003); c_sigtest->SetFillColor(kRed);
+  c_bg2test->SetStats(0);
+  c_bgtest->SetStats(0);
+  c_sigtest->SetStats(0);
 
-   mlpa_canvas->cd(3);
-   gPad->SetLogy();
+  mlpa_canvas->cd(3);
+  gPad->SetLogy();
 
 
-   c_bg->GetYaxis()->SetRangeUser(1,maximum);
-   c_bgtest->GetYaxis()->SetRangeUser(1,maximum);
+  c_bg->GetYaxis()->SetRangeUser(1,maximum);
+  c_bgtest->GetYaxis()->SetRangeUser(1,maximum);
    
-   c_bg->Draw();
-   c_bg2->Draw("same");
-   c_sig->Draw("same");
+  c_bg->Draw();
+  c_bg2->Draw("same");
+  c_sig->Draw("same");
 
-   TLegend *legend2 = new TLegend(.75, .80, .95, .95);
-   legend2->AddEntry(c_bg2, "Background2 (charm)");
-   legend2->AddEntry(c_bg, "Background (light)");
-   legend2->AddEntry(c_sig, "Signal (bottom)");
-   legend2->Draw();
+  TLegend *legend2 = new TLegend(.75, .80, .95, .95);
+  legend2->AddEntry(c_bg2, "Background2 (charm)");
+  legend2->AddEntry(c_bg, "Background (light)");
+  legend2->AddEntry(c_sig, "Signal (bottom)");
+  legend2->Draw();
 
-   mlpa_canvas->cd(4);
-   gPad->SetLogy();
+  mlpa_canvas->cd(4);
+  gPad->SetLogy();
    
-   c_bgtest->Draw();
-   c_bg2test->Draw("same");
-   c_sigtest->Draw("same");
+  c_bgtest->Draw();
+  c_bg2test->Draw("same");
+  c_sigtest->Draw("same");
 
-   TLegend *legend2test = new TLegend(.75, .80, .95, .95);
-   legend2test->AddEntry(c_bg2test, "Background2 (charm)");
-   legend2test->AddEntry(c_bgtest, "Background (light)");
-   legend2test->AddEntry(c_sigtest, "Signal (bottom)");
-   legend2test->Draw();
+  TLegend *legend2test = new TLegend(.75, .80, .95, .95);
+  legend2test->AddEntry(c_bg2test, "Background2 (charm)");
+  legend2test->AddEntry(c_bgtest, "Background (light)");
+  legend2test->AddEntry(c_sigtest, "Signal (bottom)");
+  legend2test->Draw();
 
-   mlpa_canvas->cd(7);
-   gPad->SetLogy();
-   c_bg->DrawNormalized();
-   c_bg2->DrawNormalized("same");
-   c_sig->DrawNormalized("same");
-   legend2->Draw();
+  mlpa_canvas->cd(7);
+  gPad->SetLogy();
+  c_bg->DrawNormalized();
+  c_bg2->DrawNormalized("same");
+  c_sig->DrawNormalized("same");
+  legend2->Draw();
  
-   mlpa_canvas->cd(8);
-   gPad->SetLogy();
-   c_bgtest->DrawNormalized();
-   c_bg2test->DrawNormalized("same");
-   c_sigtest->DrawNormalized("same");
-   legend2test->Draw();
+  mlpa_canvas->cd(8);
+  gPad->SetLogy();
+  c_bgtest->DrawNormalized();
+  c_bg2test->DrawNormalized("same");
+  c_sigtest->DrawNormalized("same");
+  legend2test->Draw();
 
 
-   mlpa_canvas->cd(0);
+  mlpa_canvas->cd(0);
 
-   mlpa_canvas->SaveAs("weights/result.eps");
+  mlpa_canvas->SaveAs("weights/result.eps");
 }
 

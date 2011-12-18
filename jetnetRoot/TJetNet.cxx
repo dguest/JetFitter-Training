@@ -201,7 +201,7 @@ void TJetNet::readBackTrainedNetwork(const TTrainedNetwork* trainedNetwork)
 
   if (trainedNetwork->getnHidden()!=nHidden)
   {
-    cout << " Network doesn't match.. not loading.." << endl;
+    cout << " Network doesn't match nHidden.. not loading.." << endl;
     return;
   }
 
@@ -210,7 +210,8 @@ void TJetNet::readBackTrainedNetwork(const TTrainedNetwork* trainedNetwork)
     nHiddenLayerSize.push_back(GetHiddenLayerSize(o+1));
     if (nHiddenLayerSize[o]!=trainedNetwork->getnHiddenLayerSize()[o])
     {
-      cout << " Network doesn't match... not loading..." << endl;
+      cout << " Network doesn't match layer " << o << 
+	"... not loading..." << endl;
       return;
     }
   }
@@ -218,14 +219,14 @@ void TJetNet::readBackTrainedNetwork(const TTrainedNetwork* trainedNetwork)
 
   if (trainedNetwork->getnInput()!=nInput)
   {
-    cout << " Network doesn't match... not loading.." << endl;
+    cout << " Network doesn't match nInput... not loading.." << endl;
     return;
   }
 
 
   if (trainedNetwork->getnOutput()!=nOutput)
   {
-    cout << " Network doesn't match.. not loading.." << endl;
+    cout << " Network doesn't match nOutput.. not loading.." << endl;
     return;
   }
   

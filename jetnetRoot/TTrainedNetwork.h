@@ -1,3 +1,4 @@
+// It's -*- c++ -*-
 #ifndef __TTrainedNetwork_
 #define __TTrainedNetwork_
 

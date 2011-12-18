@@ -99,15 +99,7 @@ void trainNN(TString inputfile,
   simu->SetBranchAddress("charm",   &charm);
   simu->SetBranchAddress("light",&light);
 
-
-  TString filterTrain("Entry$%");
-  filterTrain+=dilutionFactor;
-  filterTrain+="==0";
   
-  TString filterTest("Entry$%");
-  filterTest+=dilutionFactor;
-  filterTest+="==1";
-
   int* nneurons;
   int nlayer=3;
 

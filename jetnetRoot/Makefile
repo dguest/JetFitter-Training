@@ -37,6 +37,7 @@ all:  libTJetNet.so pynn.so test.exe
 
 %Dict.cxx: %.h
 	@echo making dict $@
+	@rm -f $*Dict.h
 	@rootcint $@ -c $*.h	
 
 T%Dict.o: T%Dict.cxx 

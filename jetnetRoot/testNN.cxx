@@ -26,6 +26,8 @@
 void testNN(std::string inputfile,
 	    std::string training_file,
 	    int dilutionFactor,
+	    // int nodesFirstLayer, 
+	    // int nodesSecondLayer, 
 	    bool useSD,
 	    bool withIP3D) {
 
@@ -41,8 +43,8 @@ void testNN(std::string inputfile,
   std::cout << " withIP3D: " << (withIP3D==true?"yes":"no") << std::endl;
   
   
-  TFile *file= new TFile(inputfile.c_str());
-  TTree *simu = (TTree*)file->Get("SVTree");
+  TFile file(inputfile.c_str());
+  TTree *simu = (TTree*)file.Get("SVTree");
 
   Int_t           nVTX;
   Int_t           nTracksAtVtx;
@@ -74,6 +76,7 @@ void testNN(std::string inputfile,
 
 
   // === above was from the top of the train routine
+
   TFile trained_network_file(training_file.c_str()); 
   
   TObject* trained_network_obj = trained_network_file.Get("TTrainedNetwork");
@@ -82,29 +85,44 @@ void testNN(std::string inputfile,
   if (trained_network == 0){ 
     throw NetworkLoadException(); 
   }
-  
-  // TJetNet* jn = new TJetNet( numberTestingEvents, 
-  // 			     numberTrainingEvents, 
-  // 			     nlayer, 
-  // 			     nneurons );
-  TJetNet* jn = new TJetNet();
-  jn->readBackTrainedNetwork(trained_network); 
+
+  int n_inputs = trained_network->getnInput(); 
+  std::vector<int> hidden_layer_size = trained_network->getnHiddenLayerSize();
+  int n_outputs = trained_network->getnOutput(); 
+
+  int n_layers = 2 + hidden_layer_size.size(); 
+  int* n_neurons = new int[n_layers ]; 
+
+  // setup layer configuration 
+  n_neurons[0] = n_inputs; 
+  int current_layer = 1; 
+  for (std::vector<int>::const_iterator itr = hidden_layer_size.begin(); 
+       itr != hidden_layer_size.end(); 
+       itr++){
+    n_neurons[current_layer] = *itr; 
+    current_layer++; 
+  }
+  n_neurons[current_layer] = n_outputs; 
+
+  // Hack to get the constructor working (I don't know why these are needed)
+  int numberTestingEvents = 0; 
+  int numberTrainingEvents = 0; 
+
+  TJetNet* jn = new TJetNet( numberTestingEvents, 
+  			     numberTrainingEvents, 
+  			     n_layers, 
+  			     n_neurons );
+
+  jn->Init();
+  jn->readBackTrainedNetwork(trained_network);
+
+  std::cout << "read in network" << std::endl;
 
   // === below was from the end of the train routine 
 
-  //here you should create the class... Still open how to deal with this...
-  //  char* myname=const_cast<char*>(static_cast<const char*>(outputclass));
-  //  ierr=mlpsavecf_(myname);
- 
-
- 
   TCanvas* mlpa_canvas = new TCanvas("jetnet_canvas","Network analysis");
   mlpa_canvas->Divide(2,4);
 
-
-  
-  //  TCanvas* mlpa_canvas_5=gDirectory->Get("mlpa_canvas_5");
-  //  mlpa_canvas_5->SetLogy(kTrue);
   gPad->SetLogy();
 
   // Use the NN to plot the results for each sample

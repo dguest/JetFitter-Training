@@ -11,6 +11,7 @@ static const char* train_doc_string =
   "Keywords:\n"
   "input_file\n"
   "output_class\n"
+  "output_dir\n"
   "n_iterations\n"
   "dilution_factor\n"
   "use_sd\n"
@@ -26,6 +27,7 @@ extern "C" PyObject* train_py(PyObject *self,
 {
   const char* input_file; 
   const char* output_class = "JetFitterNN"; 
+  const char* output_dir = "weights"; 
   int n_iterations = 10; 
   int dilution_factor = 2; 
   bool use_sd = false; 
@@ -38,6 +40,7 @@ extern "C" PyObject* train_py(PyObject *self,
   const char *kwlist[] = {
     "input_file",
     "output_class", 
+    "output_dir", 
     "n_iterations", 
     "dilution_factor",
     "use_sd",
@@ -53,6 +56,7 @@ extern "C" PyObject* train_py(PyObject *self,
 				   // may be changed, until then we'll cast
 				   const_cast<char**>(kwlist),
 				   &input_file, &output_class, 
+				   &output_dir, 
 				   &n_iterations, &dilution_factor, 
 				   &use_sd, &with_ip3d, &nodes_first_layer, 
 				   &nodes_second_layer, 
@@ -68,6 +72,7 @@ extern "C" PyObject* train_py(PyObject *self,
   else{ 
     trainNN(input_file, 
 	    output_class,
+	    output_dir, 
 	    n_iterations,
 	    dilution_factor,
 	    use_sd,

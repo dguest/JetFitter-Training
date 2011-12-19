@@ -2,10 +2,12 @@
 #define TRAIN_NN_H
 
 #include "TString.h"
+#include <string>
 
 
 void trainNN(TString inputfile,
              TString outputclass="JetFitterNN",
+	     std::string out_dir = "weights", 
              int nIterations=10,
              int dilutionFactor=2,
              bool useSD=false,

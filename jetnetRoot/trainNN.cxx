@@ -30,6 +30,7 @@ int main()
 
   trainNN("../reduceddatasets/reduceddataset_AntiKt4TopoEMJets_forNN.root", 
 	  "dummy",
+	  "weights",
 	  1000,
 	  200,
 	  false,
@@ -45,6 +46,7 @@ int main()
 
 void trainNN(TString inputfile,
              TString outputclass,
+	     std::string out_dir, 
              int nIterations,
              int dilutionFactor,
              bool useSD,
@@ -344,8 +346,10 @@ void trainNN(TString inputfile,
   int updatesPerEpoch = jn->GetUpdatesPerEpoch();
 
   //prepare output stream
+  
+  std::string chronology_name = out_dir + "/trainingCronology.txt"; 
 
-  ofstream cronology("weights/trainingCronology.txt",ios_base::out);//|ios_base::app);
+  ofstream cronology(chronology_name.c_str(),ios_base::out);//|ios_base::app);
   
   cronology << "-------------SETTINGS----------------" << endl;
   cronology << "Epochs: " << jn->GetEpochs() << std::endl;
@@ -396,7 +400,7 @@ void trainNN(TString inputfile,
 
     if (epoch%10==0 || epoch==restartTrainingFrom+1) {
 
-      cronology.open("weights/trainingCronology.txt",ios_base::app);
+      cronology.open(chronology_name.c_str(),ios_base::app);
 
       testError = jn->TestBTAG();
 
@@ -441,7 +445,8 @@ void trainNN(TString inputfile,
 
       cronology.close();
       
-      TString name("weights/Weights");
+      std::string weight_name = out_dir + "/Weights"; 
+      TString name(weight_name.c_str());
       name+=epoch;
       name+=".root";
 
@@ -496,7 +501,8 @@ void trainNN(TString inputfile,
     jn->SetInputs(i,inputexample[i]);
   }
 
-  cronology.open("weights/trainingCronology.txt", ios_base::app);
+  
+  cronology.open(chronology_name.c_str(), ios_base::app);
 
   jn->Evaluate();
 
@@ -586,8 +592,9 @@ void trainNN(TString inputfile,
   cronology.close();
 
   if (epochWithMinimum != 0) {
-    
-    TString name("weights/Weights");
+
+    std::string weights_out_name = out_dir + "/Weights"; 
+    TString name(weights_out_name.c_str());
     name += epochWithMinimum;
     name += ".root";
 
@@ -601,7 +608,8 @@ void trainNN(TString inputfile,
     cout << " Reading back network with minimum" << endl;
     jn->readBackTrainedNetwork(trainedNetwork);
 
-    TFile* file=new TFile("weights/weightMinimum.root","recreate");
+    std::string min_weights_name = out_dir + "/weightMinimum.root"; 
+    TFile* file=new TFile(min_weights_name.c_str(),"recreate");
     trainedNetwork->Write();
     file->Write();
     file->Close();
@@ -609,7 +617,8 @@ void trainNN(TString inputfile,
 
     cout << " -------------------- " << endl;
     cout << " Writing OUTPUT histos " << endl;
-    TFile* fileHistos=new TFile("weights/histoWeights.root","recreate");
+    std::string histo_weights_name = out_dir + "/histoWeights.root"; 
+    TFile* fileHistos=new TFile(histo_weights_name.c_str(),"recreate");
     TNetworkToHistoTool histoTool;
     std::vector<TH1*> myHistos=histoTool.
       fromTrainedNetworkToHisto(trainedNetwork);
@@ -629,8 +638,9 @@ void trainNN(TString inputfile,
   else {
     cout << " using network at last iteration (minimum not reached..." << endl;
   }
-
-  TFile* histoFile=new TFile("weights/trainingInfo.root","recreate");
+  
+  std::string training_info_name = out_dir + "/trainingInfo.root"; 
+  TFile* histoFile=new TFile(training_info_name.c_str(),"recreate");
   histoTraining->Write();
   histoTesting->Write();
   histoFile->Write();
@@ -645,7 +655,8 @@ void trainNN(TString inputfile,
   histoTraining->GetYaxis()->SetRangeUser(minimumTrain,maximumTrain);
   histoTraining->Draw("l");
   histoTesting->Draw("lsame");
-  trainingCanvas->SaveAs("weights/trainingCurve.eps");
+  std::string training_curve_name = out_dir + "/trainingCurve.eps"; 
+  trainingCanvas->SaveAs(training_curve_name.c_str());
 
 
 

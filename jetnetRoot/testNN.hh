@@ -10,12 +10,16 @@ void testNN(std::string inputfile,
 	    // int nodesFirstLayer = 10, 
 	    // int nodesSecondLayer = 9, 
 	    bool useSD = false,
-	    bool withIP3D = true);
+	    bool withIP3D = true, 
+	    std::string out_file = "all_hists.root");
 
 
-class NetworkLoadException
+class TestNNIOException
+{}; 
+class NetworkLoadException: public TestNNIOException
 {};
-
+class WriteFileException: public TestNNIOException
+{};
 class WrongNetworkSizeException: public NetworkLoadException 
 {}; 
 

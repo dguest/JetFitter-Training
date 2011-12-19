@@ -23,6 +23,10 @@ trained_nn = 'weights/weightMinimum.root'
 if not os.path.isfile(trained_nn): 
     sys.exit("ERROR: no file %s found" % trained_nn)
 
+out_path = 'draw/all_plots.root'
+out_dir, out_name  = os.path.split(out_path)
+if out_dir and not os.path.isdir(out_dir): 
+    os.mkdir(out_dir)
 
 full_ds_name = 'reduceddataset_%s_forNN.root' % input_ds
 full_path = '../reduceddatasets/' + full_ds_name
@@ -32,5 +36,6 @@ pynn.testNN(input_file = full_path,
             # dilution_factor = 2, 
             use_sd = False, 
             with_ip3d = with_ip3d, 
-            debug = False) 
+            debug = False, 
+            out_file = out_path) 
 

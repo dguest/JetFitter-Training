@@ -55,7 +55,8 @@ void testNN(std::string inputfile,
 	    std::string training_file,
 	    int dilutionFactor,
 	    bool useSD,
-	    bool withIP3D) {
+	    bool withIP3D, 
+	    std::string out_file) {
 
   double bweight=1;
   double cweight=1.;
@@ -286,16 +287,16 @@ void testNN(std::string inputfile,
 
   } // end of hist filling loop  
 
-  TFile out_file("all_hists.root","recreate"); 
+  TFile out_tfile(out_file.c_str(),"recreate"); 
   for (std::vector<TH1F*>::const_iterator hist_itr = all_hists.begin(); 
        hist_itr != all_hists.end(); 
        hist_itr++){
     if ( *hist_itr ) { 
       std::cout << "writing " << (*hist_itr)->GetName() << std::endl;
-      out_file.WriteTObject(*hist_itr); 
+      out_tfile.WriteTObject(*hist_itr); 
     }
   }
-  out_file.Close(); 
+  out_tfile.Close(); 
 
   delete n_neurons; 
   delete jn; 

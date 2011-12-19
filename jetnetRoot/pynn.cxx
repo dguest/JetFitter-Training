@@ -103,6 +103,7 @@ extern "C" PyObject* test_py(PyObject *self,
   bool use_sd = false; 
   bool with_ip3d = true; 
   bool debug = false; 
+  const char* out_file = "all_hists.root"; 
 
   const char *kwlist[] = {
     "input_file",
@@ -112,10 +113,11 @@ extern "C" PyObject* test_py(PyObject *self,
     // "nodes_second_layer", 
     "use_sd",
     "with_ip3d",
+    "out_file", 
     "debug", 
     NULL};
  
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s|sibbb", 
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s|sibbsb", 
 				   // this function should take a const, and 
 				   // may be changed, until then we'll cast
 				   const_cast<char**>(kwlist),
@@ -126,6 +128,7 @@ extern "C" PyObject* test_py(PyObject *self,
 				   // &nodes_second_layer, 
 				   &use_sd, 
 				   &with_ip3d, 
+				   &out_file, 
 				   &debug))
     return NULL;
 
@@ -143,10 +146,15 @@ extern "C" PyObject* test_py(PyObject *self,
 	     // nodes_first_layer, 
 	     // nodes_second_layer, 
 	     use_sd,
-	     with_ip3d); 
+	     with_ip3d, 
+	     out_file); 
     }
     catch (NetworkLoadException e){ 
       PyErr_SetString(PyExc_IOError,"could not load network"); 
+      return NULL; 
+    }
+    catch (WriteFileException e){ 
+      PyErr_SetString(PyExc_IOError,"could not write output"); 
       return NULL; 
     }
   }

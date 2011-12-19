@@ -39,5 +39,6 @@ pynn.trainNN(input_file = full_path,
              with_ip3d = with_ip3d, 
              nodes_first_layer = 10, 
              nodes_second_layer = 6, 
-             debug = False)
+             debug = False, 
+             output_dir = out_dir)
              

@@ -51,7 +51,7 @@ extern "C" PyObject* train_py(PyObject *self,
     "debug", 
     NULL};
  
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s|siibbiiib", 
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s|ssiibbiiib", 
 				   // this function should take a const, and 
 				   // may be changed, until then we'll cast
 				   const_cast<char**>(kwlist),

@@ -62,7 +62,7 @@ test.exe: $(T_OBJ) $(T_DICTS) $(JETNET_LIB) doNormalization.o
 
 pynn.so: pynn.cxx trainNN.o testNN.o doNormalization.o
 	@echo making python lib
-	@$(CC) $^ $(PYFLAGS) -o $@ $(PY_LINKER_OPTS) $(INC)
+	@$(CC) $^ $(PYFLAGS) -o $@ $(PY_LINKER_OPTS) $(INC) $(LIBS)
 
 libTJetNet.so pynn.cxx: trainNN.hh
 

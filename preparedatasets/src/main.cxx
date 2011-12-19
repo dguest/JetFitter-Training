@@ -4,7 +4,7 @@
 
 int main (int narg, char* argv[]) { 
 
-  writeAllNtuples("files/*.root",
+  writeAllNtuples("files/*.root*",
                   "",
                   "",
                   "",

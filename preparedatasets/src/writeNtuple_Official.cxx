@@ -560,9 +560,7 @@ void writeNtuple_Official(TString inputFileName,
     
   }
 
-
-  myTree->Write();
-  file->Write();
+  file->WriteTObject(myTree); 
   file->Close();
   
 

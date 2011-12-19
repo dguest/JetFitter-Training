@@ -19,4 +19,18 @@ class NetworkLoadException
 class WrongNetworkSizeException: public NetworkLoadException 
 {}; 
 
+enum Sample { 
+  TRAIN, 
+  TEST
+}; 
+enum Flavor { 
+  LIGHT, 
+  CHARM, 
+  BOTTOM
+}; 
+
+
+std::string flavor_to_string(Flavor); 
+std::string sample_to_string(Sample); 
+
 #endif // TEST_NN_H

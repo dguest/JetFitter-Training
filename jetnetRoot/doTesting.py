@@ -19,7 +19,7 @@ if len(sys.argv) > 2:
     if 'True' in sys.argv[2:]: 
         with_ip3d = True
 
-trained_nn = 'weights/weightMinimum.root'
+trained_nn = 'ip3d_weights/weightMinimum.root'
 if not os.path.isfile(trained_nn): 
     sys.exit("ERROR: no file %s found" % trained_nn)
 
@@ -30,6 +30,9 @@ if out_dir and not os.path.isdir(out_dir):
 
 full_ds_name = 'reduceddataset_%s_forNN.root' % input_ds
 full_path = '../reduceddatasets/' + full_ds_name
+
+if not os.path.isfile(full_path): 
+    sys.exit('no file to read!')
 
 pynn.testNN(input_file = full_path, 
             trained_nn_file = trained_nn, 

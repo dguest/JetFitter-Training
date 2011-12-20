@@ -29,7 +29,7 @@ COPT=-O2 -fPIC
 FOPT=-ffixed-form -ffixed-line-length-none -u -Wall -fPIC -O
 
 PY_LINKER_OPTS :=  -lTJetNet -L. -Wl,-rpath,.
-# PY_LINKER_OPTS += -Wl,-no-undefined 
+PY_LINKER_OPTS += -Wl,-no-undefined 
 
 
 

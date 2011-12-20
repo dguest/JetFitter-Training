@@ -1,5 +1,5 @@
-#include <TTree.h>
-#include <TFile.h>
+#include "TTree.h"
+#include "TFile.h"
 #include <TCanvas.h>
 #include <TH1F.h>
 #include <TLegend.h>
@@ -69,7 +69,10 @@ void testNN(std::string inputfile,
   std::cout << " useSD: " << (useSD==true?"yes":"no") << std::endl;
   std::cout << " withIP3D: " << (withIP3D==true?"yes":"no") << std::endl;
   
-  
+  // the requisite root calls
+  gROOT->ProcessLine("#include <TTree.h>"); 
+  gROOT->ProcessLine("#include <TFile.h>"); 
+
   TFile file(inputfile.c_str());
   TTree *simu = (TTree*)file.Get("SVTree");
 

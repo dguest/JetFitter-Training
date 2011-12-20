@@ -12,9 +12,10 @@ def sig_over_background(root_file, signal = 'charm', background = 'light'):
     if isinstance(root_file,str): 
         root_file = TFile(root_file)
 
-    for hist in root_file.GetListOfKeys(): 
-        if search_string in hist.GetName(): 
-            matches.append(hist)
+    for key in root_file.GetListOfKeys(): 
+        obj = key.ReadObj()
+        if search_string in obj.GetName(): 
+            matches.append(obj)
 
     t = TROOT
     color_dict = { 

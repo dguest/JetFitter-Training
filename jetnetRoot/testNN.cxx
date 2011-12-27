@@ -184,7 +184,7 @@ void testNN(std::string inputfile,
 	  // don't do flavors over themselves
 	  if (num != denom) { 
 	    the_hist = new TH1F(full_name.c_str(),full_name.c_str(), 
-				50, -0.5, 1.5); 
+				50, -0.1, 1.1); 
 
 	  }
 	  truth_container.push_back(the_hist); 

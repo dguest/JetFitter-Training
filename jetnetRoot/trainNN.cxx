@@ -1,10 +1,10 @@
 #include <TTree.h>
 #include <TFile.h>
-#include <TCanvas.h>
+// #include <TCanvas.h>
 #include <TH1F.h>
-#include <TLegend.h>
+// #include <TLegend.h>
 #include <iostream>
-#include <TPad.h>
+// #include <TPad.h>
 //#include <stdio.h>
 #include <string.h>
 //#include <stdlib.h>
@@ -647,16 +647,16 @@ void trainNN(TString inputfile,
   histoFile->Close();
   delete histoFile;
 
-  TCanvas* trainingCanvas=new TCanvas("trainingCanvas","trainingCanvas");
-  histoTraining->SetLineColor(2);
-  histoTesting->SetLineColor(4);
+  // TCanvas* trainingCanvas=new TCanvas("trainingCanvas","trainingCanvas");
+  // histoTraining->SetLineColor(2);
+  // histoTesting->SetLineColor(4);
 
 
-  histoTraining->GetYaxis()->SetRangeUser(minimumTrain,maximumTrain);
-  histoTraining->Draw("l");
-  histoTesting->Draw("lsame");
-  std::string training_curve_name = out_dir + "/trainingCurve.eps"; 
-  trainingCanvas->SaveAs(training_curve_name.c_str());
+  // histoTraining->GetYaxis()->SetRangeUser(minimumTrain,maximumTrain);
+  // histoTraining->Draw("l");
+  // histoTesting->Draw("lsame");
+  // std::string training_curve_name = out_dir + "/trainingCurve.eps"; 
+  // trainingCanvas->SaveAs(training_curve_name.c_str());
 
 
 

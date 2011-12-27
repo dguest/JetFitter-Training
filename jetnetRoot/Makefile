@@ -10,7 +10,9 @@ JETNET_SRC=jetnet_35.f
 
 PYFLAGS := -lpython2.6 -shared -I/usr/include/python2.6/ 
 
-ROOTLIBS=$(shell root-config --libs)
+# ROOTLIBS=$(shell root-config --libs)
+ROOTLIBS := -L$(shell root-config --libdir) 
+ROOTLIBS += -lCore -lRIO -lCint -lHist -lTree -lMatrix -lMathCore
 ROOTCFLAGS=$(shell root-config --cflags)
 
 SRCS=trainNN.cxx
@@ -33,7 +35,7 @@ PY_LINKER_OPTS += -Wl,-no-undefined
 
 
 
-all:  libTJetNet.so pynn.so test.exe
+all:  libTJetNet.so pynn.so # test.exe
 
 %Dict.cxx: %.h
 	@echo making dict $@
@@ -58,11 +60,15 @@ $(JETNET_LIB): $(JETNET_SRC)
 
 test.exe: $(T_OBJ) $(T_DICTS) $(JETNET_LIB) doNormalization.o
 	@echo making executable
-	@$(CC) $(COPT) $(SRCS) $^ $(INC) $(LIBS) -o $@
+	@$(CC) $(COPT) $(SRCS) $^ $(INC) $(LIBS) -o $@ 
 
-pynn.so: pynn.cxx trainNN.o testNN.o doNormalization.o
+py%.o: py%.cxx 
+	@echo building $@
+	@$(CC) $(COPT) $(INC) -c $< -o $@ $(PYFLAGS)
+
+pynn.so: pynn.o trainNN.o testNN.o doNormalization.o
 	@echo making python lib
-	@$(CC) $^ $(PYFLAGS) -o $@ $(PY_LINKER_OPTS) $(INC) $(LIBS)
+	@$(CC) $^ -o $@ $(PY_LINKER_OPTS) $(INC) $(LIBS) $(PYFLAGS)
 
 libTJetNet.so pynn.cxx: trainNN.hh
 

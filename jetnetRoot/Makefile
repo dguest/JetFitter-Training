@@ -11,9 +11,12 @@ JETNET_SRC=jetnet_35.f
 PY_FLAGS := -shared -I/usr/include/python2.6/ 
 PY_LIB   := -lpython2.6 -shared
 
-# ROOTLIBS=$(shell root-config --libs)
+ifdef ROOT_IS_BAD
 ROOTLIBS := -L$(shell root-config --libdir) 
 ROOTLIBS += -lCore -lRIO -lCint -lHist -lTree -lMatrix -lMathCore
+else 
+ROOTLIBS=$(shell root-config --libs)
+endif 
 ROOTCFLAGS=$(shell root-config --cflags)
 
 SRCS=trainNN.cxx

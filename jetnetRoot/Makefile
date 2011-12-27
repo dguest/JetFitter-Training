@@ -8,7 +8,8 @@
 JETNET_OBJ=jetnet.o
 JETNET_SRC=jetnet_35.f
 
-PYFLAGS := -lpython2.6 -shared -I/usr/include/python2.6/ 
+PY_FLAGS := -shared -I/usr/include/python2.6/ 
+PY_LIB   := -lpython2.6 -shared
 
 # ROOTLIBS=$(shell root-config --libs)
 ROOTLIBS := -L$(shell root-config --libdir) 
@@ -33,7 +34,7 @@ FOPT=-ffixed-form -ffixed-line-length-none -u -Wall -fPIC -O
 PY_LINKER_OPTS := -L. -Wl,-rpath,.
 PY_LINKER_OPTS += -Wl,-no-undefined 
 PY_LINKER_OPTS += -lTJetNet
-
+PY_LINKER_OPTS += $(PY_LIB)
 
 LIB_OBJECTS := $(JETNET_OBJ)
 LIB_OBJECTS += trainNN.o testNN.o doNormalization.o 
@@ -68,11 +69,11 @@ test.exe: $(T_OBJ) $(T_DICTS) $(JETNET_OBJ) doNormalization.o
 
 py%.o: py%.cxx 
 	@echo building $@
-	@$(CC) $(COPT) $(INC) -c $< -o $@ $(PYFLAGS)
+	@$(CC) $(COPT) $(INC) -c $< -o $@ $(PY_FLAGS)
 
 pynn.so: pynn.o libTJetNet.so
 	@echo making python lib
-	@$(CC) $^ -o $@ $(PY_LINKER_OPTS) $(INC) $(LIBS) $(PYFLAGS)
+	@$(CC) $^ -o $@ $(PY_LINKER_OPTS) $(INC) $(LIBS) 
 
 libTJetNet.so: $(LIB_OBJECTS)
 	@echo building $@

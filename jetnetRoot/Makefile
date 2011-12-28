@@ -44,7 +44,7 @@ LIB_OBJECTS := $(JETNET_OBJ)
 LIB_OBJECTS += trainNN.o testNN.o doNormalization.o 
 LIB_OBJECTS += $(T_OBJ) $(T_DICTS)
 
-all:  libTJetNet.so pynn.so # test.exe
+all:  libTJetNet.so pynn.so cxx_test.exe
 
 %Dict.cxx: %.h
 	@echo making dict $@
@@ -67,9 +67,9 @@ $(JETNET_OBJ): $(JETNET_SRC)
 	@echo Building JetNet Library
 	@$(FC) $(FOPT) -c $(JETNET_SRC) -o $(JETNET_OBJ)
 
-test.exe: $(T_OBJ) $(T_DICTS) $(JETNET_OBJ) doNormalization.o
+%.exe: %.o libTJetNet.so
 	@echo making executable
-	@$(CC) $(COPT) $(SRCS) $^ $(INC) $(LIBS) -o $@ 
+	@$(CC) $^ -o $@ $(INC) $(LIBS) 
 
 py%.o: py%.cxx 
 	@echo building $@

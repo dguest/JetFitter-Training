@@ -11,7 +11,7 @@
 #include <cmath>
 #include "TJetNet.h"
 #include "doNormalization.hh"
-#include "Riostream.h"
+// #include "Riostream.h"
 #include "TNetworkToHistoTool.h"
 
 #include "TTrainedNetwork.h"
@@ -150,7 +150,10 @@ void trainNN(TString inputfile,
   Int_t numberTrainingEvents=0;
   Int_t numberTestingEvents=0;
 
-  for (Int_t i = 0; i < simu->GetEntries(); i++) {
+  int n_entries = simu->GetEntries(); 
+  std::cout << n_entries << " entries in chain\n"; 
+
+  for (Int_t i = 0; i < n_entries; i++) {
 
     if (i % 100000 == 0 ) {
       std::cout << " Counting training / testing events in sample."
@@ -202,7 +205,7 @@ void trainNN(TString inputfile,
   cout << " copying over training events " << endl;
   
   int counter=0;
-  for (Int_t i = 0; i < simu->GetEntries(); i++) {
+  for (Int_t i = 0; i < n_entries; i++) {
     
     if (i % 100000 == 0 ) {
       std::cout << " Copying over training events. Looping over event " << i << std::endl;
@@ -266,7 +269,7 @@ void trainNN(TString inputfile,
   counter=0;
   
   
-  for (Int_t i = 0; i < simu->GetEntries(); i++) {
+  for (Int_t i = 0; i < n_entries; i++) {
     
     if (i % 100000 == 0 ) {
       std::cout << " Copying over testing events."

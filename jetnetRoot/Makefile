@@ -31,8 +31,9 @@ CC := g++
 INC := $(ROOTCFLAGS)
 LIBS := -lgfortran $(ROOTLIBS) 
 
-COPT=-O2 -fPIC
-FOPT=-ffixed-form -ffixed-line-length-none -u -Wall -fPIC -O
+COPT :=-O2 -fPIC
+FOPT :=-ffixed-form -ffixed-line-length-none #-u -Wall -fPIC -O 
+# FOPT +=-fdefault-real-8 -fdefault-double-8 -fno-align-commons
 
 PY_LINKER_OPTS := -L. -Wl,-rpath,.
 PY_LINKER_OPTS += -Wl,-no-undefined 

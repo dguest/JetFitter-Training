@@ -31,10 +31,12 @@ for out_dir, ip3d_state in [('ip3d_test_weights',True)]:
 
     if not os.path.isdir(out_dir): 
         os.mkdir(out_dir)
-    elif glob.glob(out_dir + '/*'): 
-        print "files found in %s, skipping" % out_dir
-        continue
-
+    else: 
+        files = glob.glob(out_dir + '/*')
+        if files: 
+            print "files found in %s, deleting" % out_dir
+            for f in files: 
+                os.remove(f)
 
     pynn.trainNN(input_file = full_path, 
                  output_class = class_name, 

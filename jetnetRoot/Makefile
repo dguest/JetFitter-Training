@@ -21,7 +21,6 @@ ROOTCFLAGS=$(shell root-config --cflags)
 
 SRCS=trainNN.cxx
 
-EXE=test.exe
 LIB=libTJetNet.so
 
 T_OBJ := TNeuralDataSet.o TJetNet.o TTrainedNetwork.o TNetworkToHistoTool.o
@@ -35,9 +34,10 @@ COPT :=-O2 -fPIC
 FOPT :=-ffixed-form -ffixed-line-length-none #-u -Wall -fPIC -O 
 # FOPT +=-fdefault-real-8 -fdefault-double-8 -fno-align-commons
 
-PY_LINKER_OPTS := -L. -Wl,-rpath,.
-PY_LINKER_OPTS += -Wl,-no-undefined 
-PY_LINKER_OPTS += -lTJetNet
+LINKER_OPTS := -L. -Wl,-rpath,.
+LINKER_OPTS += -Wl,-no-undefined 
+LINKER_OPTS += -lTJetNet
+PY_LINKER_OPTS := $(LINKER_OPTS)
 PY_LINKER_OPTS += $(PY_LIB)
 
 LIB_OBJECTS := $(JETNET_OBJ)
@@ -67,9 +67,9 @@ $(JETNET_OBJ): $(JETNET_SRC)
 	@echo Building JetNet Library
 	@$(FC) $(FOPT) -c $(JETNET_SRC) -o $(JETNET_OBJ)
 
-%.exe: %.o libTJetNet.so
+%.exe: %.o 
 	@echo making executable
-	@$(CC) $^ -o $@ $(INC) $(LIBS) 
+	@$(CC) $^ -o $@ $(INC) $(LIBS) $(LINKER_OPTS)
 
 py%.o: py%.cxx 
 	@echo building $@
@@ -77,13 +77,13 @@ py%.o: py%.cxx
 
 pynn.so: pynn.o libTJetNet.so
 	@echo making python lib
-	@$(CC) $^ -o $@ $(PY_LINKER_OPTS) $(INC) $(LIBS) 
+	@$(CC) $< -o $@ $(PY_LINKER_OPTS) $(INC) $(LIBS) 
 
 libTJetNet.so: $(LIB_OBJECTS)
 	@echo building $@
 	@$(CC) -shared -o $@ $^ $(INC) $(LIBS) #-Wl,-soname,libTJetNet.so.0
 
-DIRTY_THINGS := $(EXE) *~ $(JETNET_OBJ) libTJetNet.so *.o *.bak core
+DIRTY_THINGS := $(LIB) *~ $(JETNET_OBJ) *.o *.bak core
 DIRTY_THINGS += *Dict.h *Dict.cxx gauss.exe
 DIRTY_THINGS += pynn.so
 

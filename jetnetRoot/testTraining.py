@@ -40,12 +40,12 @@ for out_dir, ip3d_state in [('ip3d_test_weights',True)]:
 
     pynn.trainNN(input_file = full_path, 
                  output_class = class_name, 
-                 n_iterations = 10000, 
-                 dilution_factor = 200, 
+                 n_iterations = 10, 
+                 dilution_factor = 2, 
                  use_sd = False, 
                  with_ip3d = ip3d_state, 
-                 nodes_first_layer = 10, 
-                 nodes_second_layer = 6, 
+                 nodes_first_layer = 8, 
+                 nodes_second_layer = 4, 
                  debug = False, 
                  output_dir = out_dir)
              

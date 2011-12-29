@@ -11,12 +11,12 @@ JETNET_SRC=jetnet_35.f
 PY_FLAGS := -shared -I/usr/include/python2.6/ 
 PY_LIB   := -lpython2.6 -shared
 
-ifdef ROOT_IS_BAD
-ROOTLIBS := -L$(shell root-config --libdir) 
-ROOTLIBS += -lCore -lRIO -lCint -lHist -lTree -lMatrix -lMathCore
-else 
-ROOTLIBS=$(shell root-config --libs)
-endif 
+# ifeq (ROOT_IS_BAD,1)
+# ROOTLIBS := -L$(shell root-config --libdir) 
+# ROOTLIBS += -lCore -lRIO -lCint -lHist -lTree -lMatrix -lMathCore
+# else 
+ROOTLIBS := $(shell root-config --libs)
+# endif 
 ROOTCFLAGS=$(shell root-config --cflags)
 
 SRCS=trainNN.cxx
@@ -29,6 +29,7 @@ FC := gfortran
 CC := g++
 INC := $(ROOTCFLAGS)
 LIBS := -lgfortran $(ROOTLIBS) 
+# LIBS += -lstdc++ -lgcc -lc
 
 COPT :=-O2 -fPIC
 FOPT :=-ffixed-form -ffixed-line-length-none #-u -Wall -fPIC -O 

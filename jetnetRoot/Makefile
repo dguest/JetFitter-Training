@@ -31,8 +31,8 @@ INC := $(ROOTCFLAGS)
 LIBS := -lgfortran $(ROOTLIBS) 
 # LIBS += -lstdc++ -lgcc -lc
 
-COPT :=-O2 -fPIC
-FOPT :=-ffixed-form -ffixed-line-length-none #-u -Wall -fPIC -O 
+COPT :=-O2 -fPIC -g
+FOPT :=-ffixed-form -ffixed-line-length-none -g #-u -Wall -fPIC -O 
 # FOPT +=-fdefault-real-8 -fdefault-double-8 -fno-align-commons
 
 LINKER_OPTS := -L. -Wl,-rpath,.

@@ -45,7 +45,7 @@ LIB_OBJECTS := $(JETNET_OBJ)
 LIB_OBJECTS += trainNN.o testNN.o doNormalization.o 
 LIB_OBJECTS += $(T_OBJ) $(T_DICTS)
 
-all:  libTJetNet.so pynn.so cxx_test.exe
+all:  libTJetNet.so pynn.so cxx_test.exe root_test.exe
 
 %Dict.cxx: %.h
 	@echo making dict $@
@@ -85,7 +85,7 @@ libTJetNet.so: $(LIB_OBJECTS)
 	@$(CC) -shared -o $@ $^ $(INC) $(LIBS) #-Wl,-soname,libTJetNet.so.0
 
 DIRTY_THINGS := $(LIB) *~ $(JETNET_OBJ) *.o *.bak core
-DIRTY_THINGS += *Dict.h *Dict.cxx gauss.exe
+DIRTY_THINGS += *Dict.h *Dict.cxx *.exe
 DIRTY_THINGS += pynn.so
 
 clean:

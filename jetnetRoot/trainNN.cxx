@@ -59,8 +59,9 @@ void trainNN(TString inputfile,
   double cweight=1.;
   double lweight=5;
 
-  gROOT->SetStyle("Plain");
-
+  gROOT->ProcessLine("#include <TTree.h>"); 
+  gROOT->ProcessLine("#include <TFile.h>"); 
+  
   cout << "starting with settings: " << endl;
   cout << " nIterations: " << nIterations << endl;
   cout << " dilutionFactor: " << dilutionFactor << endl;

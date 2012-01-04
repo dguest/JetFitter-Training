@@ -4,7 +4,6 @@
 *.so
 *.exe
 *.d
-*.config
 /finalCalibFile/
 /reduceddatasets/
 /testingMacros/

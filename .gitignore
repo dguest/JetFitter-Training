@@ -6,5 +6,4 @@
 *.d
 /finalCalibFile/
 /reduceddatasets/
-/testingMacros/
 *weights/

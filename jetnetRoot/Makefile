@@ -8,8 +8,12 @@
 JETNET_OBJ := jetnet.o
 JETNET_SRC := jetnet_35.f
 
-PY_FLAGS := $(shell python-config --includes)
-PY_LIB   := $(shell python-config --libs)
+ifndef PY_CONFIG
+PY_CONFIG := python-config
+endif 
+
+PY_FLAGS := $(shell $(PY_CONFIG) --includes)
+PY_LIB   := $(shell $(PY_CONFIG) --libs)
 
 ROOTLIBS   := $(shell root-config --libs)
 ROOTCFLAGS := $(shell root-config --cflags)

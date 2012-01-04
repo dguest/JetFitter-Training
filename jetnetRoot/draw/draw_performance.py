@@ -1,7 +1,7 @@
 #!/usr/bin/env python2.6
 
 import sys, os
-from ROOT import TFile, TH1F, TCanvas, TROOT
+from ROOT import TFile, TH1F, TCanvas, TROOT, TLegend
 
 class NoMatchError(LookupError): 
     def __init__(self, problem, signal = '', background = '', 
@@ -53,29 +53,38 @@ def sig_over_background(root_file, signal = 'charm', background = 'light'):
     if not test_matches + train_matches: 
         raise NoMatchError('ugh',signal = signal, background = background)
                            
-
+    legend = TLegend(0.6,0.7,0.9,0.9)
+    legend.SetFillStyle(0)
+    legend.SetBorderSize(0)
+    
     for hist in test_matches: 
 
         print 'drawing %s' % hist.GetName()
-        color = color_dict[hist.GetName().split('_')[0]]
+        sig_name = hist.GetName().split('_')[0]
+        color = color_dict[sig_name]
         hist.SetTitle(';'.join(labels))
         hist.SetLineColor(color)
         hist.Draw(draw_string)
         draw_string = 'same'
 
+        legend.AddEntry(hist, sig_name, 'l')
+
+    canvas.SetLogy()
+    legend.Draw()
     canvas.file = root_file
+    canvas.legend = legend
     return canvas
 
 if __name__ == '__main__': 
 
-    import AtlasStyle
-    AtlasStyle.SetAtlasStyle()
-
     inputs = sys.argv[1:]
 
     if not len(inputs) == 2: 
-        sys.exit('usage: %s, <signal> <background>' % 
+        sys.exit('usage: %s <signal> <background>' % 
                  os.path.split(sys.argv[0])[-1])
+
+    import AtlasStyle
+    AtlasStyle.SetAtlasStyle()
 
     hist_file = 'all_plots.root'
 

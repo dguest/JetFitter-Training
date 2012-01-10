@@ -14,10 +14,10 @@ input_ds = 'AntiKt4TopoEMJets'
 if len(sys.argv) > 1: 
     input_ds = sys.argv[1]
 
-with_ip3d = False
-if len(sys.argv) > 2: 
-    if 'True' in sys.argv[2:]: 
-        with_ip3d = True
+with_ip3d = True
+# if len(sys.argv) > 2: 
+#     if 'True' in sys.argv[2:]: 
+#         with_ip3d = True
 
 trained_nn = 'ip3d_weights/weightMinimum.root'
 if not os.path.isfile(trained_nn): 

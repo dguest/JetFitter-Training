@@ -13,7 +13,8 @@ PY_CONFIG := python-config
 endif 
 
 PY_FLAGS := $(shell $(PY_CONFIG) --includes)
-PY_LIB   := $(shell $(PY_CONFIG) --libs)
+PY_LIB   := -L$(shell $(PY_CONFIG) --prefix)/lib
+PY_LIB   += $(shell $(PY_CONFIG) --libs)
 
 ROOTLIBS   := $(shell root-config --libs)
 ROOTCFLAGS := $(shell root-config --cflags)
@@ -27,7 +28,7 @@ INC := $(ROOTCFLAGS)
 LIBS := -lgfortran $(ROOTLIBS) 
 
 COPT := -O2 -fPIC -g
-FOPT := -ffixed-form -ffixed-line-length-none -g 
+FOPT := -ffixed-form -ffixed-line-length-none -g -m32
 
 LINKER_OPTS := -L. -Wl,-rpath,. 
 LINKER_OPTS += -Wl,-no-undefined 

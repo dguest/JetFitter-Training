@@ -5,7 +5,7 @@
 %}
 
 void writeAllNtuples (std::string inputfilename,
-                      std::string inputfilename2,
-                      std::string inputfilename3,
-                      std::string inputfilename4,
-                      bool forNN); 
+                      std::string inputfilename2 = "",
+                      std::string inputfilename3 = "",
+                      std::string inputfilename4 = "",
+                      bool forNN = true); 

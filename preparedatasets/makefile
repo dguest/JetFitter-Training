@@ -39,7 +39,9 @@ prepareAllNtuplesForNN: $(FILL_OBJ:%=$(BIN)/%)
 	@$(CXX) -o $@ $^ $(LIBS) $(LDFLAGS)
 
 $(PYDIR)/_%.so: $(FILL_OBJ:%=$(BIN)/%) $(BIN)/%_wrap.o
+	@echo linking $^
 	@$(CXX) -o $@ $^ -shared $(LIBS) $(LDFLAGS)
+	@touch $(PYDIR)/__init__.py
 
 # --------------------------------------------------
 
@@ -82,4 +84,4 @@ $(DEP)/%.d: %.cxx
 CLEANLIST     = *~ *.o *.o~ *.d core 
 clean:
 	rm -fr $(CLEANLIST) $(CLEANLIST:%=$(BIN)/%) $(CLEANLIST:%=$(DEP)/%)
-
+	rm -fr $(PYDIR)

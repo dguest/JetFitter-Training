@@ -1,15 +1,20 @@
 #!/usr/bin/env python2.6
 # Author: Daniel Guest (dguest@cern.ch)
 
-import sys, dl, os, glob
+import sys, dl, os, glob, ConfigParser
 
 # without this root has trouble
 binding_rules =  dl.RTLD_GLOBAL | dl.RTLD_NOW
 sys.setdlopenflags(binding_rules)
 import pynn
 
-# **** should be config-based *****
-input_ds = 'AntiKt4TopoEMJets'
+config_file = '../training.config'
+
+config = ConfigParser.ConfigParser()
+config.read([config_file])
+
+collections_to_process = config.get('collections', 'process').split()
+input_ds = collections_to_process[0]
 
 if len(sys.argv) > 1: 
     input_ds = sys.argv[1]
@@ -22,6 +27,7 @@ if len(sys.argv) > 1:
 
 # out_dir = 'weights'
 
+settings = dict(config.items('net'))
 
 full_ds_name = 'reduceddataset_%s_forNN.root' % input_ds
 full_path = '../reduceddatasets/' + full_ds_name
@@ -38,12 +44,12 @@ for out_dir, ip3d_state in [('ip3d_weights',True),('no_ip3d_weights',False)]:
 
     pynn.trainNN(input_file = full_path, 
                  output_class = class_name, 
-                 n_iterations = 10000, 
-                 dilution_factor = 2, 
+                 n_iterations = int(settings['n_iterations']), 
+                 dilution_factor = int(settings['dilution_factor']), 
                  use_sd = False, 
                  with_ip3d = ip3d_state, 
-                 nodes_first_layer = 10, 
-                 nodes_second_layer = 6, 
+                 nodes_first_layer = int(settings['nodes_1']), 
+                 nodes_second_layer = int(settings['nodes_2']), 
                  debug = True, 
                  output_dir = out_dir)
              

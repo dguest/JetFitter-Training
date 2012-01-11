@@ -18,7 +18,7 @@ ifndef PY_CONFIG
 PY_CONFIG := python-config
 endif 
 
-PY_FLAGS := $(shell $(PY_CONFIG) --includes)
+PY_FLAGS  = $(shell $(PY_CONFIG) --includes)
 
 # ---- set search path
 vpath %.cxx      src

@@ -32,7 +32,7 @@ FILL_OBJ     := readJFBTagAna.o readBaseBTagAnaTree.o writeNtuple_Official.o
 FILL_OBJ     += writeNtupleAll.o main.o
 ALLOBJ       += $(FILL_OBJ)
 
-all: prepareAllNtuplesForNN $(PYDIR)/_prepntuple.so
+all: prepareAllNtuplesForNN #$(PYDIR)/_prepntuple.so
 
 prepareAllNtuplesForNN: $(FILL_OBJ:%=$(BIN)/%)
 	@echo linking $^

@@ -148,7 +148,7 @@ void writeNtuple_Official(TString inputFileName,
 
   //for the NN you need to get the number of b,c or light jets
 
-  printf("counting entries, will take a while"); 
+  printf("counting entries, will take a while\n"); 
   Int_t num_entries=readTreeJF->fChain->GetEntries();
 
   int numberb=0;

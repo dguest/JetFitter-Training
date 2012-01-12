@@ -24,10 +24,15 @@ if len(sys.argv) > 1:
 
 
 full_ds_name = 'reduceddataset_%s_forNN.root' % input_ds
-full_path = '../reduceddatasets/' + full_ds_name
+full_path = '../reduceddatasets/dan/' + full_ds_name
 class_name = 'JetFitterNN_' + input_ds
 
-for out_dir, ip3d_state in [('ip3d_test_weights',True)]:
+test_jobs = [
+    ('ip3d_test_weights1',True), 
+    ('ip3d_test_weights2',True)
+    ]
+
+for out_dir, ip3d_state in test_jobs:
 
     if not os.path.isdir(out_dir): 
         os.mkdir(out_dir)

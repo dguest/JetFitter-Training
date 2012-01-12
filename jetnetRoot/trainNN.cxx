@@ -17,6 +17,8 @@
 #include "TTrainedNetwork.h"
 #include "trainNN.hh"
 
+#include "OwnerVector.hh"
+
 #include <iostream>
 
 #include "TMatrixD.h"
@@ -544,13 +546,13 @@ void trainNN(TString inputfile,
   TNetworkToHistoTool myHistoTool;
 
   cout << " From network to histo..." << endl;
-  std::vector<TH1*> myHistos = myHistoTool.
+  OwnerVector<TH1*> myHistos = myHistoTool.
     fromTrainedNetworkToHisto(trainedNetwork);
 
   cout << " From histo to network back..." << endl;
   TTrainedNetwork* trainedNetwork2 = myHistoTool.
     fromHistoToTrainedNetwork(myHistos);
-  
+
   cout << " reading back " << endl;
   jn->readBackTrainedNetwork(trainedNetwork2);
    
@@ -627,14 +629,16 @@ void trainNN(TString inputfile,
     std::vector<TH1*> myHistos=histoTool.
       fromTrainedNetworkToHisto(trainedNetwork);
 
-    for (std::vector<TH1*>::const_iterator histoIter = myHistos.begin();
+    for (std::vector<TH1*>::iterator histoIter = myHistos.begin();
 	 histoIter != myHistos.end(); 
 	 ++histoIter) {
       (*histoIter)->Write();
+      delete *histoIter; 
+      *histoIter = 0; 
     }
 
     // SUSPICIOUS: may be writing twice here too
-    fileHistos->Write();
+    // fileHistos->Write();
     fileHistos->Close();
     delete fileHistos;
 
@@ -647,7 +651,7 @@ void trainNN(TString inputfile,
   TFile* histoFile=new TFile(training_info_name.c_str(),"recreate");
   histoTraining->Write();
   histoTesting->Write();
-  histoFile->Write();
+  // histoFile->Write();
   histoFile->Close();
   delete histoFile;
 

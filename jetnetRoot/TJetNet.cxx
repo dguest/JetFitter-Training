@@ -481,7 +481,7 @@ Double_t TJetNet::TestBTAG( void )
   }// finish patterns
   
   if (mDebug) std::cout << " Finished patterns... " << std::endl;
-  
+
   TFile* newFile=new TFile("test.root","recreate");
   histoEfficienciesL[0]->Write();
   histoEfficienciesL[1]->Write();
@@ -489,8 +489,10 @@ Double_t TJetNet::TestBTAG( void )
   histoEfficienciesC[0]->Write();
   histoEfficienciesC[1]->Write();
   histoEfficienciesC[2]->Write();
-  newFile->Write();
+  // newFile->Write();
   newFile->Close();
+  delete newFile; 
+  newFile = 0; 
 
   //for C-jet rejection
   

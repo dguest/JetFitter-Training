@@ -2,5 +2,4 @@
 *.tar
 *.out
 /weights/
-*weights/
-/*_weights
+/*_weights*/

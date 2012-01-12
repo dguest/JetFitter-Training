@@ -8,7 +8,7 @@ template<typename T>
 class OwnerVector : public std::vector<T>
 {
 public:
-  OwnerVector(std::vector<T> v):  
+  OwnerVector(std::vector<T> v):   
     std::vector<T>(v)
   { 
   }

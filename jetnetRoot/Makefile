@@ -39,9 +39,11 @@ PY_LINKER_OPTS := $(LINKER_OPTS)
 PY_LINKER_OPTS += $(PY_LIB)
 PY_LINKER_OPTS += -shared
 
+CXX_OBJECTS := trainNN.o testNN.o doNormalization.o 
+CXX_OBJECTS += $(T_OBJ) $(T_DICTS)
+
 LIB_OBJECTS := $(JETNET_OBJ)
-LIB_OBJECTS += trainNN.o testNN.o doNormalization.o 
-LIB_OBJECTS += $(T_OBJ) $(T_DICTS)
+LIB_OBJECTS += $(CXX_OBJECTS)
 
 all:  libTJetNet.so pynn.so cxx_test.exe # root_test.exe
 
@@ -82,12 +84,28 @@ libTJetNet.so: $(LIB_OBJECTS)
 	@echo building $@
 	@$(CC) -shared -o $@ $^ $(INC) $(LIBS) #-Wl,-soname,libTJetNet.so.0
 
+# --- auto dep
+DEP = dep
+
+ifneq ($(MAKECMDGOALS),clean)
+include  $(CXX_OBJECTS:%.o=$(DEP)/%.d)
+endif
+
+$(DEP)/%.d: %.cxx
+	@echo making dependencies for $<
+	@mkdir -p $(DEP)
+	@$(CXX) -MM -MG $(INC) $< -o $@
+	@sed -i 's,$*\.o,& $@ ,g' $@
+
+# --- cleanup 
+
 DIRTY_THINGS := *~ $(JETNET_OBJ) *.o *.bak core
 DIRTY_THINGS += *Dict.h *Dict.cxx *.exe
 DIRTY_THINGS += pynn.so libTJetNet.so
 
 clean:
 	@$(RM) $(DIRTY_THINGS)
+	@$(RM) -rf $(DEP)
 backup:
 	@$(RM) backup.tar.gz
 	@tar czvf backup.tar.gz *.cxx *.h *.c *.C Makefile* *.f

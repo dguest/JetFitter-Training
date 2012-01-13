@@ -5,9 +5,11 @@
 # Simplified by Daniel Guest (dguest@cern.ch)
 # on: Fri Dec 16 21:00:00 CET 2011
 
-JETNET_OBJ := jetnet.o
-JETNET_SRC := jetnet_35.f
+# --- set dirs
+BIN          := bin/
+# LIB          := lib/
 
+# --- get build options
 ifndef PY_CONFIG
 PY_CONFIG := python-config
 endif 
@@ -20,8 +22,6 @@ ROOTLIBS   := $(shell root-config --libs)
 ROOTCFLAGS := $(shell root-config --cflags)
 ROOTLD     := $(shell root-config --ldflags)
 
-T_OBJ := TNeuralDataSet.o TJetNet.o TTrainedNetwork.o TNetworkToHistoTool.o
-T_DICTS := $(T_OBJ:.o=Dict.o)
 FC := gfortran
 CC := g++
 INC := $(ROOTCFLAGS)
@@ -30,7 +30,8 @@ LIBS := -lgfortran $(ROOTLIBS)
 COPT := -O2 -fPIC -g
 FOPT := -ffixed-form -ffixed-line-length-none -g -m32
 
-LINKER_OPTS := -L. -Wl,-rpath,. 
+LINKER_OPTS := -L$(LIB) -Wl,-rpath,$(LIB)
+LINKER_OPTS += -L. -Wl,-rpath,.
 LINKER_OPTS += -Wl,-no-undefined 
 LINKER_OPTS += -lTJetNet
 LINKER_OPTS += $(ROOTLD)
@@ -39,63 +40,72 @@ PY_LINKER_OPTS := $(LINKER_OPTS)
 PY_LINKER_OPTS += $(PY_LIB)
 PY_LINKER_OPTS += -shared
 
+# --- define specific files
+JETNET_OBJ := jetnet.o
+JETNET_SRC := jetnet_35.f
+
+T_OBJ := TNeuralDataSet.o TJetNet.o TTrainedNetwork.o TNetworkToHistoTool.o
+T_DICTS := $(T_OBJ:.o=Dict.o)
+
 CXX_OBJECTS := trainNN.o testNN.o doNormalization.o 
 CXX_OBJECTS += $(T_OBJ) $(T_DICTS)
 
 LIB_OBJECTS := $(JETNET_OBJ)
 LIB_OBJECTS += $(CXX_OBJECTS)
 
-all:  libTJetNet.so pynn.so cxx_test.exe # root_test.exe
+all:  $(LIB)libTJetNet.so $(LIB)pynn.so #cxx_test.exe # root_test.exe
 
-%Dict.cxx: %.h
+%Dict.cxx: %.h LinkDef.h
 	@echo making dict $@
 	@rm -f $*Dict.h
 	@rootcint $@ -c $*.h	
 
-T%Dict.o: T%Dict.cxx 
-	@echo building dict $@
+$(BIN)T%Dict.o: T%Dict.cxx 
+	@echo compiling dict $@
 	@$(CC) $(COPT) $(INC) -c $< -o $@
 
-T%.o: T%.cxx T%.h
-	@echo building $@
+$(BIN)T%.o: T%.cxx 
+	@echo compiling $@
 	@$(CC) $(COPT) $(INC) -c $< -o $@
 
-%.o: %.cxx %.hh
-	@echo building $@
+$(BIN)py%.o: py%.cxx 
+	@echo compiling python object $@
+	@$(CC) $(COPT) $(INC) -c $< -o $@ $(PY_FLAGS)
+
+$(BIN)%.o: %.cxx 
+	@echo compiling $@
 	@$(CC) $(COPT) $(INC) -c $< -o $@
 
-$(JETNET_OBJ): $(JETNET_SRC) 
-	@echo Building JetNet Library
-	@$(FC) $(FOPT) -c $(JETNET_SRC) -o $(JETNET_OBJ)
+$(BIN)$(JETNET_OBJ): $(JETNET_SRC) 
+	@echo compiling $@
+	@$(FC) $(FOPT) -c $(JETNET_SRC) -o $@
 
-%.exe: %.o 
+%.exe: $(BIN)%.o 
 	@echo making executable $@
 	@$(CC) $^ -o $@ $(INC) $(LIBS) $(LINKER_OPTS)
 
-py%.o: py%.cxx 
-	@echo building $@
-	@$(CC) $(COPT) $(INC) -c $< -o $@ $(PY_FLAGS)
-
-pynn.so: pynn.o libTJetNet.so
-	@echo making python lib
+$(LIB)pynn.so: $(BIN)pynn.o 
+#	@mkdir -p $(LIB)
+	@echo "linking $^ --> $@"
 	@$(CC) $< -o $@ $(PY_LINKER_OPTS) $(INC) $(LIBS) 
 
-libTJetNet.so: $(LIB_OBJECTS)
-	@echo building $@
+$(LIB)libTJetNet.so: $(LIB_OBJECTS:%.o=$(BIN)%.o)
+#	@mkdir -p $(LIB)
+	@echo "linking $^ --> $@"
 	@$(CC) -shared -o $@ $^ $(INC) $(LIBS) #-Wl,-soname,libTJetNet.so.0
 
 # --- auto dep
-DEP = dep
+DEP = $(BIN)
 
 ifneq ($(MAKECMDGOALS),clean)
-include  $(CXX_OBJECTS:%.o=$(DEP)/%.d)
+include  $(CXX_OBJECTS:%.o=$(DEP)%.d)
 endif
 
-$(DEP)/%.d: %.cxx
+$(DEP)%.d: %.cxx
 	@echo making dependencies for $<
 	@mkdir -p $(DEP)
 	@$(CXX) -MM -MG $(INC) $< -o $@
-	@sed -i 's,$*\.o,& $@ ,g' $@
+	@sed -i 's,$*\.o,$(BIN)& $@ ,g' $@
 
 # --- cleanup 
 
@@ -105,7 +115,7 @@ DIRTY_THINGS += pynn.so libTJetNet.so
 
 clean:
 	@$(RM) $(DIRTY_THINGS)
-	@$(RM) -rf $(DEP)
+	@$(RM) -rf $(DEP) $(BIN) $(LIB)
 backup:
 	@$(RM) backup.tar.gz
 	@tar czvf backup.tar.gz *.cxx *.h *.c *.C Makefile* *.f

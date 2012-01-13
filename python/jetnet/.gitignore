@@ -1,0 +1,4 @@
+*.pyc
+
+# the .so file should be a link, which we can save
+!*.so

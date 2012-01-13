@@ -1,55 +1,90 @@
-#!/usr/bin/env python2.6
+#!/usr/bin/env python 
 # Author: Daniel Guest (dguest@cern.ch)
 
-import sys, dl, os, glob, ConfigParser
+import sys, dl, os, glob
+from jetnet.dirs import OverwriteError
 
-# without this root has trouble
-binding_rules =  dl.RTLD_GLOBAL | dl.RTLD_NOW
-sys.setdlopenflags(binding_rules)
-import pynn
+def do_training(jet_collection_name, in_path, 
+                output_dir = None, 
+                with_ip3d = True, nodes = None, 
+                debug = False): 
+    # without this root has trouble
+    binding_rules =  dl.RTLD_GLOBAL | dl.RTLD_NOW
+    sys.setdlopenflags(binding_rules)
+    import pynn
 
-config_file = '../training.config'
+    class_name = 'JetFitterNN_' + jet_collection_name
 
-config = ConfigParser.ConfigParser()
-config.read([config_file])
+    if not os.path.isdir(output_dir): 
+        os.mkdir(output_dir)
+    elif glob.glob(output_dir + '/*.root*'): 
+        raise OverwriteError('root files found in %s' % out_dir)
 
-collections_to_process = config.get('collections', 'process').split()
-input_ds = collections_to_process[0]
+    if nodes is None:
+        if with_ip3d: 
+            nodes = (20, 10)
+        else: 
+            nodes = (15,  8)
+    nodes_first_layer, nodes_second_layer = nodes
 
-if len(sys.argv) > 1: 
-    input_ds = sys.argv[1]
-
-# with_ip3d = False
-# if len(sys.argv) > 2: 
-#     if set(['True','ip3d']) & set(sys.argv[2:]): 
-#         print 'using ip3d'
-#         with_ip3d = True
-
-# out_dir = 'weights'
-
-settings = dict(config.items('net'))
-
-full_ds_name = 'reduceddataset_%s_forNN.root' % input_ds
-full_path = '../reduceddatasets/' + full_ds_name
-class_name = 'JetFitterNN_' + input_ds
-
-for out_dir, ip3d_state in [('ip3d_weights',True),('no_ip3d_weights',False)]:
-
-    if not os.path.isdir(out_dir): 
-        os.mkdir(out_dir)
-    elif glob.glob(out_dir + '/*'): 
-        print "files found in %s, skipping" % out_dir
-        continue
-
-
-    pynn.trainNN(input_file = full_path, 
+    pynn.trainNN(input_file = in_path, 
                  output_class = class_name, 
-                 n_iterations = int(settings['n_iterations']), 
-                 dilution_factor = int(settings['dilution_factor']), 
+                 n_iterations = 10000, 
+                 dilution_factor = 2, 
                  use_sd = False, 
-                 with_ip3d = ip3d_state, 
-                 nodes_first_layer = int(settings['nodes_1']), 
-                 nodes_second_layer = int(settings['nodes_2']), 
-                 debug = True, 
-                 output_dir = out_dir)
+                 with_ip3d = with_ip3d, 
+                 nodes_first_layer = nodes_first_layer, 
+                 nodes_second_layer = nodes_second_layer, 
+                 debug = debug, 
+                 output_dir = output_dir)
              
+             
+if __name__ == '__main__': 
+    from optparse import OptionParser, OptionGroup
+
+    parser = OptionParser()
+    parser.set_defaults(
+        with_ip3d = True, 
+        nodes_1 = 20, 
+        nodes_2 = 10, 
+        debug = False
+        )
+    required = OptionGroup(parser,'required options')
+    required.add_option('-t','--training-file', 
+                      help = 'a reduced data set')
+    required.add_option('-o','--output-path')
+    parser.add_option_group(required)
+    
+    optional = OptionGroup(parser,'optional options')
+    optional.add_option('-j',dest = 'jet_collection', 
+                        help = "used to find in input ds in root file.\n"
+                        "Also to name output"
+                        " [default: %default]", 
+                        default = 'AntiKt4TopoEMJets')
+    optional.add_option('-i','--ip3d', dest = 'with_ip3d', 
+                      action = 'store_true', 
+                      help = 'use ip3d [default]')
+    optional.add_option('-m','--no-ip3d', dest = 'with_ip3d', 
+                      action = 'store_false', 
+                      help = "don't use ip3d")
+    optional.add_option('-1', dest = 'nodes_1', 
+                      help = 'nodes in first hidden layer'
+                      ' [default: %default]', type = 'int')
+    optional.add_option('-2', dest = 'nodes_2', 
+                      help = 'nodes in second hidden layer'
+                      ' [default: %default]', type = 'int')
+    parser.add_option_group(optional)
+
+    debug_opts = OptionGroup(parser,'debug options')
+    debug_opts.add_option('-d','--debug', action = 'store_true', 
+                          help = "don't run training, just test")
+    parser.add_option_group(debug_opts)
+
+    (options, args) = parser.parse_args()
+
+    do_training(jet_collection_name = options.jet_collection, 
+                in_path = options.training_file, 
+                output_dir = options.output_path, 
+                with_ip3d = options.with_ip3d, 
+                nodes = (options.nodes_1, options.nodes_2), 
+                debug = True)

@@ -87,4 +87,4 @@ if __name__ == '__main__':
                 output_dir = options.output_path, 
                 with_ip3d = options.with_ip3d, 
                 nodes = (options.nodes_1, options.nodes_2), 
-                debug = True)
+                debug = options.debug)

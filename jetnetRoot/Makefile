@@ -7,7 +7,7 @@
 
 # --- set dirs
 BIN          := bin/
-# LIB          := lib/
+LIB          := #lib/ 
 
 # --- get build options
 ifndef PY_CONFIG
@@ -32,6 +32,7 @@ FOPT := -ffixed-form -ffixed-line-length-none -g -m32
 
 LINKER_OPTS := -L$(LIB) -Wl,-rpath,$(LIB)
 LINKER_OPTS += -L. -Wl,-rpath,.
+LINKER_OPTS += -L$(USER_LIB) -Wl,-rpath,$(USER_LIB)
 LINKER_OPTS += -Wl,-no-undefined 
 LINKER_OPTS += -lTJetNet
 LINKER_OPTS += $(ROOTLD)
@@ -109,15 +110,23 @@ $(DEP)%.d: %.cxx
 
 # --- cleanup 
 
+# --- install 
+
+ifdef USER_LIB
+install: all 
+	@mkdir -p $(USER_LIB)
+	cp -f *.so $(USER_LIB)
+endif
+
 DIRTY_THINGS := *~ $(JETNET_OBJ) *.o *.bak core
 DIRTY_THINGS += *Dict.h *Dict.cxx *.exe
 DIRTY_THINGS += pynn.so libTJetNet.so
 
 clean:
 	@$(RM) $(DIRTY_THINGS)
-	@$(RM) -rf $(DEP) $(BIN) $(LIB)
+	@$(RM) -rf $(DEP) $(BIN)
 backup:
 	@$(RM) backup.tar.gz
 	@tar czvf backup.tar.gz *.cxx *.h *.c *.C Makefile* *.f
 
-.PHONY: clean backup all
+.PHONY: clean backup all install

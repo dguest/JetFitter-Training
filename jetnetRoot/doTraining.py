@@ -69,9 +69,10 @@ def run_performance(input_file, weights_file,
 if __name__ == '__main__': 
     from optparse import OptionParser, OptionGroup
 
-    usage = 'usage: %prog <training file> [options]'
+    usage = 'usage: %prog <reduced data set> [options]'
+    description = 'runs neural net training on <reduced data set>'
 
-    parser = OptionParser(usage = usage)
+    parser = OptionParser(usage = usage, description = description)
     parser.set_defaults(
         with_ip3d = True, 
         print_and_exit = False, 

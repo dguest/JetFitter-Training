@@ -60,7 +60,7 @@ def sig_over_background(root_file, signal = 'charm', background = 'light',
     
     for hist in matches: 
 
-        print 'drawing %s' % hist.GetName()
+        # print 'drawing %s' % hist.GetName()
         sig_name = hist.GetName().split('_')[0]
         color = color_dict[sig_name]
         hist.SetTitle(';'.join(labels))
@@ -94,16 +94,17 @@ def b_tag_plots(hist_file, normalize = False, signal = 'bottom'):
         for sample in ['train','test']: 
             plots.append( (signal, background, sample) )
 
-    import AtlasStyle
+    import AtlasStyle, random
     AtlasStyle.SetAtlasStyle()
 
 
-    canvas = TCanvas('performance','performance',100,100,600*2,400*2)
+    canvas = TCanvas(str(random.randint(0,10**10)),
+                     'performance',100,100,600*2,400*2)
     canvas.Divide(2,2)
 
     results = []
-    for pad_index, (signal, background, sample) in enumerate(plots): 
-        pad = pad_index + 1
+    for pad, (signal, background, sample) in enumerate(plots,1): 
+
         r = sig_over_background(root_file = hist_file, signal = signal, 
                                 background = background, canvas = canvas, 
                                 sample = sample, normalize = normalize, 

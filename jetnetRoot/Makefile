@@ -31,7 +31,10 @@ COPT := -O2 -fPIC -g
 FOPT := -ffixed-form -ffixed-line-length-none -g -m32
 
 LINKER_OPTS := -L$(LIB) -Wl,-rpath,$(LIB)
+
+ifndef USER_LIB
 LINKER_OPTS += -L. -Wl,-rpath,.
+endif
 LINKER_OPTS += -L$(USER_LIB) -Wl,-rpath,$(USER_LIB)
 LINKER_OPTS += -Wl,-no-undefined 
 LINKER_OPTS += -lTJetNet
@@ -125,8 +128,12 @@ DIRTY_THINGS += pynn.so libTJetNet.so
 clean:
 	@$(RM) $(DIRTY_THINGS)
 	@$(RM) -rf $(DEP) $(BIN)
+
+cleanlib: 
+	@$(RM) *.so
+
 backup:
 	@$(RM) backup.tar.gz
 	@tar czvf backup.tar.gz *.cxx *.h *.c *.C Makefile* *.f
 
-.PHONY: clean backup all install
+.PHONY: clean cleanlib backup all install

@@ -11,6 +11,12 @@ CXXFLAGS     += $(ROOTCFLAGS)
 LDFLAGS      += $(ROOTLDFLAGS)
 LIBS         += $(ROOTLIBS)
 
+# add libTJetNet
+LINKER_OPTS := -L$(USER_LIB) -Wl,-rpath,$(USER_LIB)
+LINKER_OPTS += -Wl,-no-undefined 
+LINKER_OPTS += -lTJetNet
+LIBS        += $(LINKER_OPTS)
+
 BIN          := bin
 PYDIR        := pylib
 
@@ -21,20 +27,21 @@ endif
 PY_FLAGS  = $(shell $(PY_CONFIG) --includes)
 
 # ---- set search path
-vpath %.cxx      src
+SRC_PATH     := src ../jetnetRoot ../preparedatasets/src
+vpath %.cxx  $(SRC_PATH)
 vpath %.i        src
 vpath %.o    $(BIN)
-HPATH         = src #tools #$(BIN) 
+HPATH         = $(SRC_PATH)
 CXXFLAGS     += $(HPATH:%=-I%)
 
 # ---- define macros
-FILL_OBJ     := readJFBTagAna.o readBaseBTagAnaTree.o writeNtuple_Official.o
-FILL_OBJ     += writeNtupleAll.o main.o
+FILL_OBJ     := readReducedDataset.o testJetNet.o
+FILL_OBJ     += doTesting.o
 ALLOBJ       += $(FILL_OBJ)
 
-all: prepareAllNtuplesForNN #$(PYDIR)/_prepntuple.so
+all: doTesting.exe
 
-prepareAllNtuplesForNN: $(FILL_OBJ:%=$(BIN)/%)
+doTesting.exe: $(FILL_OBJ:%=$(BIN)/%)
 	@echo linking $^
 	@$(CXX) -o $@ $^ $(LIBS) $(LDFLAGS)
 
@@ -44,17 +51,6 @@ $(PYDIR)/_%.so: $(FILL_OBJ:%=$(BIN)/%) $(BIN)/%_wrap.o
 	@touch $(PYDIR)/__init__.py
 
 # --------------------------------------------------
-
-# swig wrapper source
-src/%_wrap.cxx: %.i
-	@echo building wrapper $@
-	@mkdir -p $(PYDIR)
-	@swig -python -c++ -outdir $(PYDIR) $<
-
-$(BIN)/%_wrap.o: src/%_wrap.cxx
-	@echo compiling $<
-	@mkdir -p $(BIN)
-	@$(CXX) $(PY_FLAGS) -c $< -o $@
 
 # compile rule
 $(BIN)/%.o: %.cxx

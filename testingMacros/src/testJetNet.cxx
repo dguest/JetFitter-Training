@@ -1,17 +1,17 @@
-#include "readReducedDataset.h"
+#include "readReducedDataset.hh"
 #include <TFile.h>
 #include <TTree.h>
 #include <iostream>
-#include "testJetNet.h"
-#include "../preparedatasets/getPtEtaCategoryLikelihood.h"
+#include "testJetNet.hh"
+#include "getPtEtaCategoryLikelihood.hh"
 #include "TRandom.h"
 #include <cmath>
 #include <vector>
 #include <algorithm>
 #include <TH1D.h>
-#include "../jetnetRoot/doNormalization.C"
-#include "../jetnetRoot/TTrainedNetwork.h"
-#include "../jetnetRoot/TJetNet.h"
+#include "doNormalization.hh"
+#include "TTrainedNetwork.h"
+#include "TJetNet.h"
 #include <TVectorD.h>
 #include <TMatrixD.h>
 

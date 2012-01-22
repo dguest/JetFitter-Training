@@ -143,7 +143,7 @@ jn->readBackTrainedNetwork(trainedNetwork);
   Double_t NNu;
   
 
-  TString inputFileName("./reduceddataset_");
+  TString inputFileName("reduceddatasets/reduceddataset_");
   inputFileName+=jetCollectionName;
   inputFileName+="_forNN.root";
 
@@ -160,10 +160,9 @@ jn->readBackTrainedNetwork(trainedNetwork);
   outputFileName+=jetCollectionName;
   outputFileName+="_jetnet";
   outputFileName+=".root";
-
-  
-  
   TFile* outputFile=new TFile(outputFileName,"recreate");
+
+
   TString otputTree(jetCollectionName);
   TTree* myTree=new TTree(otputTree,otputTree);
 
@@ -335,7 +334,10 @@ jn->readBackTrainedNetwork(trainedNetwork);
     myTree->Fill();
   }
 
-  outputFile->Write();
+
+  outputFile->WriteTObject(myTree); 
+
+  // outputFile->Write();
   outputFile->Close();
 
   

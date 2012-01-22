@@ -1,4 +1,4 @@
-#!/usr/bin/env python 
+#!/usr/bin/env python2.6
 # Author: Daniel Guest (dguest@cern.ch)
 
 import sys, dl, os, glob

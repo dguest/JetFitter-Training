@@ -10,6 +10,7 @@ CXXFLAGS     := -O2 -Wall -fPIC
 CXXFLAGS     += $(ROOTCFLAGS)
 LDFLAGS      += $(ROOTLDFLAGS)
 LIBS         += $(ROOTLIBS)
+LIBS         += -lboost_program_options
 
 # add libTJetNet
 LINKER_OPTS := -L$(USER_LIB) -Wl,-rpath,$(USER_LIB)
@@ -20,11 +21,11 @@ LIBS        += $(LINKER_OPTS)
 BIN          := bin
 PYDIR        := pylib
 
-ifndef PY_CONFIG
-PY_CONFIG := python-config
-endif 
+# ifndef PY_CONFIG
+# PY_CONFIG := python-config
+# endif 
 
-PY_FLAGS  = $(shell $(PY_CONFIG) --includes)
+# PY_FLAGS  = $(shell $(PY_CONFIG) --includes)
 
 # ---- set search path
 SRC_PATH     := src ../jetnetRoot ../preparedatasets/src
@@ -42,13 +43,13 @@ ALLOBJ       += $(FILL_OBJ)
 all: doTesting.exe
 
 doTesting.exe: $(FILL_OBJ:%=$(BIN)/%)
-	@echo linking $^
+	@echo "linking $^ --> $@"
 	@$(CXX) -o $@ $^ $(LIBS) $(LDFLAGS)
 
-$(PYDIR)/_%.so: $(FILL_OBJ:%=$(BIN)/%) $(BIN)/%_wrap.o
-	@echo linking $^
-	@$(CXX) -o $@ $^ -shared $(LIBS) $(LDFLAGS)
-	@touch $(PYDIR)/__init__.py
+# $(PYDIR)/_%.so: $(FILL_OBJ:%=$(BIN)/%) $(BIN)/%_wrap.o
+# 	@echo linking $^
+# 	@$(CXX) -o $@ $^ -shared $(LIBS) $(LDFLAGS)
+# 	@touch $(PYDIR)/__init__.py
 
 # --------------------------------------------------
 
@@ -57,8 +58,6 @@ $(BIN)/%.o: %.cxx
 	@echo compiling $<
 	@mkdir -p $(BIN)
 	@$(CXX) -c $(CXXFLAGS) $< -o $@
-
-
 
 
 # use auto dependency generation
@@ -77,7 +76,7 @@ $(DEP)/%.d: %.cxx
 
 # clean
 .PHONY : clean
-CLEANLIST     = *~ *.o *.o~ *.d core 
+CLEANLIST     = *~ *.o *.o~ *.d core *.exe
 clean:
 	rm -fr $(CLEANLIST) $(CLEANLIST:%=$(BIN)/%) $(CLEANLIST:%=$(DEP)/%)
 	rm -fr $(PYDIR)

@@ -155,7 +155,7 @@ extern "C" PyObject* test_py(PyObject *self,
 	     with_ip3d, 
 	     out_file); 
     }
-    catch (NetworkLoadException e){ 
+    catch (LoadNetworkException e){ 
       PyErr_SetString(PyExc_IOError,"could not load network"); 
       return NULL; 
     }

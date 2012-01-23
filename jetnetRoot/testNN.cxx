@@ -114,7 +114,7 @@ void testNN(std::string inputfile,
   TTrainedNetwork* trained_network = 
     dynamic_cast<TTrainedNetwork*>(trained_network_obj); 
   if (trained_network == 0){ 
-    throw NetworkLoadException(); 
+    throw LoadNetworkException(); 
   }
 
   int n_inputs = trained_network->getnInput(); 

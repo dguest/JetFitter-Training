@@ -18,6 +18,7 @@
 
 #include "TTrainedNetwork.h"
 #include "testNN.hh"
+#include "nnExceptions.hh"
 
 #include <iostream>
 

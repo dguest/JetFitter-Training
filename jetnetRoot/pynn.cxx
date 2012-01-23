@@ -5,6 +5,7 @@
 
 #include "trainNN.hh"
 #include "testNN.hh"
+#include "nnExceptions.hh"
 
 static const char* train_doc_string = 
   "run the neural net. \n"

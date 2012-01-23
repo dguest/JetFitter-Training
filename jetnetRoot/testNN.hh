@@ -14,14 +14,6 @@ void testNN(std::string inputfile,
 	    std::string out_file = "all_hists.root");
 
 
-class TestNNIOException
-{}; 
-class NetworkLoadException: public TestNNIOException
-{};
-class WriteFileException: public TestNNIOException
-{};
-class WrongNetworkSizeException: public NetworkLoadException 
-{}; 
 
 enum Sample { 
   TRAIN, 

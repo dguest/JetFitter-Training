@@ -2,10 +2,12 @@
 // Author: Daniel Guest (dguest@cern.ch)
 #include <Python.h>
 #include "TString.h"
+#include <string> 
 
 #include "trainNN.hh"
 #include "testNN.hh"
 #include "nnExceptions.hh"
+#include "makeTestNtuple.hh"
 
 static const char* train_doc_string = 
   "run the neural net. \n"
@@ -155,7 +157,7 @@ extern "C" PyObject* test_py(PyObject *self,
 	     with_ip3d, 
 	     out_file); 
     }
-    catch (NetworkLoadException e){ 
+    catch (LoadNetworkException e){ 
       PyErr_SetString(PyExc_IOError,"could not load network"); 
       return NULL; 
     }
@@ -171,6 +173,60 @@ extern "C" PyObject* test_py(PyObject *self,
 }
 
 
+extern "C" PyObject* make_test_ntuple(PyObject *self, 
+				      PyObject *args, 
+				      PyObject *keywds)
+{
+  const char* input_weights_name; 
+  const char* input_dataset_name; 
+  const char* output_file_name; 
+  const char* output_tree_name = "performance"; 
+  bool debug = false; 
+
+  const char *kwlist[] = {
+    "input_weights",
+    "input_dataset", 
+    "output_file", 
+    "output_tree", 
+    "debug", 
+    NULL};
+ 
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "sss|sb", 
+				   // this function should take a const, and 
+				   // may be changed, until then we'll cast
+				   const_cast<char**>(kwlist),
+				   &input_weights_name,
+				   &input_dataset_name, 
+				   &output_file_name, 
+				   &output_tree_name, 
+				   &debug))
+    return NULL;
+
+  if (debug){ 
+    printf("in wt = %s, in ds = %s, out file = %s, out tree = %s\n", 
+  	   input_weights_name, input_dataset_name, 
+	   output_file_name, output_tree_name); 
+  }
+
+  else{ 
+    makeTestNtuple(input_weights_name, 
+    		   input_dataset_name,
+    		   output_file_name, 
+    		   output_tree_name); 
+  }
+
+  Py_INCREF(Py_None);
+
+  return Py_None;
+}
+
+static const char* ntuple_doc_string = 
+  "input_weights\n"
+  "input_dataset\n"
+  "output_file\n"
+  "output_tree\n"
+  "debug";
+
 
 static PyMethodDef keywdarg_methods[] = {
   // The cast of the function is necessary since PyCFunction values
@@ -182,6 +238,9 @@ static PyMethodDef keywdarg_methods[] = {
   {"testNN", (PyCFunction)test_py, 
    METH_VARARGS | METH_KEYWORDS,
    test_doc_string},
+  {"makeNtuple", (PyCFunction)make_test_ntuple, 
+   METH_VARARGS | METH_KEYWORDS,
+   ntuple_doc_string},
   {NULL, NULL, 0, NULL}   /* sentinel */
 };
 

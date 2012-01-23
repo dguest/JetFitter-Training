@@ -30,12 +30,14 @@ LIBS := -lgfortran $(ROOTLIBS)
 COPT := -O2 -fPIC -g
 FOPT := -ffixed-form -ffixed-line-length-none -g -m32
 
-LINKER_OPTS := -L$(LIB) -Wl,-rpath,$(LIB)
+# LINKER_OPTS := -L$(LIB) -Wl,-rpath,$(LIB) 
 
-ifndef USER_LIB
-LINKER_OPTS += -L. -Wl,-rpath,.
-endif
-LINKER_OPTS += -L$(USER_LIB) -Wl,-rpath,$(USER_LIB)
+# ifndef USER_LIB
+HERE := $(shell pwd)
+# endif 
+LINKER_OPTS += -L$(HERE) -Wl,-rpath,$(HERE)
+
+
 LINKER_OPTS += -Wl,-no-undefined 
 LINKER_OPTS += -lTJetNet
 LINKER_OPTS += $(ROOTLD)
@@ -52,6 +54,7 @@ T_OBJ := TNeuralDataSet.o TJetNet.o TTrainedNetwork.o TNetworkToHistoTool.o
 T_DICTS := $(T_OBJ:.o=Dict.o)
 
 CXX_OBJECTS := trainNN.o testNN.o doNormalization.o 
+CXX_OBJECTS += makeTestNtuple.o
 CXX_OBJECTS += $(T_OBJ) $(T_DICTS)
 
 LIB_OBJECTS := $(JETNET_OBJ)
@@ -117,6 +120,7 @@ $(DEP)%.d: %.cxx
 
 ifdef USER_LIB
 install: all 
+	@echo "WARNING: install is broken"
 	@mkdir -p $(USER_LIB)
 	cp -f *.so $(USER_LIB)
 endif

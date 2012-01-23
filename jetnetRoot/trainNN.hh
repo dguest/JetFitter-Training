@@ -4,6 +4,8 @@
 #include "TString.h"
 #include <string>
 
+// int nothing();
+
 
 void trainNN(TString inputfile,
              TString outputclass="JetFitterNN",

@@ -45,7 +45,6 @@ int main()
 }
 
 
-
 void trainNN(TString inputfile,
              TString outputclass,
 	     std::string out_dir, 

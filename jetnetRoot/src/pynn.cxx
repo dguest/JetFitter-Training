@@ -1,13 +1,13 @@
 // python wrapper for JetNet based training algorithm
 // Author: Daniel Guest (dguest@cern.ch)
 #include <Python.h>
-#include "TString.h"
 #include <string> 
-
 #include "trainNN.hh"
 #include "testNN.hh"
 #include "nnExceptions.hh"
 #include "makeTestNtuple.hh"
+
+
 
 static const char* train_doc_string = 
   "run the neural net. \n"

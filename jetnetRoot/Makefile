@@ -8,6 +8,16 @@
 # --- set dirs
 BIN          := bin/
 LIB          := #lib/ 
+SRC          := src
+INC          := include
+DICT         := dict
+
+vpath %.cxx $(SRC)
+vpath %.f   $(SRC)
+vpath %.hh  $(INC)
+vpath %.h  $(INC)
+vpath %Dict.h $(DICT)
+vpath %Dict.cxx $(DICT)
 
 # --- get build options
 ifndef PY_CONFIG
@@ -24,10 +34,9 @@ ROOTLD     := $(shell root-config --ldflags)
 
 FC := gfortran
 CC := g++
-INC := $(ROOTCFLAGS)
 LIBS := -lgfortran $(ROOTLIBS) 
 
-COPT := -O2 -fPIC -g
+COPT := -O2 -fPIC -g -I$(INC)
 FOPT := -ffixed-form -ffixed-line-length-none -g -m32
 
 # LINKER_OPTS := -L$(LIB) -Wl,-rpath,$(LIB) 
@@ -62,44 +71,47 @@ LIB_OBJECTS += $(CXX_OBJECTS)
 
 all:  $(LIB)libTJetNet.so $(LIB)pynn.so #cxx_test.exe # root_test.exe
 
-%Dict.cxx: %.h LinkDef.h
+$(DICT)/%Dict.cxx: %.h LinkDef.h
 	@echo making dict $@
-	@rm -f $*Dict.h
-	@rootcint $@ -c $*.h	
+	@mkdir -p $(DICT)
+	@rm -f $(DICT)/$*Dict.h 
+	@rootcint $@ -c $(INC)/$*.h	
+	@sed -i 's,#include "include/\(.*\)",#include "\1",g' $(DICT)/$*Dict.h
+
 
 $(BIN)T%Dict.o: T%Dict.cxx 
 	@echo compiling dict $@
-	@$(CC) $(COPT) $(INC) -c $< -o $@
+	@$(CC) $(COPT) $(ROOTCFLAGS) -c $< -o $@
 
 $(BIN)T%.o: T%.cxx 
 	@echo compiling $@
-	@$(CC) $(COPT) $(INC) -c $< -o $@
+	@$(CC) $(COPT) $(ROOTCFLAGS) -c $< -o $@
 
 $(BIN)py%.o: py%.cxx 
 	@echo compiling python object $@
-	@$(CC) $(COPT) $(INC) -c $< -o $@ $(PY_FLAGS)
+	@$(CC) $(COPT) $(ROOTCFLAGS) -c $< -o $@ $(PY_FLAGS)
 
 $(BIN)%.o: %.cxx 
 	@echo compiling $@
-	@$(CC) $(COPT) $(INC) -c $< -o $@
+	@$(CC) $(COPT) $(ROOTCFLAGS) -c $< -o $@
 
 $(BIN)$(JETNET_OBJ): $(JETNET_SRC) 
 	@echo compiling $@
-	@$(FC) $(FOPT) -c $(JETNET_SRC) -o $@
+	@$(FC) $(FOPT) -c $^ -o $@
 
 %.exe: $(BIN)%.o 
 	@echo making executable $@
-	@$(CC) $^ -o $@ $(INC) $(LIBS) $(LINKER_OPTS)
+	@$(CC) $^ -o $@ $(ROOTCFLAGS) $(LIBS) $(LINKER_OPTS)
 
 $(LIB)pynn.so: $(BIN)pynn.o 
 #	@mkdir -p $(LIB)
 	@echo "linking $^ --> $@"
-	@$(CC) $< -o $@ $(PY_LINKER_OPTS) $(INC) $(LIBS) 
+	@$(CC) $< -o $@ $(PY_LINKER_OPTS) $(ROOTCFLAGS) $(LIBS) 
 
 $(LIB)libTJetNet.so: $(LIB_OBJECTS:%.o=$(BIN)%.o)
 #	@mkdir -p $(LIB)
 	@echo "linking $^ --> $@"
-	@$(CC) -shared -o $@ $^ $(INC) $(LIBS) #-Wl,-soname,libTJetNet.so.0
+	@$(CC) -shared -o $@ $^ $(ROOTCFLAGS) $(LIBS) #-Wl,-soname,libTJetNet.so.0
 
 # --- auto dep
 DEP = $(BIN)
@@ -111,8 +123,15 @@ endif
 $(DEP)%.d: %.cxx
 	@echo making dependencies for $<
 	@mkdir -p $(DEP)
-	@$(CXX) -MM -MG $(INC) $< -o $@
+	@$(CXX) -MM -I$(INC) $(ROOTCFLAGS) $< -o $@
 	@sed -i 's,$*\.o,$(BIN)& $@ ,g' $@
+
+$(DEP)%Dict.d: $(DICT)/%Dict.cxx
+	@echo making dependencies for $<
+	@mkdir -p $(DEP)
+	@$(CXX) -MM $(ROOTCFLAGS) -I$(INC) $< -o $@
+	@sed -i 's,$*\.o,$(BIN)& $@ ,g' $@
+
 
 # --- cleanup 
 
@@ -126,12 +145,13 @@ install: all
 endif
 
 DIRTY_THINGS := *~ $(JETNET_OBJ) *.o *.bak core
-DIRTY_THINGS += *Dict.h *Dict.cxx *.exe
+DIRTY_THINGS += *Dict.h *Dict.cxx *.exe 
+DIRTY_THINGS += $(INC)/*Dict.h $(SRC)/*Dict.cxx 
 DIRTY_THINGS += pynn.so libTJetNet.so
 
 clean:
 	@$(RM) $(DIRTY_THINGS)
-	@$(RM) -rf $(DEP) $(BIN)
+	@$(RM) -rf $(DEP) $(BIN) $(DICT)
 
 cleanlib: 
 	@$(RM) *.so

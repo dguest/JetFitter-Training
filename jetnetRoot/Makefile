@@ -30,12 +30,14 @@ LIBS := -lgfortran $(ROOTLIBS)
 COPT := -O2 -fPIC -g
 FOPT := -ffixed-form -ffixed-line-length-none -g -m32
 
-LINKER_OPTS := -L$(LIB) -Wl,-rpath,$(LIB)
+# LINKER_OPTS := -L$(LIB) -Wl,-rpath,$(LIB) 
 
-ifndef USER_LIB
-LINKER_OPTS += -L. -Wl,-rpath,.
-endif
-LINKER_OPTS += -L$(USER_LIB) -Wl,-rpath,$(USER_LIB)
+# ifndef USER_LIB
+HERE := $(shell pwd)
+# endif 
+LINKER_OPTS += -L$(HERE) -Wl,-rpath,$(HERE)
+
+
 LINKER_OPTS += -Wl,-no-undefined 
 LINKER_OPTS += -lTJetNet
 LINKER_OPTS += $(ROOTLD)

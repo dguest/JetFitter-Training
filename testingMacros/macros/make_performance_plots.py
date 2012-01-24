@@ -1,8 +1,8 @@
 #!/usr/bin/env python2.6
-import os, sys, math, re
+import os, sys, math, re, array
 from math import exp, log
 from random import random
-from ROOT import TTree, TH1D, TFile, TCanvas, TROOT, gPad
+from ROOT import TTree, TH1D, TFile, TCanvas, TROOT, gPad, TGraph
 import AtlasStyle
 
 class Q: 
@@ -167,6 +167,41 @@ def fill_plots(plots_by_function, file_name):
         
         # if entry_n > 100000: break 
 
+def bin_iter(hist): 
+    n_bins = hist.GetNbinsX()
+    for bin_num in xrange(1,n_bins + 1): 
+        yield hist.GetBinContent(bin_num)
+
+def plots_to_rej_vs_eff(signal, background, total_events = None): 
+
+    if isinstance(background, list): 
+        total_background = background[0].Clone(str(random()))
+        for other_background in background[1:]: 
+            total_background.Add(other_background)
+        background = total_background
+
+    if total_events is None: 
+        total_events = signal.GetEntries() + background.GetEntries()
+
+    total_background = 0
+    total_signal = 0
+
+    sig_array = array.array('f')
+    bkg_array = array.array('f')
+
+    for sig_val, bkg_val in zip(bin_iter(signal), bin_iter(background)):
+        total_signal += sig_val
+        total_background += bkg_val
+        
+        sig_array.append(total_signal / total_events)
+        bkg_array.append(total_background / total_events)
+
+    inv_bkg_array = array.array('f', [1/x for x in bkg_array])
+
+    assert len(sig_array) == len(bkg_array)
+
+    graph = TGraph(len(sig_array), sig_array, inv_bkg_array)
+    return graph
 
 def draw_plots(plots_by_function): 
 

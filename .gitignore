@@ -10,3 +10,5 @@
 /testing/
 /trainingResults*/
 .asetup.save
+*.root
+*.pyc

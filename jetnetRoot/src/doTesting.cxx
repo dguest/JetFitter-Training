@@ -1,0 +1,1 @@
+../../testingMacros/src/doTesting.cxx

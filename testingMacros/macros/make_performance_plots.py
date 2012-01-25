@@ -75,7 +75,7 @@ color_dict = {
     'over c': t.kOrange, 
     'over l': t.kBlue, 
     'over b': t.kRed, 
-    'over all': t.kGreen + 4, 
+    'over all': t.kGreen + 2, 
     }
 color_key_re = re.compile('|'.join(color_dict.keys()))
     
@@ -241,9 +241,9 @@ def test_graphs(plots_by_function):
 
         the_graph = 'none'
 
-def draw_plots(plots_by_function, logy = True): 
+def draw_plots(plots_by_function, logy = True, canvas_name = 'performance'): 
 
-    perf_canvas = TCanvas('performance','performance',
+    perf_canvas = TCanvas(canvas_name,canvas_name,
                           50,50,600*2, 400*2)
 
 
@@ -258,6 +258,8 @@ def draw_plots(plots_by_function, logy = True):
 
         num_name, denom_name = plot_list[0].func_name.split('over')
         x_label = '#frac{%s}{%s + %s}' % (num_name, num_name, denom_name)
+        if 'all' in denom_name: 
+            x_label = '#frac{%s}{all}' % (num_name)
         new_plot_title = ';'.join(['',x_label,'n Jets'])
         plot_list[0].SetTitle(new_plot_title)
         plot_list[0].Draw()
@@ -286,12 +288,12 @@ def draw_plots(plots_by_function, logy = True):
     return perf_canvas
 
 def draw_graphs(plots_by_function, logy = True, variable_list = None, 
-                y_function = sig_over_bg): 
+                y_function = sig_over_bg, canvas_name = 'rej_vs_eff'): 
 
-    perf_canvas = TCanvas('rej_vs_eff','rej_vs_eff',
+    perf_canvas = TCanvas(canvas_name,canvas_name,
                           50,50,600,400)
 
-    d_string = 'ap'
+    d_string = 'al'
 
     all_graphs = []
     min_vals = []
@@ -305,6 +307,7 @@ def draw_graphs(plots_by_function, logy = True, variable_list = None,
         plot_variable = plot_list[0].func_name
         num_name, denom_name = plot_variable.split('over')
         x_label = '#frac{%s}{%s + %s}' % (num_name, num_name, denom_name)
+            
         new_plot_title = ';'.join(['',x_label,'n Jets'])
         if variable_list: 
             if plot_variable not in variable_list: 
@@ -327,11 +330,12 @@ def draw_graphs(plots_by_function, logy = True, variable_list = None,
         rej_plot.GetXaxis().SetLimits(0,1)
         rej_plot.GetXaxis().SetRangeUser(0,1)
         rej_plot.Draw(d_string)
-        d_string = 'p'
+        d_string = 'l'
 
         color = color_dict[color_key_re.findall(signal_hist.func_name)[0]]
         rej_plot.SetMarkerColor(color)
         rej_plot.SetLineColor(color)
+        rej_plot.SetLineWidth(2)
 
         from ROOT import TMath
         # the_max = TMath.GeomMean(rej_plot.GetN(),rej_plot.GetY())
@@ -342,7 +346,7 @@ def draw_graphs(plots_by_function, logy = True, variable_list = None,
         max_vals.append(the_max)
         all_graphs.append(rej_plot)
 
-        legend.AddEntry(rej_plot,signal_hist.func_name,'p')
+        legend.AddEntry(rej_plot,signal_hist.func_name,'l')
 
     the_min = min(min_vals)
     # the_max = (sum(max_vals) / len(max_vals)) * 3
@@ -371,40 +375,76 @@ def draw_graphs(plots_by_function, logy = True, variable_list = None,
     perf_canvas.legend = legend
     return perf_canvas
 
+
+def make_plots_from(ntuple_file_name): 
+
+    cache_file_name = '%s_cache%s' % os.path.splitext(ntuple_file_name)
+
+    ntuple_file = TFile(ntuple_file_name)
+    cache_file = None
+
+    if not os.path.isfile(cache_file_name): 
+
+        plots_by_function = define_plots()
+        fill_plots(plots_by_function, ntuple_file)
+        save_plots(plots_by_function,cache_file_name)
+
+    else: 
+        plots_by_function, cache_file = get_plots(cache_file_name)
+
+
+    perf_canvas = draw_plots(plots_by_function)
+    perf_canvas.file = cache_file
+    
+    # raw_input('press enter')
+
+    eff_graphs = [ 
+        ('c_tagging',['c over all','c over b','c over l']), 
+        ('b_tagging',['b over all','b over c','b over l']), 
+        ]
+    rej_vs_eff_list = []
+    for name, plots in eff_graphs:
+        
+        rej_vs_eff = draw_graphs(plots_by_function, 
+                                 variable_list = plots, 
+                                 y_function = significance, 
+                                 logy = False, 
+                                 canvas_name = name)
+
+        rej_vs_eff_list.append(rej_vs_eff)
+
+    all_canvas = [perf_canvas] + rej_vs_eff_list
+
+
+    return all_canvas
+    # raw_input('press enter')
+
 if __name__ == '__main__': 
     
     if len(sys.argv) != 2: 
         sys.exit('usage: %s <testing ntuple>' % 
                  os.path.basename(sys.argv[0]))
 
-    cache_file_name = 'cache.root'
-
+    from os.path import splitext, basename, dirname
     ntuple_file_name = sys.argv[1]
-    ntuple_file = TFile(ntuple_file_name)
+    save_dir = '%splots_%s' % (dirname(ntuple_file_name), 
+                             splitext(ntuple_file_name)[0])
+    all_canvas = make_plots_from(ntuple_file_name)
 
-    if not os.path.isfile(cache_file_name): 
-
-        plots_by_function = define_plots()
-        fill_plots(plots_by_function, ntuple_file)
-        save_plots(plots_by_function,'cache.root')
-
-    else: 
-        plots_by_function, root_file = get_plots('cache.root')
-
-
-    # perf_canvas = draw_plots(plots_by_function)
-    
-    # raw_input('press enter')
-
-    plots = ['c over all','c over b','c over l']
-    # plots = ['b over all','b over c','b over l']
-
-    rej_vs_eff = draw_graphs(plots_by_function, 
-                             variable_list = plots, 
-                             y_function = significance, 
-                             logy = False)
 
 
     raw_input('press enter')
+    
+    formats = ['.pdf','.png']
+    if save_dir: 
+        if not os.path.isdir(save_dir): 
+            os.makedirs(save_dir)
+
+        for ext in formats: 
+            for plot in all_canvas: 
+                fullname = plot.GetName() + ext
+                fullpath = os.path.join(save_dir,fullname)
+                print 'printing to %s' % fullpath
+                plot.Print(fullpath)
 
 

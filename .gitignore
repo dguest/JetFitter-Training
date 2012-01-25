@@ -12,3 +12,4 @@
 .asetup.save
 *.root
 *.pyc
+*.out

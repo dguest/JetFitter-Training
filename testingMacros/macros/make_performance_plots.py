@@ -2,7 +2,7 @@
 import os, sys, math, re, array
 from math import exp, log
 from random import random
-from ROOT import TTree, TH1D, TFile, TCanvas, TROOT, gPad, TGraph
+from ROOT import TTree, TH1D, TFile, TCanvas, TROOT, gPad, TGraph, TLegend
 import AtlasStyle
 
 class Q: 
@@ -71,7 +71,11 @@ t = TROOT
 color_dict = { 
     'charm': t.kOrange, 
     'light': t.kBlue, 
-    'bottom': t.kRed
+    'bottom': t.kRed, 
+    'over c': t.kOrange, 
+    'over l': t.kBlue, 
+    'over b': t.kRed, 
+    'over all': t.kGreen + 4, 
     }
 color_key_re = re.compile('|'.join(color_dict.keys()))
     
@@ -83,8 +87,8 @@ def define_plots():
         (c_over_l, 'c over l'), 
         (b_over_c, 'b over c'), 
         (c_over_b, 'c over b'), 
-        # (c_over_all, 'c over all'), 
-        # (c_over_all, 'c over all'), 
+        (c_over_all, 'c over all'), 
+        (b_over_all, 'b over all'), 
         ]
     
     quark_flavor_list = [ 
@@ -142,9 +146,10 @@ def get_plots(file_name):
     ret_value = plots_by_function.values()
     return ret_value, root_file
 
-def fill_plots(plots_by_function, file_name): 
+def fill_plots(plots_by_function, root_file): 
 
-    root_file = TFile(file_name)
+    if isinstance(root_file, str): 
+        root_file = TFile(root_file)
     root_tree = root_file.Get('performance')
     
     n_entries_total = root_tree.GetEntriesFast()
@@ -167,46 +172,80 @@ def fill_plots(plots_by_function, file_name):
         
         # if entry_n > 100000: break 
 
-def bin_iter(hist): 
+def bin_rev_iter(hist): 
     n_bins = hist.GetNbinsX()
-    for bin_num in xrange(1,n_bins + 1): 
+    for bin_num in xrange(n_bins + 1,1, -1): 
         yield hist.GetBinContent(bin_num)
 
-def plots_to_rej_vs_eff(signal, background, total_events = None): 
+# --- y axis functions 
+def sig_over_bg(signal, background): 
+    if background == 0: 
+        return None
+    return signal / background
+sig_over_bg.string = 'sig / bkg' 
+
+def significance(signal, background): 
+    if signal + background == 0: 
+        return None
+    return signal / math.sqrt(signal + background)
+significance.string = '#frac{s}{#sqrt{s + b}}'
+
+def plots_to_rej_vs_eff(signal, background, y_function = sig_over_bg): 
 
     if isinstance(background, list): 
         total_background = background[0].Clone(str(random()))
         for other_background in background[1:]: 
             total_background.Add(other_background)
         background = total_background
-
-    if total_events is None: 
-        total_events = signal.GetEntries() + background.GetEntries()
-
-    total_background = 0
-    total_signal = 0
-
-    sig_array = array.array('f')
-    bkg_array = array.array('f')
-
-    for sig_val, bkg_val in zip(bin_iter(signal), bin_iter(background)):
-        total_signal += sig_val
-        total_background += bkg_val
         
-        sig_array.append(total_signal / total_events)
-        bkg_array.append(total_background / total_events)
+    total_signal = signal.GetEntries() 
 
-    inv_bkg_array = array.array('f', [1/x for x in bkg_array])
+    sum_background = 0
+    sum_signal = 0
+
+    sig_array = array.array('d')
+    bkg_array = array.array('d')
+
+    bin_values = zip(bin_rev_iter(signal), bin_rev_iter(background))
+    for sig_val, bkg_val in bin_values: 
+        sum_signal += sig_val
+        sum_background += bkg_val
+
+        y_value = y_function(sum_signal, sum_background)
+        if y_value is not None: 
+            sig_array.append(sum_signal / total_signal)
+            bkg_array.append(y_value)
+
+
+
+    # filter for nonzero background (since inverses of zero don't graph)
+    # f_sig, f_bkg = zip(*filter(lambda (x,y): y, zip(sig_array,bkg_array)))
+    # f_bkg_array = array.array('d', f_bkg)
+    # f_sig_array = array.array('d', f_sig)
 
     assert len(sig_array) == len(bkg_array)
 
-    graph = TGraph(len(sig_array), sig_array, inv_bkg_array)
+    # print type(f_sig), type(f_bkg)
+
+    graph = TGraph(len(sig_array), sig_array, bkg_array)
     return graph
 
-def draw_plots(plots_by_function): 
+def test_graphs(plots_by_function): 
+    signal = None
+    background = []
+    for fom_group in plots_by_function: 
+        print '--- new fom group ---'
+        for plot in fom_group: 
+            print '%s, %s, %s' % (plot.GetName(), 
+                                  plot.func_name, plot.truth_name)
+
+        the_graph = 'none'
+
+def draw_plots(plots_by_function, logy = True): 
 
     perf_canvas = TCanvas('performance','performance',
                           50,50,600*2, 400*2)
+
 
     n_pad_x, n_pad_y = get_square_of(len(plots_by_function))
     perf_canvas.Divide(n_pad_x, n_pad_y)
@@ -234,20 +273,103 @@ def draw_plots(plots_by_function):
         the_min = max(min(min_vals),1)
         the_max = max(max_vals)
         the_range = the_max - the_min
+        y_mar = 0.1
 
-        # plot_list[0].SetMaximum(the_max + 0.1*the_range)
-        # plot_list[0].SetMinimum(the_min - 0.1*the_range)
+        if logy: 
+            plot_list[0].SetMaximum(the_max*exp( y_mar*log(the_range)))
+            plot_list[0].SetMinimum(the_min*exp(-y_mar*log(the_range)))
+            gPad.SetLogy()
+        else: 
+            plot_list[0].SetMaximum(the_max + y_mar*the_range)
+            plot_list[0].SetMinimum(the_min - y_mar*the_range)
 
-        plot_list[0].SetMaximum(the_max*exp( 0.1*log(the_range)))
-        plot_list[0].SetMinimum(the_min*exp(-0.1*log(the_range)))
+    return perf_canvas
+
+def draw_graphs(plots_by_function, logy = True, variable_list = None, 
+                y_function = sig_over_bg): 
+
+    perf_canvas = TCanvas('rej_vs_eff','rej_vs_eff',
+                          50,50,600,400)
+
+    d_string = 'ap'
+
+    all_graphs = []
+    min_vals = []
+    max_vals = []
+    legend = TLegend(0.6, 0.6, 0.9,0.9)
+    legend.SetFillStyle(0)
+    legend.SetBorderSize(0)
+
+    for plot_list in plots_by_function:
+    
+        plot_variable = plot_list[0].func_name
+        num_name, denom_name = plot_variable.split('over')
+        x_label = '#frac{%s}{%s + %s}' % (num_name, num_name, denom_name)
+        new_plot_title = ';'.join(['',x_label,'n Jets'])
+        if variable_list: 
+            if plot_variable not in variable_list: 
+                continue
+
+        signal_char = plot_list[0].func_name.split()[0]
+
+        signal_hist = None
+        background_list = []
+        for plot in plot_list: 
+            if plot.truth_name[0] == signal_char: 
+                assert signal_hist is None
+                signal_hist = plot
+            else: 
+                background_list.append(plot)
+
+        rej_plot = plots_to_rej_vs_eff(signal_hist, background_list, 
+                                       y_function = y_function)
+
+        rej_plot.GetXaxis().SetLimits(0,1)
+        rej_plot.GetXaxis().SetRangeUser(0,1)
+        rej_plot.Draw(d_string)
+        d_string = 'p'
+
+        color = color_dict[color_key_re.findall(signal_hist.func_name)[0]]
+        rej_plot.SetMarkerColor(color)
+        rej_plot.SetLineColor(color)
+
+        from ROOT import TMath
+        # the_max = TMath.GeomMean(rej_plot.GetN(),rej_plot.GetY())
+        the_max = TMath.MaxElement(rej_plot.GetN(),rej_plot.GetY())
+        the_min = TMath.MinElement(rej_plot.GetN(),rej_plot.GetY())
+
+        min_vals.append(the_min)
+        max_vals.append(the_max)
+        all_graphs.append(rej_plot)
+
+        legend.AddEntry(rej_plot,signal_hist.func_name,'p')
+
+    the_min = min(min_vals)
+    # the_max = (sum(max_vals) / len(max_vals)) * 3
+    the_max = max(max_vals) 
+    the_range = the_max - the_min
+    y_mar = 0.1
+    print the_min, '--', the_max
+
+    try: 
+        y_title = y_function.string 
+    except AttributeError: 
+        y_title = 'unknown something' 
+
+    all_graphs[0].SetTitle(';'.join(['','efficiency',y_title]))
+
+    if logy: 
+        all_graphs[0].SetMaximum(the_max*exp( y_mar*log(the_range)))
+        all_graphs[0].SetMinimum(the_min*exp(-y_mar*log(the_range)))
         gPad.SetLogy()
-        
+    else: 
+        all_graphs[0].SetMaximum(the_max + y_mar*the_range)
+        all_graphs[0].SetMinimum(the_min - y_mar*the_range)
 
-
-    # for plot in all_plots: 
-    #     plot.Draw()
-    raw_input('PRESS ENTER')
-
+    legend.Draw()
+    perf_canvas.graphs = all_graphs
+    perf_canvas.legend = legend
+    return perf_canvas
 
 if __name__ == '__main__': 
     
@@ -257,17 +379,32 @@ if __name__ == '__main__':
 
     cache_file_name = 'cache.root'
 
+    ntuple_file_name = sys.argv[1]
+    ntuple_file = TFile(ntuple_file_name)
+
     if not os.path.isfile(cache_file_name): 
 
         plots_by_function = define_plots()
-        fill_plots(plots_by_function, sys.argv[1])
+        fill_plots(plots_by_function, ntuple_file)
         save_plots(plots_by_function,'cache.root')
 
     else: 
         plots_by_function, root_file = get_plots('cache.root')
 
 
-    draw_plots(plots_by_function)
+    # perf_canvas = draw_plots(plots_by_function)
+    
+    # raw_input('press enter')
 
+    plots = ['c over all','c over b','c over l']
+    # plots = ['b over all','b over c','b over l']
+
+    rej_vs_eff = draw_graphs(plots_by_function, 
+                             variable_list = plots, 
+                             y_function = significance, 
+                             logy = False)
+
+
+    raw_input('press enter')
 
 

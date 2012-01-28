@@ -1,69 +1,80 @@
-# --- load in root libraries
+# makefile for JETNET ntuple preprocessor 
+# Author: Dan Guest (dguest@cern.ch)
+# Created: Sat Jan 28 13:09:53 CET 2012
+
+# --- set dirs
+BIN          := bin
+SRC          := src
+INC          := include
+
+#  set search path
+vpath %.o    $(BIN)
+vpath %.cxx  $(SRC)
+vpath %.hh   $(INC)
+
+# --- load in root config
 ROOTCFLAGS    := $(shell root-config --cflags)
 ROOTLIBS      := $(shell root-config --libs)
 ROOTLDFLAGS   := $(shell root-config --ldflags)
 
-# --- set compiler and flags
-CXX          := g++
-CXXFLAGS     := -O2 -Wall -fPIC 
-
-CXXFLAGS     += $(ROOTCFLAGS)
-LDFLAGS      += $(ROOTLDFLAGS)
-LIBS         += $(ROOTLIBS)
-
-BIN          := bin
-PYDIR        := pylib
-
+# and py config
 ifndef PY_CONFIG
 PY_CONFIG := python-config
 endif 
+PY_FLAGS :=   $(shell $(PY_CONFIG) --includes)
+PY_LIB   := -L$(shell $(PY_CONFIG) --prefix)/lib
+PY_LIB   +=   $(shell $(PY_CONFIG) --libs)
 
-PY_FLAGS  = $(shell $(PY_CONFIG) --includes)
 
-# ---- set search path
-vpath %.cxx      src
-vpath %.i        src
-vpath %.o    $(BIN)
-HPATH         = src #tools #$(BIN) 
-CXXFLAGS     += $(HPATH:%=-I%)
+# --- set compiler and flags
+CXX          := g++
+CXXFLAGS     := -O2 -Wall -fPIC -I$(INC)
+LDFLAGS      := -Wl,-no-undefined 
 
-# ---- define macros
-FILL_OBJ     := readJFBTagAna.o readBaseBTagAnaTree.o writeNtuple_Official.o
-FILL_OBJ     += writeNtupleAll.o main.o
-ALLOBJ       += $(FILL_OBJ)
+# rootstuff 
+CXXFLAGS     += $(ROOTCFLAGS)
+LDFLAGS      := $(ROOTLDFLAGS)
+LIBS         := $(ROOTLIBS)
 
-all: prepareAllNtuplesForNN #$(PYDIR)/_prepntuple.so
+# pystuff 
+PY_LDFLAGS := $(LDFLAGS)
+PY_LDFLAGS += $(PY_LIB)
+PY_LDFLAGS += -shared
 
-prepareAllNtuplesForNN: $(FILL_OBJ:%=$(BIN)/%)
-	@echo linking $^
+# ---- define objects
+GEN_OBJ     := readJFBTagAna.o readBaseBTagAnaTree.o writeNtuple_Official.o
+GEN_OBJ     += writeNtupleAll.o 
+EXE_OBJ     := $(GEN_OBJ) main.o
+
+PY_OBJ       := pyprep.o
+
+ALLOBJ       := $(GEN_OBJ) $(PY_OBJ)
+
+ALLOUTPUT    := prepareAllNtuplesForNN pyprep.so 
+
+all: $(ALLOUTPUT)
+
+prepareAllNtuplesForNN: $(EXE_OBJ:%=$(BIN)/%)
+	@echo "linking $^ --> $@"
 	@$(CXX) -o $@ $^ $(LIBS) $(LDFLAGS)
 
-$(PYDIR)/_%.so: $(FILL_OBJ:%=$(BIN)/%) $(BIN)/%_wrap.o
-	@echo linking $^
-	@$(CXX) -o $@ $^ -shared $(LIBS) $(LDFLAGS)
-	@touch $(PYDIR)/__init__.py
+pyprep.so: $(GEN_OBJ:%=$(BIN)/%) $(PY_OBJ:%=$(BIN)/%)
+	@echo "linking $^ --> $@"
+	@$(CXX) -o $@ $^ $(LIBS) $(PY_LDFLAGS)
 
 # --------------------------------------------------
 
-# swig wrapper source
-src/%_wrap.cxx: %.i
-	@echo building wrapper $@
-	@mkdir -p $(PYDIR)
-	@swig -python -c++ -outdir $(PYDIR) $<
-
-$(BIN)/%_wrap.o: src/%_wrap.cxx
-	@echo compiling $<
+# python object compile
+$(BIN)/py%.o: py%.cxx 
+	@echo compiling python object $@
 	@mkdir -p $(BIN)
-	@$(CXX) $(PY_FLAGS) -c $< -o $@
+	@$(CXX) -c $(CXXFLAGS) $(PY_FLAGS) $< -o $@ 
 
 # compile rule
 $(BIN)/%.o: %.cxx
 	@echo compiling $<
 	@mkdir -p $(BIN)
 	@$(CXX) -c $(CXXFLAGS) $< -o $@
-
-
-
 
 # use auto dependency generation
 DEP = $(BIN)
@@ -77,11 +88,10 @@ $(DEP)/%.d: %.cxx
 	@mkdir -p $(DEP)
 	@$(CXX) -MM $(CXXFLAGS) $< -o $@
 	@sed -i 's,$*\.o,$(BIN)/& $@ ,g' $@
-	@rm -f $@.tmp
 
 # clean
 .PHONY : clean
 CLEANLIST     = *~ *.o *.o~ *.d core 
 clean:
 	rm -fr $(CLEANLIST) $(CLEANLIST:%=$(BIN)/%) $(CLEANLIST:%=$(DEP)/%)
-	rm -fr $(PYDIR)
+	rm -fr $(BIN) $(ALLOUTPUT)

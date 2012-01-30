@@ -1,13 +1,18 @@
 #include <TString.h>
+#include <vector>
+#include <string> 
 
 using namespace std;
 
-void writeNtuple_Official(TString inputFileName="all.root",
-                          TString inputFileName2="",
-                          TString inputFileName3="",
-                          TString inputFileName4="",
-                          TString jetCollectionName="Cone4H1TowerParticleJets",
-                          TString suffix = "AOD",
+typedef std::vector<std::string> SVector; 
+
+class LoadOfficialDSException {};
+
+void writeNtuple_Official(SVector input_files, 
+			  SVector observer_discriminators,
+                          std::string jetCollectionName = 
+			  "Cone4H1TowerParticleJets",
+                          std::string suffix = "AOD",
                           bool forNN = false,
                           bool randomize = false);
   

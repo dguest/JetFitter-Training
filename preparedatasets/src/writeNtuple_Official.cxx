@@ -8,6 +8,7 @@
 #include "TRandom.h"
 #include <cmath>
 #include <vector>
+#include <string>
 #include <algorithm>
 
 using namespace std;
@@ -53,98 +54,70 @@ struct allinfos
 
 
 
-void writeNtuple_Official(TString inputFileName,
-                          TString inputFileName2,
-                          TString inputFileName3,
-                          TString inputFileName4,
-                          TString jetCollectionName,
-                          TString suffix,
+void writeNtuple_Official(SVector input_files, 
+			  SVector observer_discriminators, 
+                          std::string jetCollectionName,
+                          std::string suffix,
                           bool forNN,
                           bool randomize) 
 {
   
 
-  TString jetCollection=jetCollectionName+suffix;
+  std::string jetCollection = jetCollectionName + suffix;
 
-  cout << " opening input file: " << inputFileName << endl << " processing to obtain: " << 
-      jetCollection << " root file "  << endl;
+  cout << " opening input file: " << inputFileName << endl 
+       << " processing to obtain: " << jetCollection 
+       << " root file "  << endl;
   
-  TString baseBTag("BTag_");
-  TString suffixIP2D("_IP2D/PerfTreeAll");
-  TString suffixIP3D("_IP3D/PerfTreeAll");
-  TString suffixSV1("_SV1/PerfTreeAll");
-  TString suffixCOMB("_COMB/PerfTreeAll");
-  TString suffixJF("_JetFitterTagNN/PerfTreeAll");
+  std::string baseBTag("BTag_");
 
-  cout << "instantiating IP2D " << endl;
-  TChain* treeIP2D=new TChain(baseBTag+jetCollection+suffixIP2D);
-  treeIP2D->Add(inputFileName);
-  treeIP2D->Add(inputFileName2);
-  treeIP2D->Add(inputFileName3);
-  treeIP2D->Add(inputFileName4);
-  if (treeIP2D->GetEntries()==0) throw std::string("Problem IP2D");
-  readBaseBTagAnaTree* readTreeIP2D= new readBaseBTagAnaTree(treeIP2D);
+  // --- observer variables
+  std::vector<readBaseBTagAnaTree*> observer_arrays; 
+  std::vector<TChain*> observer_chains; 
   
-  cout << "instantiating IP3D " << endl;
-  TChain* treeIP3D=new TChain(baseBTag+jetCollection+suffixIP3D);
-  treeIP3D->Add(inputFileName);
-  treeIP3D->Add(inputFileName2);
-  treeIP3D->Add(inputFileName3);
-  treeIP3D->Add(inputFileName4);
-  if (treeIP3D->GetEntries()==0) throw std::string("Problem IP3D");
-  readBaseBTagAnaTree* readTreeIP3D= new readBaseBTagAnaTree(treeIP3D);
+  for (SVector::const_iterator name_itr = observer_discriminators.begin(); 
+       name_itr != observer_discriminators.end(); 
+       name_itr++){ 
+    cout << "instantiating " << *name_itr << endl;
+    std::string chain_name = baseBTag + jetCollection + 
+      "_" + *name_itr + "/PerfTreeAll"; 
+    TChain* the_chain = new TChain(chain_name.c_str()); 
+    observer_chains.push_back(the_chain); 
+    
 
-  cout << "instantiating SV1 " << endl;
-  TChain* treeSV1=new TChain(baseBTag+jetCollection+suffixSV1);
-  treeSV1->Add(inputFileName);
-  treeSV1->Add(inputFileName2);
-  treeSV1->Add(inputFileName3);
-  treeSV1->Add(inputFileName4);
-  if (treeSV1->GetEntries()==0) throw std::string("Problem SV1");
-  readBaseBTagAnaTree* readTreeSV1= new readBaseBTagAnaTree(treeSV1);
+    for (SVector::const_iterator in_file_itr = input_files.begin(); 
+	 in_file_itr != input_files.end(); 
+	 in_file_itr++){ 
+      (*chain_itr)->Add(*in_file_itr); 
+    }
 
-  cout << "instantiating COMB " << endl;
-  TChain* treeCOMB=new TChain(baseBTag+jetCollection+suffixCOMB);
-  treeCOMB->Add(inputFileName);
-  treeCOMB->Add(inputFileName2);
-  treeCOMB->Add(inputFileName3);
-  treeCOMB->Add(inputFileName4);
-  if (treeCOMB->GetEntries()==0) throw std::string("Problem COMB");
-  readBaseBTagAnaTree* readTreeCOMB= new readBaseBTagAnaTree(treeCOMB);
+    if (the_chain->GetEntries() == 0)
+      throw LoadOfficialDSException();
+    
+    observer_arrays.push_back(new readBaseBTagAnaTree(the_chain) ); 
 
+  }
+
+  // --- jetfitter variables
+  std::string suffixJF("_JetFitterTagNN/PerfTreeAll");
   cout << "instantiating JetFitterTagNN " << endl;
-  TChain* treeJF=new TChain(baseBTag+jetCollection+suffixJF);
-  treeJF->Add(inputFileName);
-  treeJF->Add(inputFileName2);
-  treeJF->Add(inputFileName3);
-  treeJF->Add(inputFileName4);
+  TChain* treeJF=new TChain((baseBTag+jetCollection+suffixJF).c_str());
+
+  for (SVector::const_iterator in_file_itr = input_files.begin(); 
+       in_file_itr != input_files.end(); 
+       in_file_itr++){ 
+    treeJF->Add(*in_file_itr); 
+  }
+
   if (treeJF->GetEntries()==0) throw std::string("Problem JF");
   readJFBTagAna* readTreeJF= new readJFBTagAna(treeJF);
 
-  Int_t nVTX;
-  Int_t nTracksAtVtx;
-  Int_t nSingleTracks;
-  Double_t energyFraction;
-  Double_t mass;
-  Double_t significance3d;
+  // TString suffixIP2D("_IP2D/PerfTreeAll");
+  // TString suffixIP3D("_IP3D/PerfTreeAll");
+  // TString suffixSV1("_SV1/PerfTreeAll");
+  // TString suffixCOMB("_COMB/PerfTreeAll");
 
-  Int_t cat_flavour;
-  Int_t bottom;
-  Int_t charm;
-  Int_t light;
 
-  Double_t discriminatorIP2D;
-  Double_t discriminatorIP3D;
-  Double_t discriminatorSV1;
-  Double_t discriminatorCOMB;
- 
-  Double_t weight;
- 
-  Double_t deltaR;
-  Double_t JetPt;
-  Double_t JetEta;
-  Int_t cat_pT;
-  Int_t cat_eta;
 
   //for the NN you need to get the number of b,c or light jets
 
@@ -295,6 +268,44 @@ void writeNtuple_Official(TString inputFileName,
   
   TTree* myTree=new TTree("SVTree","SVTree");
 
+  // --- things to write out
+  Int_t nVTX;
+  Int_t nTracksAtVtx;
+  Int_t nSingleTracks;
+  Double_t energyFraction;
+  Double_t mass;
+  Double_t significance3d;
+
+  Int_t cat_flavour;
+  Int_t bottom;
+  Int_t charm;
+  Int_t light;
+
+  // observer write branches 
+  std::vector<double*> observer_write_buffers; 
+  for (SVector::const_iterator name_itr = observer_discriminators.begin(); 
+       name_itr != observer_discriminators.end(); 
+       name_itr++){ 
+    double* the_buffer = new double; 
+    observer_write_buffers.push_back(the_buffer); 
+    std::string name = "discriminator" + *name_itr; 
+    myTree->Branch(name.c_str(), the_buffer); 
+  }
+    
+  // Double_t discriminatorIP2D;
+  // Double_t discriminatorIP3D;
+  // Double_t discriminatorSV1;
+  // Double_t discriminatorCOMB;
+ 
+  Double_t weight;
+ 
+  Double_t deltaR;
+  Double_t JetPt;
+  Double_t JetEta;
+  Int_t cat_pT;
+  Int_t cat_eta;
+
+
   
   myTree->Branch("nVTX",&nVTX,"nVTX/I");
   myTree->Branch("nTracksAtVtx",&nTracksAtVtx,"nTracksAtVtx/I");
@@ -304,12 +315,11 @@ void writeNtuple_Official(TString inputFileName,
   myTree->Branch("significance3d",&significance3d,"significance3d/D");
 
   
-  if (forNN)
-  {
+  if (forNN){
     myTree->Branch("cat_pT",&cat_pT,"cat_pT/I");
     myTree->Branch("cat_eta",&cat_eta,"cat_eta/I");
     myTree->Branch("weight",&weight,"weight/D");
-    myTree->Branch("discriminatorIP3D",&discriminatorIP3D,"discriminatorIP3D/D");
+
     myTree->Branch("bottom",&bottom,"bottom/I");
     myTree->Branch("charm",&charm,"charm/I");
     myTree->Branch("light",&light,"light/I");
@@ -317,14 +327,10 @@ void writeNtuple_Official(TString inputFileName,
   
 
 
-    myTree->Branch("discriminatorIP2D",&discriminatorIP2D,"discriminatorIP2D/D");
-    myTree->Branch("discriminatorSV1",&discriminatorSV1,"discriminatorSV1/D");
-    myTree->Branch("discriminatorCOMB",&discriminatorCOMB,"discriminatorCOMB/D");  
-
-    myTree->Branch("deltaR",&deltaR,"deltaR/D");    
-    myTree->Branch("JetPt",&JetPt,"JetPt/D");
-    myTree->Branch("JetEta",&JetEta,"JetEta/D");
-    myTree->Branch("cat_flavour",&cat_flavour,"cat_flavour/I");  
+  myTree->Branch("deltaR",&deltaR,"deltaR/D");    
+  myTree->Branch("JetPt",&JetPt,"JetPt/D");
+  myTree->Branch("JetEta",&JetEta,"JetEta/D");
+  myTree->Branch("cat_flavour",&cat_flavour,"cat_flavour/I");  
 
 
 //  if (num_entries!=readTreeCOMB->fChain->GetEntries()) {
@@ -531,20 +537,26 @@ void writeNtuple_Official(TString inputFileName,
  
 
       //read the others only on demand (faster)
-      readTreeIP2D->GetEntry(i);
-      readTreeIP3D->GetEntry(i);
-      readTreeSV1->GetEntry(i);
-      readTreeCOMB->GetEntry(i);
+      for (short i = 0; i < observer_chains.size(); i++){ 
+	TChain* the_chain = observer_chains.at(i); 
+	readBaseBTagAnaTree* read_buffer = observer_arrays.at(i); 
+	double* write_buffer = observer_write_buffers.at(i); 
 
-      discriminatorIP3D=readTreeIP3D->Discriminator;
+	the_chain->GetEntry(i); 
+	// copy to the write buffer
+	*write_buffer = read_buffer->Discriminator; 
+	
+      }
+
+      // discriminatorIP3D=readTreeIP3D->Discriminator;
 //          readTreeIP3D->Discriminator>-10?readTreeIP3D->Discriminator:-10;
       
 //      if (!forNN)
 //      {
-        discriminatorIP2D=readTreeIP2D->Discriminator;
-        discriminatorSV1=readTreeSV1->Discriminator;
-        discriminatorCOMB=readTreeCOMB->Discriminator;
-        deltaR=readTreeCOMB->DeltaRtoBorCorTau;
+        // discriminatorIP2D=readTreeIP2D->Discriminator;
+        // discriminatorSV1=readTreeSV1->Discriminator;
+        // discriminatorCOMB=readTreeCOMB->Discriminator;
+        // deltaR=readTreeCOMB->DeltaRtoBorCorTau;
 //      }
       
 

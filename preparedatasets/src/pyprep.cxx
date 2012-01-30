@@ -4,7 +4,7 @@
 #include <string> 
 #include <vector>
 #include <iostream>
-#include "writeNtupleAll.hh"
+#include "writeNtuple_Official.hh"
 
 extern "C" { 
   
@@ -16,19 +16,25 @@ extern "C" {
 			PyObject *keywds)
   {
     PyObject* input_file_list; 
+    PyObject* observer_discriminators; 
+    std::string* jet_collection_name = "Cone4H1TowerParticleJets"; 
     bool debug = false; 
 
     const char *kwlist[] = {
       "input_file_list",
+      "observer_discriminators", 
+      "jet_collection_name", 
       "debug", 
       NULL};
     
     bool ok = PyArg_ParseTupleAndKeywords
-      (args, keywds, "O|b", 
+      (args, keywds, "OO|sb", 
        // this function should take a const, and 
-       // may be changed, until then we'll cast
+       // may be changed. until then we'll cast
        const_cast<char**>(kwlist),
        &input_file_list,
+       &observer_discriminators, 
+       &jet_collection_name, 
        &debug); 
 
     if (!ok) return NULL;
@@ -38,6 +44,14 @@ extern "C" {
       PyErr_SetString(PyExc_TypeError,"first arg should be a list of files"); 
       return NULL; 
     }
+
+    ok = PyList_Check(observer_discriminators); 
+    if (!ok) { 
+      PyErr_SetString(PyExc_TypeError,
+		      "observer_discriminators should be a list"); 
+      return NULL; 
+    }
+
     
     std::vector<std::string> files; 
     int n_files = PyList_Size(input_file_list); 
@@ -53,6 +67,20 @@ extern "C" {
       files.push_back(the_string); 
     }
 
+    
+    std::vector<std::string> observers; 
+    int n_observers = PyList_Size(observer_discriminators); 
+    for (int i = 0; i < n_observers; i++){ 
+      PyObject* the_ob = PyList_GetItem(observer_discriminators, i); 
+      if (!PyString_Check(the_ob)){ 
+	PyErr_SetString(PyExc_TypeError,
+			"found non-string in file list"); 
+	return NULL; 
+      }
+
+      std::string the_string = PyString_AsString(the_ob); 
+      observers.push_back(the_ob); 
+    }
 
     if (debug){ 
       std::cout << "files: " << std::endl;
@@ -70,6 +98,9 @@ extern "C" {
       // 		      input_file_2, 
       // 		      input_file_3, 
       // 		      input_file_4);
+
+      writeNtuple_Official(files, observers, jet_collection_name); 
+
     }
 
     Py_INCREF(Py_None);

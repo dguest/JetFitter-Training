@@ -65,7 +65,7 @@ void writeNtuple_Official(SVector input_files,
 
   std::string jetCollection = jetCollectionName + suffix;
 
-  cout << " opening input file: " << inputFileName << endl 
+  cout << " opening input files: " << endl 
        << " processing to obtain: " << jetCollection 
        << " root file "  << endl;
   
@@ -88,7 +88,7 @@ void writeNtuple_Official(SVector input_files,
     for (SVector::const_iterator in_file_itr = input_files.begin(); 
 	 in_file_itr != input_files.end(); 
 	 in_file_itr++){ 
-      (*chain_itr)->Add(*in_file_itr); 
+      the_chain->Add(in_file_itr->c_str()); 
     }
 
     if (the_chain->GetEntries() == 0)
@@ -106,7 +106,7 @@ void writeNtuple_Official(SVector input_files,
   for (SVector::const_iterator in_file_itr = input_files.begin(); 
        in_file_itr != input_files.end(); 
        in_file_itr++){ 
-    treeJF->Add(*in_file_itr); 
+    treeJF->Add(in_file_itr->c_str()); 
   }
 
   if (treeJF->GetEntries()==0) throw std::string("Problem JF");
@@ -129,26 +129,26 @@ void writeNtuple_Official(SVector input_files,
   int numberl=0;
 
   if (forNN) 
-  {
+    {
 
-    for (Long64_t i=0;i<num_entries;i++) {
+      for (Long64_t i=0;i<num_entries;i++) {
 
-      readTreeJF->GetEntry(i);
+	readTreeJF->GetEntry(i);
       
-      if (readTreeJF->mass > -100)
-      {
-        if (abs(readTreeJF->Flavour)==5){
-          numberb+=1;
-        }
-        if (abs(readTreeJF->Flavour)==4){
-          numberc+=1;
-        }
-        if (abs(readTreeJF->Flavour==1)){
-          numberl+=1;
-        }
+	if (readTreeJF->mass > -100)
+	  {
+	    if (abs(readTreeJF->Flavour)==5){
+	      numberb+=1;
+	    }
+	    if (abs(readTreeJF->Flavour)==4){
+	      numberc+=1;
+	    }
+	    if (abs(readTreeJF->Flavour==1)){
+	      numberl+=1;
+	    }
+	  }
       }
     }
-  }
   
   //now you have to calculate the weights...
   //(store them in a matrix for b,c or light jets...
@@ -180,8 +180,7 @@ void writeNtuple_Official(SVector input_files,
   Double_t maxweightc=0;
   
   
-  if (forNN) 
-  {
+  if (forNN) {
     
     weightsb=new Double_t[numPtBins*numEtaBins];
     weightsl=new Double_t[numPtBins*numEtaBins];
@@ -217,27 +216,24 @@ void writeNtuple_Official(SVector input_files,
       
       int flavour=abs(readTreeJF->Flavour);
 
-//      cout << " actualpT " << actualpT << " actualeta " << actualeta << endl;
+      //      cout << " actualpT " << actualpT << " actualeta " << actualeta << endl;
       
-      switch (flavour)
-      {
+      switch (flavour){
       case 5:
-        countb[actualpT+numPtBins*actualeta]+=1./(ptInfo.second*etaInfo.second);
-        break;
+	countb[actualpT+numPtBins*actualeta]+=1./(ptInfo.second*etaInfo.second);
+	break;
       case 4:
-        countc[actualpT+numPtBins*actualeta]+=1./(ptInfo.second*etaInfo.second);
-        break;
+	countc[actualpT+numPtBins*actualeta]+=1./(ptInfo.second*etaInfo.second);
+	break;
       case 1:
-        countl[actualpT+numPtBins*actualeta]+=1./(ptInfo.second*etaInfo.second);
-        break;
+	countl[actualpT+numPtBins*actualeta]+=1./(ptInfo.second*etaInfo.second);
+	break;
       }
 
     }
     
       
     for (int i=0;i<numPtBins*numEtaBins;i++){
-//      cout << " for i=ptxeta = " << i << " weightsb[i] " << weightsb[i]
-//           << " weightsl[i] " << weightsl[i] << " weightsc[i] " << weightsc[i] << endl;
       weightsb[i]= (Double_t)numberb / (Double_t)countb[i] ;
       weightsl[i]= (Double_t)numberl / (Double_t)countl[i] ;
       weightsc[i]= (Double_t)numberc / (Double_t)countc[i];
@@ -252,16 +248,16 @@ void writeNtuple_Official(SVector input_files,
   
 
   cout << " maxweightb: " << maxweightb << " maxweightc: " << maxweightc << 
-      " maxweightl: " << maxweightl << endl;
+    " maxweightl: " << maxweightl << endl;
 
   TFile* file=0;
   
   TString filename("../reduceddatasets/reduceddataset_");
   filename+=jetCollectionName;
   if (forNN)
-  {
-    filename+="_forNN";
-  }
+    {
+      filename+="_forNN";
+    }
   filename+=".root";
 
   file=new TFile(filename,"recreate");
@@ -333,58 +329,14 @@ void writeNtuple_Official(SVector input_files,
   myTree->Branch("cat_flavour",&cat_flavour,"cat_flavour/I");  
 
 
-//  if (num_entries!=readTreeCOMB->fChain->GetEntries()) {
-//    throw std::string("event number doesn't match");
-//  }
-
-  //now randomize entries
-
-/*
-  std::vector<int> inputvalues;
-  
-  for (Int_t i=0;i<num_entries;i++) 
-  {
-    inputvalues.push_back(i);
-  }
-  
-  std::vector<int> outputvalues;
-  int counter=0;
-  do
-  {
-
-    int size=inputvalues.size();
-    if (size==0)
-    {
-      break;
-    }
-    double randomNumber=random.Uniform(0,size);
-    int nToTransfer=(int)(std::floor(randomNumber<size?randomNumber:0)+0.5);
-    vector<int>::iterator begin=inputvalues.begin();
-    begin+=nToTransfer;
-    outputvalues.push_back(inputvalues[nToTransfer]);
-    if (counter%100000==0)
-    {
-    cout << " Processing randomizing event: " << counter << 
-        " inputvalue " << inputvalues[nToTransfer] <<  endl;
-    }
-    
-    inputvalues.erase(begin);
-    counter+=1;
-
-
-  }
-  while (true);
-*/
 
   std::vector<number_pair> outputvalues;
   
-  for (Int_t i=0;i<num_entries;i++) 
-  {
+  for (Int_t i=0;i<num_entries;i++) {
     outputvalues.push_back(number_pair(i,random.Uniform()));
   }
   
-  if (randomize)
-  {
+  if (randomize){
     
     cout << " Doing sorting... " << endl;
     std::sort (outputvalues.begin(), outputvalues.end());
@@ -398,30 +350,26 @@ void writeNtuple_Official(SVector input_files,
   
   vector<number_pair>::const_iterator begin=outputvalues.begin();
   vector<number_pair>::const_iterator end=outputvalues.end();
-  
+
   Int_t counter=0;
-  for (vector<number_pair>::const_iterator iter=begin;iter!=end;++iter)
-  {
+  for (vector<number_pair>::const_iterator iter=begin;iter!=end;++iter){
     i=(*iter).first;
 
     //take only every fifth data point
-    if (!forNN)
-    {
-      if (counter%5 != 0)
-      {
-        counter+=1;
-        continue;
+    if (!forNN){
+      if (counter%5 != 0){
+	counter+=1;
+	continue;
       }
     }
     
 
-//    if (counter>1000000)
-//      break;
-//    }
     
 
     if (counter % 500000 == 0 ) {
-      std::cout << " processing event number " << counter << " data event: " << i << " which was event n. " << std::endl;
+      std::cout << " processing event number " << 
+	counter << " data event: " << i << " which was event n. " 
+		<< std::endl;
     }
     
     counter+=1;
@@ -441,123 +389,96 @@ void writeNtuple_Official(SVector input_files,
       cat_eta=getEtaCategory(JetEta).first;
       
       cat_flavour=abs(readTreeJF->Flavour);
-      if (forNN)
-      {
-        bottom=0;
-        charm=0;
-        light=0;
+      if (forNN){
+	bottom=0;
+	charm=0;
+	light=0;
 
-        bool throwevent(false);
+	bool throwevent(false);
 
-        switch (cat_flavour)
-        {
-        case 5:
-          bottom=1;
-          weight=weightsb[cat_pT+numPtBins*cat_eta];
+	switch (cat_flavour){
+	case 5:
+	  bottom=1;
+	  weight=weightsb[cat_pT+numPtBins*cat_eta];
 
-          if (forNN)
-          {
+	  if (forNN){
             
-            if (weight<maxweightb/toleranceb)
-            {
-              if (random.Uniform()>weight*toleranceb/maxweightb)
-              {
-                throwevent=true;
-              }
-              weight=1.;//maxweightb/toleranceb;
-            }
-            else
-            {
-              weight/=(maxweightb/toleranceb);
-            }
-          } 
+	    if (weight<maxweightb/toleranceb){
+	      if (random.Uniform()>weight*toleranceb/maxweightb){
+		throwevent=true;
+	      }
+	      weight=1.;//maxweightb/toleranceb;
+	    }
+	    else{
+	      weight/=(maxweightb/toleranceb);
+	    }
+	  } 
             
           
-          break;
-        case 4:
-          charm=1;
-          weight=weightsc[cat_pT+numPtBins*cat_eta];
+	  break;
+	case 4:
+	  charm=1;
+	  weight=weightsc[cat_pT+numPtBins*cat_eta];
 
-          if (forNN)
-          {
-            if (weight<maxweightc/tolerancec)
-            {
-              if (random.Uniform()>weight*tolerancec/maxweightc)
-              {
-                throwevent=true;
-              }
-              weight=1.;//maxweightc/tolerancec;
-            }
-            else
-            {
-              weight/=(maxweightc/tolerancec);
-            }
-          }
+	  if (forNN){
+	    if (weight<maxweightc/tolerancec){
+	      if (random.Uniform()>weight*tolerancec/maxweightc){
+		throwevent=true;
+	      }
+	      weight=1.;//maxweightc/tolerancec;
+	    }
+	    else{
+	      weight/=(maxweightc/tolerancec);
+	    }
+	  }
           
 
 
-          break;
-        case 1:
-          light=1;
-          weight=weightsl[cat_pT+numPtBins*cat_eta];
+	  break;
+	case 1:
+	  light=1;
+	  weight=weightsl[cat_pT+numPtBins*cat_eta];
 
-          if (forNN)
-          {
+	  if (forNN){
             
-            if (weight<maxweightl/tolerancel)
-            {
-              if (random.Uniform()>weight*tolerancel/maxweightl)
-              {
-                throwevent=true;
-              }
-              weight=1.;//maxweightl/tolerancel;
-            }
-            else 
-            {
-              weight/=(maxweightl/tolerancel);
-            }
+	    if (weight<maxweightl/tolerancel){
+	      if (random.Uniform()>weight*tolerancel/maxweightl){
+		throwevent=true;
+	      }
+	      weight=1.;//maxweightl/tolerancel;
+	    }
+	    else {
+	      weight/=(maxweightl/tolerancel);
+	    }
             
-          }
+	  }
           
-          break;
+	  break;
 
-        default:
-          throwevent=true;
-          break;
+	default:
+	  throwevent=true;
+	  break;
           
         
-        }
+	}
         
 
-        if (throwevent) continue;
+	if (throwevent) continue;
 
       }
       
 
- 
-
       //read the others only on demand (faster)
-      for (short i = 0; i < observer_chains.size(); i++){ 
-	TChain* the_chain = observer_chains.at(i); 
-	readBaseBTagAnaTree* read_buffer = observer_arrays.at(i); 
-	double* write_buffer = observer_write_buffers.at(i); 
+      for (short j = 0; j < observer_chains.size(); j++){ 
+	TChain* the_chain = observer_chains.at(j); 
+	readBaseBTagAnaTree* read_buffer = observer_arrays.at(j); 
+	double* write_buffer = observer_write_buffers.at(j); 
 
 	the_chain->GetEntry(i); 
-	// copy to the write buffer
 	*write_buffer = read_buffer->Discriminator; 
 	
       }
 
-      // discriminatorIP3D=readTreeIP3D->Discriminator;
-//          readTreeIP3D->Discriminator>-10?readTreeIP3D->Discriminator:-10;
-      
-//      if (!forNN)
-//      {
-        // discriminatorIP2D=readTreeIP2D->Discriminator;
-        // discriminatorSV1=readTreeSV1->Discriminator;
-        // discriminatorCOMB=readTreeCOMB->Discriminator;
-        // deltaR=readTreeCOMB->DeltaRtoBorCorTau;
-//      }
       
 
       nVTX=readTreeJF->nVTX;
@@ -572,20 +493,22 @@ void writeNtuple_Official(SVector input_files,
     
   }
 
+
+
   file->WriteTObject(myTree); 
   file->Close();
   
 
 
   /*
-  delete readTreeIP2D;
-  delete readTreeIP3D;
-  delete readTreeSV1;
-  delete readTreeCOMB;
-  delete readTreeJF;
+    delete readTreeIP2D;
+    delete readTreeIP3D;
+    delete readTreeSV1;
+    delete readTreeCOMB;
+    delete readTreeJF;
   */
 
-//  inputFile.Close();
+  //  inputFile.Close();
 
   
 }

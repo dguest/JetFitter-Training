@@ -11,8 +11,8 @@ class LoadOfficialDSException {};
 void writeNtuple_Official(SVector input_files, 
 			  SVector observer_discriminators,
                           std::string jetCollectionName = 
-			  "Cone4H1TowerParticleJets",
+			  "AntiKt4TopoEMJets",  
                           std::string suffix = "AOD",
-                          bool forNN = false,
+                          bool forNN = true,
                           bool randomize = false);
   

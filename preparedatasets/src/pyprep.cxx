@@ -17,7 +17,7 @@ extern "C" {
   {
     PyObject* input_file_list; 
     PyObject* observer_discriminators; 
-    std::string* jet_collection_name = "Cone4H1TowerParticleJets"; 
+    const char* jet_collection_name = "AntiKt4TopoEMJets"; 
     bool debug = false; 
 
     const char *kwlist[] = {
@@ -79,7 +79,7 @@ extern "C" {
       }
 
       std::string the_string = PyString_AsString(the_ob); 
-      observers.push_back(the_ob); 
+      observers.push_back(the_string); 
     }
 
     if (debug){ 
@@ -92,12 +92,6 @@ extern "C" {
     }
 
     else{ 
-
-      // ****** WORK DO HERE **********
-      // writeAllNtuples(input_file_1, 
-      // 		      input_file_2, 
-      // 		      input_file_3, 
-      // 		      input_file_4);
 
       writeNtuple_Official(files, observers, jet_collection_name); 
 

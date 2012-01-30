@@ -79,8 +79,6 @@ color_dict = {
     }
 color_key_re = re.compile('|'.join(color_dict.keys()))
     
-
-
 def define_plots(): 
     plot_function_list = [
         (b_over_l, 'b over l'), 
@@ -146,7 +144,8 @@ def get_plots(file_name):
     ret_value = plots_by_function.values()
     return ret_value, root_file
 
-def fill_plots(plots_by_function, root_file): 
+def fill_plots(plots_by_function, root_file, cut_list = [], 
+               max_events = None): 
 
     if isinstance(root_file, str): 
         root_file = TFile(root_file)
@@ -156,21 +155,29 @@ def fill_plots(plots_by_function, root_file):
 
     print '%i entries in tree' % n_entries_total
 
+    n_cuts = 0
     for entry_n, entry in enumerate(root_tree): 
+
+        if max_events is not None: 
+            if entry_n > max_events: 
+                break 
+
+        for cut in cut_list: 
+            if cut(entry): 
+                n_cuts += 1
+                continue
 
         for plot_list in plots_by_function: 
             for plot in plot_list: 
                 plot.fill(entry)
 
-        # print 'entry: %i' % entry_n
-        # print 'flavor: %i' % entry.cat_flavour
-        # print the_map.name
-        # print the_map(entry)
 
         if entry_n % 20000 == 0: 
             print '%i of %i entries processed' % (entry_n, n_entries_total)
         
         # if entry_n > 100000: break 
+
+    print 'cut %i events' % n_cuts
 
 def bin_rev_iter(hist): 
     n_bins = hist.GetNbinsX()
@@ -178,17 +185,23 @@ def bin_rev_iter(hist):
         yield hist.GetBinContent(bin_num)
 
 # --- y axis functions 
-def sig_over_bg(signal, background): 
+def sig_over_bg(signal, background, total_background): 
     if background == 0: 
         return None
     return signal / background
 sig_over_bg.string = 'sig / bkg' 
 
-def significance(signal, background): 
+def significance(signal, background, total_background): 
     if signal + background == 0: 
         return None
     return signal / math.sqrt(signal + background)
 significance.string = '#frac{s}{#sqrt{s + b}}'
+
+def rejection(signal, background, total_background): 
+    if background == 0: 
+        return None
+    return total_background / background
+rejection.string = 'rejection'
 
 def plots_to_rej_vs_eff(signal, background, y_function = sig_over_bg): 
 
@@ -199,6 +212,7 @@ def plots_to_rej_vs_eff(signal, background, y_function = sig_over_bg):
         background = total_background
         
     total_signal = signal.GetEntries() 
+    total_background = background.GetEntries() 
 
     sum_background = 0
     sum_signal = 0
@@ -211,21 +225,14 @@ def plots_to_rej_vs_eff(signal, background, y_function = sig_over_bg):
         sum_signal += sig_val
         sum_background += bkg_val
 
-        y_value = y_function(sum_signal, sum_background)
+        y_value = y_function(sum_signal, sum_background, total_background)
         if y_value is not None: 
             sig_array.append(sum_signal / total_signal)
             bkg_array.append(y_value)
 
 
-
-    # filter for nonzero background (since inverses of zero don't graph)
-    # f_sig, f_bkg = zip(*filter(lambda (x,y): y, zip(sig_array,bkg_array)))
-    # f_bkg_array = array.array('d', f_bkg)
-    # f_sig_array = array.array('d', f_sig)
-
     assert len(sig_array) == len(bkg_array)
 
-    # print type(f_sig), type(f_bkg)
 
     graph = TGraph(len(sig_array), sig_array, bkg_array)
     return graph
@@ -313,16 +320,23 @@ def draw_graphs(plots_by_function, logy = True, variable_list = None,
             if plot_variable not in variable_list: 
                 continue
 
-        signal_char = plot_list[0].func_name.split()[0]
+        signal_char, bg_char = plot_list[0].func_name.split(' over ')
 
         signal_hist = None
         background_list = []
         for plot in plot_list: 
-            if plot.truth_name[0] == signal_char: 
+            truth_char = plot.truth_name[0]
+            if truth_char == signal_char: 
                 assert signal_hist is None
                 signal_hist = plot
-            else: 
+            elif truth_char == bg_char or bg_char == 'all': 
                 background_list.append(plot)
+
+            else: 
+                print 'not including %s in %s' % (plot.truth_name, 
+                                                  plot.func_name)
+
+                print signal_char, bg_char
 
         rej_plot = plots_to_rej_vs_eff(signal_hist, background_list, 
                                        y_function = y_function)
@@ -346,7 +360,16 @@ def draw_graphs(plots_by_function, logy = True, variable_list = None,
         max_vals.append(the_max)
         all_graphs.append(rej_plot)
 
-        legend.AddEntry(rej_plot,signal_hist.func_name,'l')
+        # add legend
+        func_name = signal_hist.func_name
+        sig_name, bg_name = func_name.split(' over ')
+        if bg_name == 'all': 
+            leg_entry = 'nn_{%s} / nn_{all}' % sig_name
+        else: 
+            leg_entry = 'nn_{%s} / nn_{%s + %s}' % (
+                sig_name, sig_name, bg_name)
+
+        legend.AddEntry(rej_plot,leg_entry,'l')
 
     the_min = min(min_vals)
     # the_max = (sum(max_vals) / len(max_vals)) * 3
@@ -376,7 +399,7 @@ def draw_graphs(plots_by_function, logy = True, variable_list = None,
     return perf_canvas
 
 
-def make_plots_from(ntuple_file_name): 
+def make_plots_from(ntuple_file_name, cut_list = None ): 
 
     cache_file_name = '%s_cache%s' % os.path.splitext(ntuple_file_name)
 
@@ -386,7 +409,8 @@ def make_plots_from(ntuple_file_name):
     if not os.path.isfile(cache_file_name): 
 
         plots_by_function = define_plots()
-        fill_plots(plots_by_function, ntuple_file)
+        fill_plots(plots_by_function, ntuple_file, cut_list = cut_list, 
+                   max_events = 10000)
         save_plots(plots_by_function,cache_file_name)
 
     else: 
@@ -407,8 +431,8 @@ def make_plots_from(ntuple_file_name):
         
         rej_vs_eff = draw_graphs(plots_by_function, 
                                  variable_list = plots, 
-                                 y_function = significance, 
-                                 logy = False, 
+                                 y_function = rejection, 
+                                 logy = True, 
                                  canvas_name = name)
 
         rej_vs_eff_list.append(rej_vs_eff)
@@ -418,6 +442,16 @@ def make_plots_from(ntuple_file_name):
 
     return all_canvas
     # raw_input('press enter')
+
+# ---- cuts 
+
+def jet_pt_cut(entry): 
+    pass_cut = 50 < entry.JetPt < 180
+    return not pass_cut
+
+def jet_eta_cut(entry): 
+    pass_cut = abs(entry.JetEta) < 1.5
+    return not pass_cut
 
 if __name__ == '__main__': 
     
@@ -429,9 +463,15 @@ if __name__ == '__main__':
     ntuple_file_name = sys.argv[1]
     save_dir = '%splots_%s' % (dirname(ntuple_file_name), 
                              splitext(ntuple_file_name)[0])
-    all_canvas = make_plots_from(ntuple_file_name)
 
 
+    cut_list = [ 
+        jet_pt_cut, 
+        jet_eta_cut, 
+        ]
+    all_canvas = make_plots_from(ntuple_file_name, cut_list)
+
+    
 
     raw_input('press enter')
     

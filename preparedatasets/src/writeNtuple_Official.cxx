@@ -12,6 +12,7 @@
 #include <algorithm>
 
 #include <boost/ptr_container/ptr_vector.hpp>
+#include <boost/scoped_ptr.hpp>
 
 using namespace std;
 
@@ -27,12 +28,13 @@ struct number_pair
 
 
 
-void writeNtuple_Official(SVector input_files, 
-			  SVector observer_discriminators, 
-                          std::string jetCollectionName,
-                          std::string suffix,
-                          bool forNN,
-                          bool randomize) 
+int writeNtuple_Official(SVector input_files, 
+			 SVector observer_discriminators, 
+			 std::string jetCollectionName,
+			 std::string output_file, 
+			 std::string suffix,
+			 bool forNN,
+			 bool randomize) 
 {
   
 
@@ -76,7 +78,8 @@ void writeNtuple_Official(SVector input_files,
   // --- jetfitter variables
   std::string suffixJF("_JetFitterTagNN/PerfTreeAll");
   cout << "instantiating JetFitterTagNN " << endl;
-  TChain* treeJF = new TChain((baseBTag+jetCollection+suffixJF).c_str());
+  boost::scoped_ptr<TChain> treeJF
+    (new TChain((baseBTag+jetCollection+suffixJF).c_str()));
 
   for (SVector::const_iterator in_file_itr = input_files.begin(); 
        in_file_itr != input_files.end(); 
@@ -84,8 +87,11 @@ void writeNtuple_Official(SVector input_files,
     treeJF->Add(in_file_itr->c_str()); 
   }
 
-  if (treeJF->GetEntries()==0) throw std::string("Problem JF");
-  readJFBTagAna* readTreeJF= new readJFBTagAna(treeJF);
+  if (treeJF->GetEntries()==0) 
+      throw LoadOfficialDSException();
+
+  boost::scoped_ptr<readJFBTagAna> readTreeJF
+    (new readJFBTagAna(treeJF.get()));
 
   // TString suffixIP2D("_IP2D/PerfTreeAll");
   // TString suffixIP3D("_IP3D/PerfTreeAll");
@@ -103,32 +109,32 @@ void writeNtuple_Official(SVector input_files,
   int numberc=0;
   int numberl=0;
 
-  if (forNN) 
-    {
+  if (forNN) {
 
-      for (Long64_t i=0;i<num_entries;i++) {
+    for (Long64_t i=0;i<num_entries;i++) {
 
-	readTreeJF->GetEntry(i);
+      readTreeJF->GetEntry(i);
       
-	if (readTreeJF->mass > -100)
-	  {
-	    if (abs(readTreeJF->Flavour)==5){
-	      numberb+=1;
-	    }
-	    if (abs(readTreeJF->Flavour)==4){
-	      numberc+=1;
-	    }
-	    if (abs(readTreeJF->Flavour==1)){
-	      numberl+=1;
-	    }
-	  }
+      if (readTreeJF->mass > -100){
+	if (abs(readTreeJF->Flavour)==5){
+	  numberb+=1;
+	}
+	if (abs(readTreeJF->Flavour)==4){
+	  numberc+=1;
+	}
+	if (abs(readTreeJF->Flavour==1)){
+	  numberl+=1;
+	}
       }
     }
+  }
   
   //now you have to calculate the weights...
   //(store them in a matrix for b,c or light jets...
 
-  cout << " number of b found : " << numberb << " c: " << numberc << " l: " << numberl << endl;
+  cout << " number of b found : " << numberb 
+       << " c: " << numberc 
+       << " l: " << numberl << endl;
 
   double correctionfactor=1;
 
@@ -225,19 +231,11 @@ void writeNtuple_Official(SVector input_files,
   cout << " maxweightb: " << maxweightb << " maxweightc: " << maxweightc << 
     " maxweightl: " << maxweightl << endl;
 
-  TFile* file=0;
-  
-  TString filename("../reduceddatasets/reduceddataset_");
-  filename+=jetCollectionName;
-  if (forNN)
-    {
-      filename+="_forNN";
-    }
-  filename+=".root";
+  boost::scoped_ptr<TFile> file(new TFile(output_file.c_str(),"recreate"));
+  // TFile* file = new TFile(output_file.c_str(),"recreate");
 
-  file=new TFile(filename,"recreate");
-  
-  TTree* myTree=new TTree("SVTree","SVTree");
+  boost::scoped_ptr<TTree> myTree(new TTree("SVTree","SVTree"));
+  // TTree* myTree = new TTree("SVTree","SVTree");
 
   // --- things to write out
   Int_t nVTX;
@@ -444,7 +442,7 @@ void writeNtuple_Official(SVector input_files,
       
 
       //read the others only on demand (faster)
-      for (short j = 0; j < observer_chains.size(); j++){ 
+      for (unsigned short j = 0; j < observer_chains.size(); j++){ 
 	TChain& the_chain = observer_chains.at(j); 
 	readBaseBTagAnaTree& read_buffer = observer_arrays.at(j); 
 	double& write_buffer = observer_write_buffers.at(j); 
@@ -469,22 +467,10 @@ void writeNtuple_Official(SVector input_files,
   }
 
 
+  file->WriteTObject(myTree.get()); 
+  printf("done!\n");
 
-  file->WriteTObject(myTree); 
-  file->Close();
-  
-
-
-  /*
-    delete readTreeIP2D;
-    delete readTreeIP3D;
-    delete readTreeSV1;
-    delete readTreeCOMB;
-    delete readTreeJF;
-  */
-
-  //  inputFile.Close();
-
+  return 0; 
   
 }
   

@@ -14,7 +14,7 @@ int main (int narg, char* argv[]) {
   observers.push_back("SV1"); 
   observers.push_back("COMB"); 
 
-  writeNtuple_Official(files,observers); 
+  writeNtuple_Official(files,observers);  
 
 
 

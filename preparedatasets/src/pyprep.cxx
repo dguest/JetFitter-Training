@@ -18,23 +18,26 @@ extern "C" {
     PyObject* input_file_list; 
     PyObject* observer_discriminators; 
     const char* jet_collection_name = "AntiKt4TopoEMJets"; 
+    const char* output_file_name = "reduced.root"; 
     bool debug = false; 
 
     const char *kwlist[] = {
       "input_file_list",
       "observer_discriminators", 
       "jet_collection_name", 
+      "output_file_name", 
       "debug", 
       NULL};
     
     bool ok = PyArg_ParseTupleAndKeywords
-      (args, keywds, "OO|sb", 
+      (args, keywds, "OO|ssb", 
        // this function should take a const, and 
        // may be changed. until then we'll cast
        const_cast<char**>(kwlist),
        &input_file_list,
        &observer_discriminators, 
        &jet_collection_name, 
+       &output_file_name, 
        &debug); 
 
     if (!ok) return NULL;
@@ -89,11 +92,25 @@ extern "C" {
 	   itr++){ 
 	std::cout << *itr << std::endl;
       }
+
+      std::cout << "observers: " << std::endl;
+      for (std::vector<std::string>::const_iterator itr = observers.begin(); 
+	   itr != observers.end(); 
+	   itr++){ 
+	std::cout << *itr << std::endl;
+      }
+      
+      printf("jet collection: %s\n" , jet_collection_name);
+      printf("output file: %s\n", output_file_name); 
+
+
     }
 
     else{ 
 
-      writeNtuple_Official(files, observers, jet_collection_name); 
+      writeNtuple_Official(files, observers, 
+			   jet_collection_name, 
+			   output_file_name); 
 
     }
 

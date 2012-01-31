@@ -11,6 +11,8 @@
 #include <string>
 #include <algorithm>
 
+#include <boost/ptr_container/ptr_vector.hpp>
+
 using namespace std;
 
 struct number_pair
@@ -22,35 +24,6 @@ struct number_pair
   bool operator< (const number_pair& other) const
   { return second > other.second; }
 };
-
-struct allinfos
-{
-  Int_t nVTX;
-  Int_t nTracksAtVtx;
-  Int_t nSingleTracks;
-  Double_t energyFraction;
-  Double_t mass;
-  Double_t significance3d;
-
-  Int_t cat_flavour;
-  Int_t bottom;
-  Int_t charm;
-  Int_t light;
-
-  Double_t discriminatorIP2D;
-  Double_t discriminatorIP3D;
-  Double_t discriminatorSV1;
-  Double_t discriminatorCOMB;
- 
-  Double_t weight;
- 
-  Double_t deltaR;
-  Double_t JetPt;
-  Double_t JetEta;
-  Int_t cat_pT;
-  Int_t cat_eta;
-};
-
 
 
 
@@ -72,8 +45,8 @@ void writeNtuple_Official(SVector input_files,
   std::string baseBTag("BTag_");
 
   // --- observer variables
-  std::vector<readBaseBTagAnaTree*> observer_arrays; 
-  std::vector<TChain*> observer_chains; 
+  boost::ptr_vector<readBaseBTagAnaTree> observer_arrays(10); 
+  boost::ptr_vector<TChain> observer_chains(10); 
   
   for (SVector::const_iterator name_itr = observer_discriminators.begin(); 
        name_itr != observer_discriminators.end(); 
@@ -81,6 +54,8 @@ void writeNtuple_Official(SVector input_files,
     cout << "instantiating " << *name_itr << endl;
     std::string chain_name = baseBTag + jetCollection + 
       "_" + *name_itr + "/PerfTreeAll"; 
+
+
     TChain* the_chain = new TChain(chain_name.c_str()); 
     observer_chains.push_back(the_chain); 
     
@@ -101,7 +76,7 @@ void writeNtuple_Official(SVector input_files,
   // --- jetfitter variables
   std::string suffixJF("_JetFitterTagNN/PerfTreeAll");
   cout << "instantiating JetFitterTagNN " << endl;
-  TChain* treeJF=new TChain((baseBTag+jetCollection+suffixJF).c_str());
+  TChain* treeJF = new TChain((baseBTag+jetCollection+suffixJF).c_str());
 
   for (SVector::const_iterator in_file_itr = input_files.begin(); 
        in_file_itr != input_files.end(); 
@@ -278,7 +253,7 @@ void writeNtuple_Official(SVector input_files,
   Int_t light;
 
   // observer write branches 
-  std::vector<double*> observer_write_buffers; 
+  boost::ptr_vector<double> observer_write_buffers; 
   for (SVector::const_iterator name_itr = observer_discriminators.begin(); 
        name_itr != observer_discriminators.end(); 
        name_itr++){ 
@@ -470,12 +445,12 @@ void writeNtuple_Official(SVector input_files,
 
       //read the others only on demand (faster)
       for (short j = 0; j < observer_chains.size(); j++){ 
-	TChain* the_chain = observer_chains.at(j); 
-	readBaseBTagAnaTree* read_buffer = observer_arrays.at(j); 
-	double* write_buffer = observer_write_buffers.at(j); 
+	TChain& the_chain = observer_chains.at(j); 
+	readBaseBTagAnaTree& read_buffer = observer_arrays.at(j); 
+	double& write_buffer = observer_write_buffers.at(j); 
 
-	the_chain->GetEntry(i); 
-	*write_buffer = read_buffer->Discriminator; 
+	the_chain.GetEntry(i); 
+	write_buffer = read_buffer.Discriminator; 
 	
       }
 

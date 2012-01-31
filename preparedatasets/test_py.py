@@ -1,9 +1,13 @@
 #!/usr/bin/env python2.6
 
+import os
 from glob import glob
 from pyprep import prep_ntuple
 
-files = glob('files/*.root')[:4]
+data_path = os.path.expandvars('$DATA/jetnet')
+files = glob(data_path + '/**/*.root')[:4]
+
+assert files
 
 prep_ntuple(files, 
-            ['IP3D','SV1'])
+            ['IP2D','IP3D','SV1','COMB'])

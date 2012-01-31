@@ -5,7 +5,7 @@ from glob import glob
 from pyprep import prep_ntuple
 
 data_path = os.path.expandvars('$DATA/jetnet')
-files = glob(data_path + '/**/*.root')[:1]
+files = glob(data_path + '/user.dguest**/*.root')[:1]
 
 assert files
 

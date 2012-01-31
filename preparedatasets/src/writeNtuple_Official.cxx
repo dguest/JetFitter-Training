@@ -40,8 +40,13 @@ int writeNtuple_Official(SVector input_files,
 
   std::string jetCollection = jetCollectionName + suffix;
 
-  cout << " opening input files: " << endl 
-       << " processing to obtain: " << jetCollection 
+  cout << " opening input files: \n"; 
+  for (SVector::const_iterator itr = input_files.begin(); 
+       itr != input_files.end(); 
+       itr++){ 
+    cout << *itr << "\n"; 
+  }
+  std::cout << " processing to obtain: " << jetCollection 
        << " root file "  << endl;
   
   std::string baseBTag("BTag_");

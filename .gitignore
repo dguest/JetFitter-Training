@@ -13,3 +13,4 @@
 *.root
 *.pyc
 *.out
+.__afs*

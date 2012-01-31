@@ -1,4 +1,3 @@
-#include "readBaseBTagAnaTree.hh"
 #include "readJFBTagAna.hh"
 #include <TFile.h>
 #include <TTree.h>
@@ -51,10 +50,15 @@ int writeNtuple_Official(SVector input_files,
   
   std::string baseBTag("BTag_");
 
+  // --- write tree
+  boost::scoped_ptr<TFile> file(new TFile(output_file.c_str(),"recreate"));
+  boost::scoped_ptr<TTree> output_tree(new TTree("SVTree","SVTree"));
+
   // --- observer variables
-  boost::ptr_vector<readBaseBTagAnaTree> observer_arrays(10); 
-  boost::ptr_vector<TChain> observer_chains(10); 
-  
+  boost::ptr_vector<TChain> observer_chains; 
+  boost::ptr_vector<double> observer_write_buffers; 
+
+  // ---- loop to set observer variables and chains
   for (SVector::const_iterator name_itr = observer_discriminators.begin(); 
        name_itr != observer_discriminators.end(); 
        name_itr++){ 
@@ -62,11 +66,10 @@ int writeNtuple_Official(SVector input_files,
     std::string chain_name = baseBTag + jetCollection + 
       "_" + *name_itr + "/PerfTreeAll"; 
 
-
     TChain* the_chain = new TChain(chain_name.c_str()); 
     observer_chains.push_back(the_chain); 
-    
 
+    // fill chains
     for (SVector::const_iterator in_file_itr = input_files.begin(); 
 	 in_file_itr != input_files.end(); 
 	 in_file_itr++){ 
@@ -75,8 +78,17 @@ int writeNtuple_Official(SVector input_files,
 
     if (the_chain->GetEntries() == 0)
       throw LoadOfficialDSException();
-    
-    observer_arrays.push_back(new readBaseBTagAnaTree(the_chain) ); 
+
+    // define buffers in which to store the vars
+    double* the_buffer = new double; 
+    observer_write_buffers.push_back(the_buffer); 
+    std::string name = "discriminator" + *name_itr; 
+    output_tree->Branch(name.c_str(), the_buffer); 
+
+    // set the chain to write to this branch 
+    the_chain->SetBranchStatus("*",0); 
+    the_chain->SetBranchStatus("Discriminator",1); 
+    the_chain->SetBranchAddress("Discriminator", the_buffer); 
 
   }
 
@@ -236,12 +248,6 @@ int writeNtuple_Official(SVector input_files,
   cout << " maxweightb: " << maxweightb << " maxweightc: " << maxweightc << 
     " maxweightl: " << maxweightl << endl;
 
-  boost::scoped_ptr<TFile> file(new TFile(output_file.c_str(),"recreate"));
-  // TFile* file = new TFile(output_file.c_str(),"recreate");
-
-  boost::scoped_ptr<TTree> myTree(new TTree("SVTree","SVTree"));
-  // TTree* myTree = new TTree("SVTree","SVTree");
-
   // --- things to write out
   Int_t nVTX;
   Int_t nTracksAtVtx;
@@ -255,16 +261,16 @@ int writeNtuple_Official(SVector input_files,
   Int_t charm;
   Int_t light;
 
-  // observer write branches 
-  boost::ptr_vector<double> observer_write_buffers; 
-  for (SVector::const_iterator name_itr = observer_discriminators.begin(); 
-       name_itr != observer_discriminators.end(); 
-       name_itr++){ 
-    double* the_buffer = new double; 
-    observer_write_buffers.push_back(the_buffer); 
-    std::string name = "discriminator" + *name_itr; 
-    myTree->Branch(name.c_str(), the_buffer); 
-  }
+  // // observer write branches 
+  // boost::ptr_vector<double> observer_write_buffers; 
+  // for (SVector::const_iterator name_itr = observer_discriminators.begin(); 
+  //      name_itr != observer_discriminators.end(); 
+  //      name_itr++){ 
+  //   double* the_buffer = new double; 
+  //   observer_write_buffers.push_back(the_buffer); 
+  //   std::string name = "discriminator" + *name_itr; 
+  //   output_tree->Branch(name.c_str(), the_buffer); 
+  // }
     
   // Double_t discriminatorIP2D;
   // Double_t discriminatorIP3D;
@@ -281,30 +287,30 @@ int writeNtuple_Official(SVector input_files,
 
 
   
-  myTree->Branch("nVTX",&nVTX,"nVTX/I");
-  myTree->Branch("nTracksAtVtx",&nTracksAtVtx,"nTracksAtVtx/I");
-  myTree->Branch("nSingleTracks",&nSingleTracks,"nSingleTracks/I");
-  myTree->Branch("energyFraction",&energyFraction,"energyFraction/D");
-  myTree->Branch("mass",&mass,"mass/D");
-  myTree->Branch("significance3d",&significance3d,"significance3d/D");
+  output_tree->Branch("nVTX",&nVTX,"nVTX/I");
+  output_tree->Branch("nTracksAtVtx",&nTracksAtVtx,"nTracksAtVtx/I");
+  output_tree->Branch("nSingleTracks",&nSingleTracks,"nSingleTracks/I");
+  output_tree->Branch("energyFraction",&energyFraction,"energyFraction/D");
+  output_tree->Branch("mass",&mass,"mass/D");
+  output_tree->Branch("significance3d",&significance3d,"significance3d/D");
 
   
   if (forNN){
-    myTree->Branch("cat_pT",&cat_pT,"cat_pT/I");
-    myTree->Branch("cat_eta",&cat_eta,"cat_eta/I");
-    myTree->Branch("weight",&weight,"weight/D");
+    output_tree->Branch("cat_pT",&cat_pT,"cat_pT/I");
+    output_tree->Branch("cat_eta",&cat_eta,"cat_eta/I");
+    output_tree->Branch("weight",&weight,"weight/D");
 
-    myTree->Branch("bottom",&bottom,"bottom/I");
-    myTree->Branch("charm",&charm,"charm/I");
-    myTree->Branch("light",&light,"light/I");
+    output_tree->Branch("bottom",&bottom,"bottom/I");
+    output_tree->Branch("charm",&charm,"charm/I");
+    output_tree->Branch("light",&light,"light/I");
   }
   
 
 
-  myTree->Branch("deltaR",&deltaR,"deltaR/D");    
-  myTree->Branch("JetPt",&JetPt,"JetPt/D");
-  myTree->Branch("JetEta",&JetEta,"JetEta/D");
-  myTree->Branch("cat_flavour",&cat_flavour,"cat_flavour/I");  
+  output_tree->Branch("deltaR",&deltaR,"deltaR/D");    
+  output_tree->Branch("JetPt",&JetPt,"JetPt/D");
+  output_tree->Branch("JetEta",&JetEta,"JetEta/D");
+  output_tree->Branch("cat_flavour",&cat_flavour,"cat_flavour/I");  
 
 
 
@@ -448,16 +454,8 @@ int writeNtuple_Official(SVector input_files,
 
       //read the others only on demand (faster)
       for (unsigned short j = 0; j < observer_chains.size(); j++){ 
-	TChain& the_chain = observer_chains.at(j); 
-	readBaseBTagAnaTree& read_buffer = observer_arrays.at(j); 
-	double& write_buffer = observer_write_buffers.at(j); 
-
-	the_chain.GetEntry(i); 
-	write_buffer = read_buffer.Discriminator; 
-	
+	observer_chains.at(j).GetEntry(i); 
       }
-
-      
 
       nVTX=readTreeJF->nVTX;
       nSingleTracks=readTreeJF->nSingleTracks;
@@ -465,14 +463,14 @@ int writeNtuple_Official(SVector input_files,
       energyFraction=readTreeJF->energyFraction;
       mass=readTreeJF->mass;
       significance3d=readTreeJF->significance3d;
-      myTree->Fill();
+      output_tree->Fill();
       
     }
     
   }
 
 
-  file->WriteTObject(myTree.get()); 
+  file->WriteTObject(output_tree.get()); 
   printf("done!\n");
 
   return 0; 

@@ -1,7 +1,6 @@
 #ifndef WRITE_NTUPLE_OFFICIAL_H
 #define WRITE_NTUPLE_OFFICIAL_H
 
-#include <TString.h>
 #include <vector>
 #include <string> 
 

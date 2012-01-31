@@ -40,15 +40,15 @@ int writeNtuple_Official(SVector input_files,
   std::string jetCollection = jetCollectionName + suffix;
 
   // run output 
-  std::ofstream out_stream("output.out", ios_base::out | ios_base::trunc); 
+  // std::ofstream out_stream("output.out", ios_base::out | ios_base::trunc); 
 
-  out_stream << " opening input files: \n"; 
+  std::cout << " opening input files: \n"; 
   for (SVector::const_iterator itr = input_files.begin(); 
        itr != input_files.end(); 
        itr++){ 
-    out_stream << *itr << "\n"; 
+    std::cout << *itr << "\n"; 
   }
-  out_stream << " processing to obtain: " << jetCollection 
+  std::cout << " processing to obtain: " << jetCollection 
        << " root file "  << endl;
   
   std::string baseBTag("BTag_");
@@ -65,7 +65,7 @@ int writeNtuple_Official(SVector input_files,
   for (SVector::const_iterator name_itr = observer_discriminators.begin(); 
        name_itr != observer_discriminators.end(); 
        name_itr++){ 
-    out_stream << "instantiating " << *name_itr << endl;
+    std::cout << "instantiating " << *name_itr << endl;
     std::string chain_name = baseBTag + jetCollection + 
       "_" + *name_itr + "/PerfTreeAll"; 
 
@@ -97,7 +97,7 @@ int writeNtuple_Official(SVector input_files,
 
   // --- jetfitter variables
   std::string suffixJF("_JetFitterTagNN/PerfTreeAll");
-  out_stream << "instantiating JetFitterTagNN " << endl;
+  std::cout << "instantiating JetFitterTagNN " << endl;
   boost::scoped_ptr<TChain> treeJF
     (new TChain((baseBTag+jetCollection+suffixJF).c_str()));
 
@@ -122,7 +122,7 @@ int writeNtuple_Official(SVector input_files,
 
   //for the NN you need to get the number of b,c or light jets
 
-  out_stream << "counting entries, will take a while\n"; 
+  std::cout << "counting entries, will take a while\n"; 
   Int_t num_entries=readTreeJF->fChain->GetEntries();
 
   int numberb=0;
@@ -152,7 +152,7 @@ int writeNtuple_Official(SVector input_files,
   //now you have to calculate the weights...
   //(store them in a matrix for b,c or light jets...
 
-  out_stream << " number of b found : " << numberb 
+  std::cout << " number of b found : " << numberb 
        << " c: " << numberc 
        << " l: " << numberl << endl;
 
@@ -217,7 +217,7 @@ int writeNtuple_Official(SVector input_files,
       
       int flavour=abs(readTreeJF->Flavour);
 
-      //      out_stream << " actualpT " << actualpT << " actualeta " << actualeta << endl;
+      //      std::cout << " actualpT " << actualpT << " actualeta " << actualeta << endl;
       
       switch (flavour){
       case 5:
@@ -248,7 +248,7 @@ int writeNtuple_Official(SVector input_files,
   }
   
 
-  out_stream << " maxweightb: " << maxweightb << " maxweightc: " << maxweightc << 
+  std::cout << " maxweightb: " << maxweightb << " maxweightc: " << maxweightc << 
     " maxweightl: " << maxweightl << endl;
 
   // --- things to write out
@@ -263,22 +263,6 @@ int writeNtuple_Official(SVector input_files,
   Int_t bottom;
   Int_t charm;
   Int_t light;
-
-  // // observer write branches 
-  // boost::ptr_vector<double> observer_write_buffers; 
-  // for (SVector::const_iterator name_itr = observer_discriminators.begin(); 
-  //      name_itr != observer_discriminators.end(); 
-  //      name_itr++){ 
-  //   double* the_buffer = new double; 
-  //   observer_write_buffers.push_back(the_buffer); 
-  //   std::string name = "discriminator" + *name_itr; 
-  //   output_tree->Branch(name.c_str(), the_buffer); 
-  // }
-    
-  // Double_t discriminatorIP2D;
-  // Double_t discriminatorIP3D;
-  // Double_t discriminatorSV1;
-  // Double_t discriminatorCOMB;
  
   Double_t weight;
  
@@ -325,13 +309,13 @@ int writeNtuple_Official(SVector input_files,
   
   if (randomize){
     
-    out_stream << " Doing sorting... " << endl;
+    std::cout << " Doing sorting... " << endl;
     std::sort (outputvalues.begin(), outputvalues.end());
-    out_stream << " End sorting ... " << endl;
+    std::cout << " End sorting ... " << endl;
   }
   
 
-  out_stream << "Total entries are: " << num_entries << endl;
+  std::cout << "Total entries are: " << num_entries << endl;
   Int_t i=0;
 
   
@@ -354,7 +338,7 @@ int writeNtuple_Official(SVector input_files,
     
 
     if (counter % 500000 == 0 ) {
-      out_stream << " processing event number " << 
+      std::cout << " processing event number " << 
 	counter << " data event: " << i << " which was event n. " 
 		<< std::endl;
     }
@@ -474,7 +458,7 @@ int writeNtuple_Official(SVector input_files,
 
 
   file->WriteTObject(output_tree.get()); 
-  out_stream << "done!\n";
+  std::cout << "done!\n";
 
   return 0; 
   

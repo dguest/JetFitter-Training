@@ -473,8 +473,7 @@ int writeNtuple_Official(SVector input_files,
   }
 
 
-  // file->WriteTObject(output_tree.get()); 
-  file->Write(); 
+  file->WriteTObject(output_tree.get()); 
   out_stream << "done!\n";
 
   return 0; 

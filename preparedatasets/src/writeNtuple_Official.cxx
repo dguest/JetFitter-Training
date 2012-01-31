@@ -9,11 +9,11 @@
 #include <vector>
 #include <string>
 #include <algorithm>
-
+#include <fstream>
 #include <boost/ptr_container/ptr_vector.hpp>
 #include <boost/scoped_ptr.hpp>
 
-using namespace std;
+//using namespace std;
 
 struct number_pair
 {
@@ -39,13 +39,16 @@ int writeNtuple_Official(SVector input_files,
 
   std::string jetCollection = jetCollectionName + suffix;
 
-  cout << " opening input files: \n"; 
+  // run output 
+  std::ofstream out_stream("output.out", ios_base::out | ios_base::trunc); 
+
+  out_stream << " opening input files: \n"; 
   for (SVector::const_iterator itr = input_files.begin(); 
        itr != input_files.end(); 
        itr++){ 
-    cout << *itr << "\n"; 
+    out_stream << *itr << "\n"; 
   }
-  std::cout << " processing to obtain: " << jetCollection 
+  out_stream << " processing to obtain: " << jetCollection 
        << " root file "  << endl;
   
   std::string baseBTag("BTag_");
@@ -62,7 +65,7 @@ int writeNtuple_Official(SVector input_files,
   for (SVector::const_iterator name_itr = observer_discriminators.begin(); 
        name_itr != observer_discriminators.end(); 
        name_itr++){ 
-    cout << "instantiating " << *name_itr << endl;
+    out_stream << "instantiating " << *name_itr << endl;
     std::string chain_name = baseBTag + jetCollection + 
       "_" + *name_itr + "/PerfTreeAll"; 
 
@@ -94,7 +97,7 @@ int writeNtuple_Official(SVector input_files,
 
   // --- jetfitter variables
   std::string suffixJF("_JetFitterTagNN/PerfTreeAll");
-  cout << "instantiating JetFitterTagNN " << endl;
+  out_stream << "instantiating JetFitterTagNN " << endl;
   boost::scoped_ptr<TChain> treeJF
     (new TChain((baseBTag+jetCollection+suffixJF).c_str()));
 
@@ -119,7 +122,7 @@ int writeNtuple_Official(SVector input_files,
 
   //for the NN you need to get the number of b,c or light jets
 
-  printf("counting entries, will take a while\n"); 
+  out_stream << "counting entries, will take a while\n"; 
   Int_t num_entries=readTreeJF->fChain->GetEntries();
 
   int numberb=0;
@@ -149,7 +152,7 @@ int writeNtuple_Official(SVector input_files,
   //now you have to calculate the weights...
   //(store them in a matrix for b,c or light jets...
 
-  cout << " number of b found : " << numberb 
+  out_stream << " number of b found : " << numberb 
        << " c: " << numberc 
        << " l: " << numberl << endl;
 
@@ -214,7 +217,7 @@ int writeNtuple_Official(SVector input_files,
       
       int flavour=abs(readTreeJF->Flavour);
 
-      //      cout << " actualpT " << actualpT << " actualeta " << actualeta << endl;
+      //      out_stream << " actualpT " << actualpT << " actualeta " << actualeta << endl;
       
       switch (flavour){
       case 5:
@@ -245,7 +248,7 @@ int writeNtuple_Official(SVector input_files,
   }
   
 
-  cout << " maxweightb: " << maxweightb << " maxweightc: " << maxweightc << 
+  out_stream << " maxweightb: " << maxweightb << " maxweightc: " << maxweightc << 
     " maxweightl: " << maxweightl << endl;
 
   // --- things to write out
@@ -322,13 +325,13 @@ int writeNtuple_Official(SVector input_files,
   
   if (randomize){
     
-    cout << " Doing sorting... " << endl;
+    out_stream << " Doing sorting... " << endl;
     std::sort (outputvalues.begin(), outputvalues.end());
-    cout << " End sorting ... " << endl;
+    out_stream << " End sorting ... " << endl;
   }
   
 
-  cout << "Total entries are: " << num_entries << endl;
+  out_stream << "Total entries are: " << num_entries << endl;
   Int_t i=0;
 
   
@@ -351,7 +354,7 @@ int writeNtuple_Official(SVector input_files,
     
 
     if (counter % 500000 == 0 ) {
-      std::cout << " processing event number " << 
+      out_stream << " processing event number " << 
 	counter << " data event: " << i << " which was event n. " 
 		<< std::endl;
     }
@@ -470,8 +473,9 @@ int writeNtuple_Official(SVector input_files,
   }
 
 
-  file->WriteTObject(output_tree.get()); 
-  printf("done!\n");
+  // file->WriteTObject(output_tree.get()); 
+  file->Write(); 
+  out_stream << "done!\n";
 
   return 0; 
   

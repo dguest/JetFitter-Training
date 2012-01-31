@@ -5,9 +5,11 @@ from glob import glob
 from pyprep import prep_ntuple
 
 data_path = os.path.expandvars('$DATA/jetnet')
-files = glob(data_path + '/user.dguest**/*.root*')
+files = glob(data_path + '/user.dguest**/*.root*')[:1]
 
 assert files
 
-prep_ntuple(files, 
-            ['IP2D','IP3D','SV1','COMB'], debug = False)
+prep_ntuple(input_file_list = files, 
+            observer_discriminators = ['IP2D','IP3D','SV1','COMB'],
+            output_file_name = 'with_write.root', 
+            debug = False)

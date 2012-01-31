@@ -113,12 +113,6 @@ int writeNtuple_Official(SVector input_files,
   boost::scoped_ptr<readJFBTagAna> readTreeJF
     (new readJFBTagAna(treeJF.get()));
 
-  // TString suffixIP2D("_IP2D/PerfTreeAll");
-  // TString suffixIP3D("_IP3D/PerfTreeAll");
-  // TString suffixSV1("_SV1/PerfTreeAll");
-  // TString suffixCOMB("_COMB/PerfTreeAll");
-
-
 
   //for the NN you need to get the number of b,c or light jets
 
@@ -204,7 +198,7 @@ int writeNtuple_Official(SVector input_files,
       
       readTreeJF->GetEntry(i);
       
-      if (readTreeJF->mass<-100) continue;
+      if (readTreeJF->mass < -100) continue;
       
       if (fabs(readTreeJF->JetEta)>2.5||readTreeJF->JetPt<=15.)  continue;
 

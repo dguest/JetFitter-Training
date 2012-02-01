@@ -3,7 +3,6 @@
 #include <TFile.h>
 #include <TTree.h>
 #include <iostream>
-#include "getPtEtaCategoryLikelihood.hh"
 #include "TRandom.h"
 #include <cmath>
 #include <vector>
@@ -16,6 +15,9 @@
 #include <TMatrixD.h>
 #include <string> 
 #include "nnExceptions.hh"
+
+#include "getPtEtaCategoryLikelihood.hh" //FIXME: remove this dependence
+
 
 using namespace std;
 

@@ -63,7 +63,8 @@ def run_performance(input_file, weights_file,
 def run_test_ntuple(input_weights, 
                     input_dataset, 
                     output_file_name, 
-                    output_tree_name = 'performance'): 
+                    output_tree_name = 'performance', 
+                    print_and_exit = False): 
 
     import pynn
 
@@ -72,8 +73,9 @@ def run_test_ntuple(input_weights,
         os.makedirs(output_dir)
 
 
-    pynn.make_test_ntuple(input_weights = input_weights, 
-                          input_dataset = input_dataset, 
-                          output_file_name = output_file_name, 
-                          output_tree_name = output_tree_name)
-                    
+    pynn.makeNtuple(input_weights = input_weights, 
+                    input_dataset = input_dataset, 
+                    output_file = output_file_name, 
+                    output_tree = output_tree_name, 
+                    debug = print_and_exit)
+    

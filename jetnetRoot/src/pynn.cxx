@@ -138,7 +138,7 @@ extern "C" PyObject* test_py(PyObject *self,
     return NULL;
 
   if (debug){ 
-    printf("in = %s, train = %s, dil = %i\n", 
+    printf("in ds = %s, train = %s, dil = %i\n", 
   	   input_file, training_file, dilution_factor); 
     
     

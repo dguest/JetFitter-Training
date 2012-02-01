@@ -31,7 +31,6 @@ int main()
 {
 
   trainNN("../reduceddatasets/reduceddataset_AntiKt4TopoEMJets_forNN.root", 
-	  "dummy",
 	  "weights",
 	  1000,
 	  200,
@@ -46,7 +45,6 @@ int main()
 
 
 void trainNN(TString inputfile,
-             TString outputclass,
 	     std::string out_dir, 
              int nIterations,
              int dilutionFactor,

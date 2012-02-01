@@ -74,7 +74,7 @@ all:  $(LIB)libTJetNet.so $(LIB)pynn.so #cxx_test.exe # root_test.exe
 $(DICT)/%Dict.cxx: %.h LinkDef.h
 	@echo making dict $@
 	@mkdir -p $(DICT)
-	@rm -f $(DICT)/$*Dict.h 
+	@rm -f $(DICT)/$*Dict.h $(DICT)/$*Dict.cxx 
 	@rootcint $@ -c $(INC)/$*.h	
 	@sed -i 's,#include "include/\(.*\)",#include "\1",g' $(DICT)/$*Dict.h
 

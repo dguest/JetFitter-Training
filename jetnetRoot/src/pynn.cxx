@@ -13,7 +13,6 @@ static const char* train_doc_string =
   "run the neural net. \n"
   "Keywords:\n"
   "input_file\n"
-  "output_class\n"
   "output_dir\n"
   "n_iterations\n"
   "dilution_factor\n"
@@ -29,7 +28,6 @@ extern "C" PyObject* train_py(PyObject *self,
 			      PyObject *keywds)
 {
   const char* input_file; 
-  const char* output_class = "JetFitterNN"; 
   const char* output_dir = "weights"; 
   int n_iterations = 10; 
   int dilution_factor = 2; 
@@ -42,7 +40,6 @@ extern "C" PyObject* train_py(PyObject *self,
 
   const char *kwlist[] = {
     "input_file",
-    "output_class", 
     "output_dir", 
     "n_iterations", 
     "dilution_factor",
@@ -54,27 +51,27 @@ extern "C" PyObject* train_py(PyObject *self,
     "debug", 
     NULL};
  
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s|ssiibbiiib", 
-				   // this function should take a const, and 
-				   // may be changed, until then we'll cast
-				   const_cast<char**>(kwlist),
-				   &input_file, &output_class, 
-				   &output_dir, 
-				   &n_iterations, &dilution_factor, 
-				   &use_sd, &with_ip3d, &nodes_first_layer, 
-				   &nodes_second_layer, 
-				   &restart_training_from, 
-				   &debug))
-    return NULL;
+  if (!PyArg_ParseTupleAndKeywords
+      (args, keywds, "s|siibbiiib", 
+       // this function should take a const, and 
+       // may be changed, until then we'll cast
+       const_cast<char**>(kwlist),
+       &input_file, 
+       &output_dir, 
+       &n_iterations, &dilution_factor, 
+       &use_sd, &with_ip3d, &nodes_first_layer, 
+       &nodes_second_layer, 
+       &restart_training_from, 
+       &debug)
+      ) return NULL;
 
   if (debug){ 
-    printf("in = %s, out = %s, itr = %i, rest from = %i\n", 
-  	   input_file, output_class, n_iterations, restart_training_from); 
+    printf("in = %s, out dir = %s, itr = %i, rest from = %i\n", 
+  	   input_file, output_dir, n_iterations, restart_training_from); 
   }
 
   else{ 
     trainNN(input_file, 
-	    output_class,
 	    output_dir, 
 	    n_iterations,
 	    dilution_factor,

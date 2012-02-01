@@ -51,7 +51,7 @@ if __name__ == '__main__':
 
     debug_opts = OptionGroup(parser,'debug options')
     debug_opts.add_option('--print-and-exit', action = 'store_true', 
-                          help = "don't run training, just print"
+                          help = "don't run training, just make dirs and"
                           " some info to confirm that c++ works")
     parser.add_option_group(debug_opts)
 

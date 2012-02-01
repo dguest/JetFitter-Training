@@ -7,15 +7,13 @@ def _set_linker_flags():
     binding_rules =  dl.RTLD_GLOBAL | dl.RTLD_NOW
     sys.setdlopenflags(binding_rules)
 
-def run_training(jet_collection_name, in_path, 
-                output_dir = None, 
-                with_ip3d = True, nodes = None, 
-                debug = False): 
+def run_training(in_path, 
+                 output_dir = None, 
+                 with_ip3d = True, nodes = None, 
+                 debug = False): 
     # _set_linker_flags()
 
     import pynn
-
-    class_name = 'JetFitterNN_' + jet_collection_name
 
     if not os.path.isdir(output_dir): 
         os.mkdir(output_dir)
@@ -30,7 +28,6 @@ def run_training(jet_collection_name, in_path,
     nodes_first_layer, nodes_second_layer = nodes
 
     pynn.trainNN(input_file = in_path, 
-                 output_class = class_name, 
                  n_iterations = 10000, 
                  dilution_factor = 2, 
                  use_sd = False, 

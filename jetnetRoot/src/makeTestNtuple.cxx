@@ -263,10 +263,10 @@ jn->readBackTrainedNetwork(trainedNetwork);
   }      
   
   TVectorD result(nOutput);
-  for (Int_t i=0;i<nOutput;i++)
+  for (Int_t jjj = 0; jjj < nOutput; jjj++)
   {
-    result.operator()(i)=
-      resultVector[nHidden]->operator()(i);
+    result.operator()(jjj)=
+      resultVector[nHidden]->operator()(jjj);
   }
 
   //CALCULATION ENDS HERE

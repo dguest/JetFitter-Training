@@ -3,7 +3,6 @@
 #include <TFile.h>
 #include <TTree.h>
 #include <iostream>
-#include "testJetNet.hh"
 #include "getPtEtaCategoryLikelihood.hh"
 #include "TRandom.h"
 #include <cmath>

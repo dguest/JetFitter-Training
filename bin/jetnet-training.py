@@ -21,10 +21,6 @@ if __name__ == '__main__':
     optional.add_option('-o',dest = 'output_path', 
                         help = "[default: %default]", 
                         default = 'weights')
-    optional.add_option('-j',dest = 'jet_collection', 
-                        help = "used name output"
-                        " [default: %default]", 
-                        default = 'AntiKt4TopoEMJets')
     optional.add_option('-i','--ip3d', dest = 'with_ip3d', 
                         action = 'store_true', 
                         help = 'use ip3d [default]')
@@ -43,10 +39,14 @@ if __name__ == '__main__':
                         help = 'nodes in second hidden layer'
                         ' [default: %default]', type = 'int', 
                         default = 10)
-    optional.add_option('--hist-file', 
+    optional.add_option('--perf-hist-file', dest = 'hist_file',
                         help = 'name of performance hist file'
                         ' [default: %default]', 
-                        default = 'hists/performance_plots.root')
+                        default = 'performance/performance_plots.root')
+    optional.add_option('--perf-ntuple', dest = 'perf_ntuple', 
+                        help = 'name of performance ntuple'
+                        ' [default: %default]', 
+                        default = 'performance/performance.root')
     parser.add_option_group(optional)
 
     debug_opts = OptionGroup(parser,'debug options')
@@ -69,16 +69,21 @@ if __name__ == '__main__':
         not os.path.isfile(weights_file_path) 
         )
 
+    input_ds = args[0]
+
     if do_training: 
-        run_training(jet_collection_name = options.jet_collection, 
-                     in_path = args[0], 
+        run_training(in_path = input_ds, 
                      output_dir = options.output_path, 
                      with_ip3d = options.with_ip3d, 
                      nodes = (options.nodes_1, options.nodes_2), 
                      debug = options.print_and_exit)
     
-    run_performance(input_file = args[0], weights_file = weights_file_path, 
-            output_file = options.hist_file, 
-            with_ip3d = options.with_ip3d, 
-            print_and_exit = options.print_and_exit)
+    run_performance(input_file = input_ds, 
+                    weights_file = weights_file_path, 
+                    output_file = options.hist_file, 
+                    with_ip3d = options.with_ip3d, 
+                    print_and_exit = options.print_and_exit)
 
+    run_test_ntuple(input_weights = weights_file_path, 
+                    input_dataset = input_ds, 
+                    output_file_name = options.perf_ntuple)

@@ -8,7 +8,7 @@ def _set_linker_flags():
     sys.setdlopenflags(binding_rules)
 
 def run_training(in_path, 
-                 output_dir = None, 
+                 output_dir,
                  with_ip3d = True, nodes = None, 
                  debug = False): 
     # _set_linker_flags()

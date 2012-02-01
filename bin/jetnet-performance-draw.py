@@ -1,7 +1,7 @@
 #!/usr/bin/env python2.6
 
 import sys, os
-from jetnet.draw import performance as p
+from jetnet.perf import performance as p
 
 if __name__ == '__main__': 
 

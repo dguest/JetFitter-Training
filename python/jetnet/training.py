@@ -62,3 +62,21 @@ def run_performance(input_file, weights_file,
                 debug = print_and_exit, 
                 out_file = output_file) 
 
+
+def run_test_ntuple(input_weights, 
+                    input_dataset, 
+                    output_file_name, 
+                    output_tree_name = 'performance'): 
+
+    import pynn
+
+    output_dir = os.path.dirname(output_file_name)
+    if not os.path.isdir(output_dir): 
+        os.makedirs(output_dir)
+
+
+    pynn.make_test_ntuple(input_weights = input_weights, 
+                          input_dataset = input_dataset, 
+                          output_file_name = output_file_name, 
+                          output_tree_name = output_tree_name)
+                    

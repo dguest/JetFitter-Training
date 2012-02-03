@@ -16,7 +16,7 @@ extern "C" {
 			PyObject *keywds)
   {
     PyObject* input_file_list; 
-    PyObject* observer_discriminators; 
+    PyObject* observer_discriminators = PyList_New(0); 
     const char* jet_collection_name = "AntiKt4TopoEMJets"; 
     const char* output_file_name = "reduced.root"; 
     bool debug = false; 
@@ -30,7 +30,7 @@ extern "C" {
       NULL};
     
     bool ok = PyArg_ParseTupleAndKeywords
-      (args, keywds, "OO|ssb", 
+      (args, keywds, "O|Ossb", 
        // this function should take a const, and 
        // may be changed. until then we'll cast
        const_cast<char**>(kwlist),

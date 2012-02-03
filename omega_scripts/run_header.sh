@@ -7,7 +7,7 @@ export ATLAS_LOCAL_ROOT_BASE=/home/hep/share/app/atlas/ATLASLocalRootBase
 # source ${ATLAS_LOCAL_ROOT_BASE}/user/atlasLocalSetup.sh
 
 alias setupATLAS='source ${ATLAS_LOCAL_ROOT_BASE}/user/atlasLocalSetup.sh'
-setupATLAS -q
+setupATLAS --quiet
 
 alias asetup='source $AtlasSetup/scripts/asetup.sh' 
 

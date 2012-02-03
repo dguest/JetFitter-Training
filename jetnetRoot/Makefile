@@ -69,7 +69,11 @@ CXX_OBJECTS += $(T_OBJ) $(T_DICTS)
 LIB_OBJECTS := $(JETNET_OBJ)
 LIB_OBJECTS += $(CXX_OBJECTS)
 
-all:  $(LIB)libTJetNet.so $(LIB)pynn.so #cxx_test.exe # root_test.exe
+ALL_LIBS := $(LIB)libTJetNet.so
+ALL_LIBS += $(LIB)pynn.so
+
+all: $(ALL_LIBS) #cxx_test.exe # root_test.exe
+
 
 $(DICT)/%Dict.cxx: %.h LinkDef.h
 	@echo making dict $@
@@ -106,7 +110,7 @@ $(BIN)$(JETNET_OBJ): $(JETNET_SRC)
 $(LIB)pynn.so: $(BIN)pynn.o 
 #	@mkdir -p $(LIB)
 	@echo "linking $^ --> $@"
-	@$(CC) $< -o $@ $(PY_LINKER_OPTS) $(ROOTCFLAGS) $(LIBS) 
+	@$(CC) $^ -o $@ $(PY_LINKER_OPTS) $(ROOTCFLAGS) $(LIBS) 
 
 $(LIB)libTJetNet.so: $(LIB_OBJECTS:%.o=$(BIN)%.o)
 #	@mkdir -p $(LIB)
@@ -160,4 +164,4 @@ backup:
 	@$(RM) backup.tar.gz
 	@tar czvf backup.tar.gz *.cxx *.h *.c *.C Makefile* *.f
 
-.PHONY: clean cleanlib backup all install
+.PHONY: clean cleanlib backup all install check-py

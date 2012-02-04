@@ -5,6 +5,7 @@
 #include <vector>
 #include <iostream>
 #include "writeNtuple_Official.hh"
+#include "pyprep.hh"
 
 extern "C" { 
   
@@ -16,7 +17,7 @@ extern "C" {
 			PyObject *keywds)
   {
     PyObject* input_file_list; 
-    PyObject* observer_discriminators = PyList_New(0); 
+    PyObject* observer_discriminators = 0; 
     const char* jet_collection_name = "AntiKt4TopoEMJets"; 
     const char* output_file_name = "reduced.root"; 
     bool debug = false; 
@@ -41,48 +42,17 @@ extern "C" {
        &debug); 
 
     if (!ok) return NULL;
-    
-    ok = PyList_Check(input_file_list); 
-    if (!ok) { 
-      PyErr_SetString(PyExc_TypeError,"first arg should be a list of files"); 
-      return NULL; 
-    }
 
-    ok = PyList_Check(observer_discriminators); 
-    if (!ok) { 
-      PyErr_SetString(PyExc_TypeError,
-		      "observer_discriminators should be a list"); 
-      return NULL; 
-    }
-
-    
     std::vector<std::string> files; 
-    int n_files = PyList_Size(input_file_list); 
-    for (int i = 0; i < n_files; i++){ 
-      PyObject* the_file = PyList_GetItem(input_file_list, i); 
-      if (!PyString_Check(the_file)){ 
-	PyErr_SetString(PyExc_TypeError,
-			"found non-string in file list"); 
-	return NULL; 
-      }
-
-      std::string the_string = PyString_AsString(the_file); 
-      files.push_back(the_string); 
-    }
-
-    
     std::vector<std::string> observers; 
-    int n_observers = PyList_Size(observer_discriminators); 
-    for (int i = 0; i < n_observers; i++){ 
-      PyObject* the_ob = PyList_GetItem(observer_discriminators, i); 
-      if (!PyString_Check(the_ob)){ 
-	PyErr_SetString(PyExc_TypeError,
-			"found non-string in file list"); 
-	return NULL; 
-      }
-
-      std::string the_string = PyString_AsString(the_ob); 
-      observers.push_back(the_string); 
+    try { 
+      files = parse_string_list(input_file_list); 
+      observers = parse_string_list(observer_discriminators); 
+    }
+    catch(ParseException e) { 
+      PyErr_SetString(PyExc_TypeError,
+		      "expected a list of strings, found something else"); 
+      return NULL; 
     }
 
     if (debug){ 
@@ -102,7 +72,6 @@ extern "C" {
       
       printf("jet collection: %s\n" , jet_collection_name);
       printf("output file: %s\n", output_file_name); 
-
 
     }
 
@@ -134,5 +103,30 @@ extern "C" {
   {
     Py_InitModule("pyprep", keywdarg_methods);
   }
+
+}
+
+std::vector<std::string> parse_string_list(PyObject* string_list){ 
+  std::vector<std::string> strings; 
+  if (string_list == 0) { 
+    return strings; 
+  }
+
+  bool ok = PyList_Check(string_list); 
+  if (!ok) {
+    throw ListParseException(); 
+  }
+
+  int n_strings = PyList_Size(string_list); 
+  for (int i = 0; i < n_strings; i++){ 
+    PyObject* the_ob = PyList_GetItem(string_list, i); 
+    if (!PyString_Check(the_ob)){ 
+      throw StringParseException(); 
+    }
+
+    std::string the_string = PyString_AsString(the_ob); 
+    strings.push_back(the_string); 
+  }
+  return strings; 
 
 }

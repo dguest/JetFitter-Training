@@ -12,4 +12,4 @@ assert files
 prep_ntuple(input_file_list = files, 
             observer_discriminators = ['IP2D','IP3D','SV1','COMB'],
             output_file_name = 'with_write.root', 
-            debug = False)
+            debug = True)

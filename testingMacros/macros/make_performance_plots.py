@@ -1,6 +1,7 @@
 #!/usr/bin/env python2.6
 import AtlasStyle
-from jetnet.perf import rejection
+from jetnet.perf import rejection as re
+import sys, os
 
 if __name__ == '__main__': 
     
@@ -14,7 +15,7 @@ if __name__ == '__main__':
                              splitext(ntuple_file_name)[0])
 
 
-    all_canvas = make_plots_from(ntuple_file_name)
+    all_canvas = re.make_plots_from(ntuple_file_name)
 
     
 

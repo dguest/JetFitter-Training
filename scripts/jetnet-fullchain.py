@@ -101,4 +101,4 @@ if __name__ == '__main__':
                 input_files.append(line.strip())
 
 
-        run_full_chain(input_files, do_test = True)
+        run_full_chain(input_files, do_test = False)

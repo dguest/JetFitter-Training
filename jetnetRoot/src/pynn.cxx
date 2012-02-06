@@ -78,17 +78,25 @@ extern "C" PyObject* train_py(PyObject *self,
   	   input_file, output_dir, n_iterations, restart_training_from); 
   }
 
-  else{ 
-    trainNN(input_file, 
-	    output_dir, 
-	    n_iterations,
-	    dilution_factor,
-	    use_sd,
-	    with_ip3d,
-	    nodes_first_layer,
-	    nodes_second_layer,
-	    restart_training_from);
+  if (node_vec.size() != 2){ 
+    PyErr_SetString(PyExc_ValueError,
+		    "node tuple must have two entries (for now)"); 
+    return 0;
   }
+  int nodes_first_layer = node_vec.at(0); 
+  int nodes_second_layer = node_vec.at(1); 
+
+  
+  trainNN(input_file, 
+	  output_dir, 
+	  n_iterations,
+	  dilution_factor,
+	  use_sd,
+	  with_ip3d,
+	  nodes_first_layer,
+	  nodes_second_layer,
+	  restart_training_from);
+  
 
   Py_INCREF(Py_None);
 
@@ -255,7 +263,7 @@ extern "C" PyMODINIT_FUNC initpynn(void)
 
 std::vector<int> parse_int_tuple(PyObject* py_list){ 
   std::vector<int> ints; 
-  if (string_list == 0) { 
+  if (py_list == 0) { 
     return ints; 
   }
 

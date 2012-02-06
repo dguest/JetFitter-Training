@@ -44,7 +44,7 @@ extern "C" PyObject* train_py(PyObject *self,
     "dilution_factor",
     "use_sd",
     "with_ip3d",
-    "nodes"
+    "nodes", 
     "restart_training_from",
     "debug", 
     NULL};
@@ -56,8 +56,10 @@ extern "C" PyObject* train_py(PyObject *self,
        const_cast<char**>(kwlist),
        &input_file, 
        &output_dir, 
-       &n_iterations, &dilution_factor, 
-       &use_sd, &with_ip3d, 
+       &n_iterations, 
+       &dilution_factor, 
+       &use_sd, 
+       &with_ip3d, 
        &nodes, 
        &restart_training_from, 
        &debug)
@@ -73,10 +75,6 @@ extern "C" PyObject* train_py(PyObject *self,
     return 0;
   }
 
-  if (debug){ 
-    printf("in = %s, out dir = %s, itr = %i, rest from = %i\n", 
-  	   input_file, output_dir, n_iterations, restart_training_from); 
-  }
 
   if (node_vec.size() != 2){ 
     PyErr_SetString(PyExc_ValueError,
@@ -86,17 +84,28 @@ extern "C" PyObject* train_py(PyObject *self,
   int nodes_first_layer = node_vec.at(0); 
   int nodes_second_layer = node_vec.at(1); 
 
-  
-  trainNN(input_file, 
-	  output_dir, 
-	  n_iterations,
-	  dilution_factor,
-	  use_sd,
-	  with_ip3d,
-	  nodes_first_layer,
-	  nodes_second_layer,
-	  restart_training_from);
-  
+  if (debug){ 
+    printf("in = %s, out dir = %s, itr = %i, rest from = %i, nodes: (", 
+  	   input_file, output_dir, n_iterations, restart_training_from); 
+    for (std::vector<int>::const_iterator itr = node_vec.begin(); 
+	 itr != node_vec.end(); 
+	 itr++){
+      if (itr != node_vec.begin()) printf(","); 
+      printf("%i", *itr); 
+    }
+    printf(")\n"); 
+  }
+  else { 
+    trainNN(input_file, 
+	    output_dir, 
+	    n_iterations,
+	    dilution_factor,
+	    use_sd,
+	    with_ip3d,
+	    nodes_first_layer,
+	    nodes_second_layer,
+	    restart_training_from);
+  }  
 
   Py_INCREF(Py_None);
 
@@ -106,7 +115,7 @@ extern "C" PyObject* train_py(PyObject *self,
 static const char* test_doc_string = 
   "test the neural net. \n"
   "Keywords:\n"
-  "input_file\n"
+  "reduced_dataset\n"
   "weights_file\n"
   "dilution_factor\n"
   "use_sd\n"
@@ -127,7 +136,7 @@ extern "C" PyObject* test_py(PyObject *self,
   const char* out_file = "all_hists.root"; 
 
   const char *kwlist[] = {
-    "input_file",
+    "reduced_dataset",
     "weights_file", 
     "dilution_factor",
     "use_sd",

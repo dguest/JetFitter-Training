@@ -27,13 +27,13 @@ def run_training(reduced_dataset,
             nodes = (15,  8)
 
     pynn.trainNN(reduced_dataset = reduced_dataset, 
+                 output_directory = output_directory, 
                  n_iterations = 10000, 
                  dilution_factor = 2, 
                  use_sd = False, 
                  with_ip3d = with_ip3d, 
                  nodes = nodes, 
-                 debug = debug, 
-                 output_directory = output_directory)
+                 debug = debug)
 
 
 def run_performance(reduced_dataset, weights_file, 
@@ -49,7 +49,7 @@ def run_performance(reduced_dataset, weights_file,
     if not os.path.isdir(output_dir): 
         os.makedirs(output_dir)
 
-    pynn.testNN(input_file = input_file, 
+    pynn.testNN(reduced_dataset = reduced_dataset, 
                 weights_file = weights_file, 
                 # dilution_factor = 2, 
                 use_sd = False, 
@@ -66,7 +66,7 @@ def run_test_ntuple(reduced_dataset,
 
     import pynn
 
-    output_dir = os.path.dirname(output_file_name)
+    output_dir = os.path.dirname(output_file)
     if not os.path.isdir(output_dir): 
         os.makedirs(output_dir)
 

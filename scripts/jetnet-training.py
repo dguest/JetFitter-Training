@@ -76,19 +76,19 @@ if __name__ == '__main__':
         )
 
     if do_training: 
-        tr.run_training(in_path = input_ds, 
-                        output_dir = options.output_path, 
+        tr.run_training(reduced_dataset = input_ds, 
+                        output_directory = options.output_path, 
                         with_ip3d = options.with_ip3d, 
                         nodes = (options.nodes_1, options.nodes_2), 
                         debug = options.print_and_exit)
     
-    tr.run_performance(input_file = input_ds, 
+    tr.run_performance(reduced_dataset = input_ds, 
                        weights_file = weights_file_path, 
                        output_file = options.hist_file, 
                        with_ip3d = options.with_ip3d, 
                        print_and_exit = options.print_and_exit)
 
-    tr.run_test_ntuple(input_weights = weights_file_path, 
-                       input_dataset = input_ds, 
-                       output_file_name = options.perf_ntuple, 
+    tr.run_test_ntuple(weights_file = weights_file_path, 
+                       reduced_dataset = input_ds, 
+                       output_file = options.perf_ntuple, 
                        print_and_exit = options.print_and_exit)

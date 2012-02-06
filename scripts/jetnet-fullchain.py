@@ -37,10 +37,10 @@ def run_full_chain(input_files, working_dir = None, output_path = None,
     rds_path = os.path.join(reduced_dir, rds_name)
     
     if not os.path.isfile(rds_path): 
-        pyprep.prep_ntuple(input_file_list = input_files, 
+        pyprep.prep_ntuple(input_files = input_files, 
                            observer_discriminators = observer_discriminators, 
-                           jet_collection_name = jet_collection, 
-                           output_file_name = rds_path, 
+                           jet_collection = jet_collection, 
+                           output_file = rds_path, 
                            debug = do_test)
 
     # --- training part 
@@ -50,8 +50,8 @@ def run_full_chain(input_files, working_dir = None, output_path = None,
 
     weights_path = os.path.join(training_dir, 'weightMinimum.root')
     if not os.path.isfile(weights_path): 
-        training.run_training(in_path = rds_path, 
-                              output_dir = training_dir, 
+        training.run_training(reduced_dataset = rds_path, 
+                              output_directory = training_dir, 
                               with_ip3d = True, 
                               debug = do_test)
 
@@ -62,7 +62,7 @@ def run_full_chain(input_files, working_dir = None, output_path = None,
 
     ovrtrn_hist_path = os.path.join(testing_dir,'overtraining_hists.root')
     if not os.path.isfile(ovrtrn_hist_path): 
-        training.run_performance(input_file = rds_path, 
+        training.run_performance(reduced_dataset = rds_path, 
                                  weights_file = weights_path, 
                                  output_file = ovrtrn_hist_path, 
                                  with_ip3d = True, 
@@ -70,9 +70,9 @@ def run_full_chain(input_files, working_dir = None, output_path = None,
 
     test_ntuple_path = os.path.join(testing_dir,'perf_ntuple.root')
     if not os.path.isfile(test_ntuple_path): 
-        training.run_test_ntuple(input_weights = weights_path, 
-                                 input_dataset = rds_path, 
-                                 output_file_name = test_ntuple_path, 
+        training.run_test_ntuple(reduced_dataset = rds_path, 
+                                 weights_file = weights_path, 
+                                 output_file = test_ntuple_path, 
                                  print_and_exit = do_test)
     
     rej_hist_path = os.path.join(testing_dir, 'performance_hists') 

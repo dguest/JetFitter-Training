@@ -22,10 +22,10 @@ PyObject* prep_ntuple(PyObject *self,
   bool debug = false; 
 
   const char *kwlist[] = {
-    "input_file_list",
+    "input_files",
     "observer_discriminators", 
-    "jet_collection_name", 
-    "output_file_name", 
+    "jet_collection", 
+    "output_file", 
     "debug", 
     NULL};
     

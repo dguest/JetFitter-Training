@@ -11,4 +11,11 @@ class WrongNetworkSizeException: public LoadNetworkException {};
 class WriteFileException: public NNException {};
 
 
+
+class ParseException {}; 
+class TupleParseException: public ParseException{}; 
+class IntParseException: public ParseException{};
+
+
+
 #endif // NN_EXCEPTIONS_H

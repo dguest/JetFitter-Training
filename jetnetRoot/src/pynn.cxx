@@ -6,14 +6,14 @@
 #include "testNN.hh"
 #include "nnExceptions.hh"
 #include "makeTestNtuple.hh"
-
+#include "pynn.hh"
 
 
 static const char* train_doc_string = 
   "run the neural net. \n"
   "Keywords:\n"
-  "input_file\n"
-  "output_dir\n"
+  "reduced_dataset\n"
+  "output_directory\n"
   "n_iterations\n"
   "dilution_factor\n"
   "use_sd\n"
@@ -33,37 +33,45 @@ extern "C" PyObject* train_py(PyObject *self,
   int dilution_factor = 2; 
   bool use_sd = false; 
   bool with_ip3d = true; 
-  int nodes_first_layer = 10; 
-  int nodes_second_layer = 9; 
+  PyObject* nodes = 0; 
   int restart_training_from = 0; 
   bool debug = false; 
 
   const char *kwlist[] = {
-    "input_file",
-    "output_dir", 
+    "reduced_dataset",
+    "output_directory", 
     "n_iterations", 
     "dilution_factor",
     "use_sd",
     "with_ip3d",
-    "nodes_first_layer",
-    "nodes_second_layer", 
+    "nodes"
     "restart_training_from",
     "debug", 
     NULL};
  
   if (!PyArg_ParseTupleAndKeywords
-      (args, keywds, "s|siibbiiib", 
+      (args, keywds, "s|siibbOib", 
        // this function should take a const, and 
        // may be changed, until then we'll cast
        const_cast<char**>(kwlist),
        &input_file, 
        &output_dir, 
        &n_iterations, &dilution_factor, 
-       &use_sd, &with_ip3d, &nodes_first_layer, 
-       &nodes_second_layer, 
+       &use_sd, &with_ip3d, 
+       &nodes, 
        &restart_training_from, 
        &debug)
       ) return NULL;
+
+  std::vector<int> node_vec; 
+  try {
+    node_vec = parse_int_tuple(nodes); 
+  }
+  catch(ParseException e) { 
+    PyErr_SetString(PyExc_TypeError,
+		    "expected a tuple of int, found something else"); 
+    return 0;
+  }
 
   if (debug){ 
     printf("in = %s, out dir = %s, itr = %i, rest from = %i\n", 
@@ -91,7 +99,7 @@ static const char* test_doc_string =
   "test the neural net. \n"
   "Keywords:\n"
   "input_file\n"
-  "trained_nn_file\n"
+  "weights_file\n"
   "dilution_factor\n"
   "use_sd\n"
   "with_ip3d\n"; 
@@ -112,13 +120,11 @@ extern "C" PyObject* test_py(PyObject *self,
 
   const char *kwlist[] = {
     "input_file",
-    "trained_nn_file", 
+    "weights_file", 
     "dilution_factor",
-    // "nodes_first_layer", 
-    // "nodes_second_layer", 
     "use_sd",
     "with_ip3d",
-    "out_file", 
+    "output_file", 
     "debug", 
     NULL};
  
@@ -129,8 +135,6 @@ extern "C" PyObject* test_py(PyObject *self,
 				   &input_file,  
 				   &training_file,
 				   &dilution_factor, 
-				   // &nodes_first_layer,
-				   // &nodes_second_layer, 
 				   &use_sd, 
 				   &with_ip3d, 
 				   &out_file, 
@@ -181,8 +185,8 @@ extern "C" PyObject* make_test_ntuple(PyObject *self,
   bool debug = false; 
 
   const char *kwlist[] = {
-    "input_weights",
-    "input_dataset", 
+    "weights_file",
+    "reduced_dataset", 
     "output_file", 
     "output_tree", 
     "debug", 
@@ -246,3 +250,30 @@ extern "C" PyMODINIT_FUNC initpynn(void)
   Py_InitModule("pynn", keywdarg_methods);
 }
 
+
+
+
+std::vector<int> parse_int_tuple(PyObject* py_list){ 
+  std::vector<int> ints; 
+  if (string_list == 0) { 
+    return ints; 
+  }
+
+  bool ok = PyTuple_Check(py_list); 
+  if (!ok) {
+    throw TupleParseException(); 
+  }
+
+  int n_items = PyTuple_Size(py_list); 
+  for (int i = 0; i < n_items; i++){ 
+    PyObject* the_ob = PyTuple_GetItem(py_list, i); 
+    if (!PyInt_Check(the_ob)){ 
+      throw IntParseException(); 
+    }
+
+    int the_int = PyInt_AsLong(the_ob); 
+    ints.push_back(the_int); 
+  }
+  return ints; 
+
+}

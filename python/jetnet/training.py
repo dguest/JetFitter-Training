@@ -7,38 +7,36 @@ def _set_linker_flags():
     binding_rules =  dl.RTLD_GLOBAL | dl.RTLD_NOW
     sys.setdlopenflags(binding_rules)
 
-def run_training(in_path, 
-                 output_dir,
+def run_training(reduced_dataset, 
+                 output_directory,
                  with_ip3d = True, nodes = None, 
                  debug = False): 
     # _set_linker_flags()
 
     import pynn
 
-    if not os.path.isdir(output_dir): 
-        os.mkdir(output_dir)
-    elif glob.glob(output_dir + '/*.root*'): 
-        raise OverwriteError('root files found in %s' % output_dir)
+    if not os.path.isdir(output_directory): 
+        os.mkdir(output_directory)
+    elif glob.glob(output_directory + '/*.root*'): 
+        raise OverwriteError('root files found in %s' % output_directory)
 
     if nodes is None:
         if with_ip3d: 
             nodes = (20, 10)
         else: 
             nodes = (15,  8)
-    nodes_first_layer, nodes_second_layer = nodes
 
-    pynn.trainNN(input_file = in_path, 
+    pynn.trainNN(reduced_dataset = reduced_dataset, 
                  n_iterations = 10000, 
                  dilution_factor = 2, 
                  use_sd = False, 
                  with_ip3d = with_ip3d, 
-                 nodes_first_layer = nodes_first_layer, 
-                 nodes_second_layer = nodes_second_layer, 
+                 nodes = nodes, 
                  debug = debug, 
-                 output_dir = output_dir)
+                 output_directory = output_directory)
 
 
-def run_performance(input_file, weights_file, 
+def run_performance(reduced_dataset, weights_file, 
             output_file = 'hists/performance_plots.root', 
             with_ip3d = True, 
             print_and_exit = False): 
@@ -52,18 +50,18 @@ def run_performance(input_file, weights_file,
         os.makedirs(output_dir)
 
     pynn.testNN(input_file = input_file, 
-                trained_nn_file = weights_file, 
+                weights_file = weights_file, 
                 # dilution_factor = 2, 
                 use_sd = False, 
                 with_ip3d = with_ip3d, 
                 debug = print_and_exit, 
-                out_file = output_file) 
+                output_file = output_file) 
 
 
-def run_test_ntuple(input_weights, 
-                    input_dataset, 
-                    output_file_name, 
-                    output_tree_name = 'performance', 
+def run_test_ntuple(reduced_dataset, 
+                    weights_file, 
+                    output_file, 
+                    output_tree = 'performance', 
                     print_and_exit = False): 
 
     import pynn
@@ -73,9 +71,9 @@ def run_test_ntuple(input_weights,
         os.makedirs(output_dir)
 
 
-    pynn.makeNtuple(input_weights = input_weights, 
-                    input_dataset = input_dataset, 
-                    output_file = output_file_name, 
-                    output_tree = output_tree_name, 
+    pynn.makeNtuple(weights_file = weights_file, 
+                    reduced_dataset = reduced_dataset,
+                    output_file = output_file, 
+                    output_tree = output_tree, 
                     debug = print_and_exit)
     

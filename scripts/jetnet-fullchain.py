@@ -12,6 +12,9 @@ runs full chain
 from jetnet import training, pyprep
 from jetnet.perf import rejection
 import os, sys
+from warnings import warn
+
+class UglyWarning(UserWarning): pass
 
 observer_discriminators = ['IP2D','IP3D','SV1','COMB']
 
@@ -78,9 +81,14 @@ def run_full_chain(input_files, working_dir = None, output_path = None,
 
 
     if not do_test: 
-        all_canvas = re.make_plots_from(ntuple_file_name)
+        all_canvas = rejection.make_plots_from(test_ntuple_path)
         
         formats = ['.pdf','.png']
+
+        try: 
+            import AtlasStyle
+        except ImportError: 
+            warn('could not import AtlasStyle', UglyWarning)
 
         for ext in formats: 
             for plot in all_canvas: 

@@ -9,3 +9,9 @@ prepare:
 
 training: 
 	  @$(MAKE) -C jetnetRoot
+
+clean: 
+	@$(MAKE) -C preparedatasets clean 
+	@$(MAKE) -C jetnetRoot clean 
+
+.PHONY: clean 

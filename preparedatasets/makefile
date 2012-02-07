@@ -52,11 +52,18 @@ ALLOBJ       := $(GEN_OBJ) $(PY_OBJ)
 
 ALLOUTPUT    := pyprep.so # prepareAllNtuplesForNN
 
-all: $(ALLOUTPUT)
+TEST_OBJ      := PtEtaCategoryTool.o test.o
+
+all: $(ALLOUTPUT) test
 
 prepareAllNtuplesForNN: $(EXE_OBJ:%=$(BIN)/%)
 	@echo "linking $^ --> $@"
 	@$(CXX) -o $@ $^ $(LIBS) $(LDFLAGS)
+
+test: $(TEST_OBJ:%=$(BIN)/%)
+	@echo "linking $^ --> $@"
+	@$(CXX) -o $@ $^ $(LIBS) $(LDFLAGS)
+
 
 pyprep.so: $(GEN_OBJ:%=$(BIN)/%) $(PY_OBJ:%=$(BIN)/%)
 	@echo "linking $^ --> $@"

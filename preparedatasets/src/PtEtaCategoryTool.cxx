@@ -30,7 +30,7 @@ std::ostream& operator<<(std::ostream& out, const CategoryRange& range)
 
 int CategoryMap::get_category(float value)
 {
-  CategoryRange r(value,value + fabs(value*1e-5)); 
+  CategoryRange r(value,value);// + fabs(value*1e-5)); 
   std::map<CategoryRange,int>::iterator loc = this->find(r); 
   if (loc == this->end())
     return -1; 
@@ -47,6 +47,9 @@ CategoryRange::CategoryRange(float min, float max):
 
 bool CategoryRange::operator<(const CategoryRange& r) const
 {
-  if (this->_max <= r._min) return true; 
+  if (this->_max <= r._max){ 
+    if (this->_min < r._min) 
+      return true; 
+  }
   return false; 
 }

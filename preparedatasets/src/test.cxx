@@ -25,6 +25,23 @@ int main (int narg, char* argv[]){
 
   CategoryMap cat_map(values); 
   
+  std::cout << cat_map.get_category(1e-4) << std::endl; 
+  std::cout << cat_map.get_category(1e-5) << std::endl; 
+  std::cout << cat_map.get_category(1e-6) << std::endl; 
+  std::cout << cat_map.get_category(1e-7) << std::endl; 
+  std::cout << cat_map.get_category(0) << std::endl; 
+  std::cout << cat_map.get_category(-1e-7) << std::endl; 
+  std::cout << cat_map.get_category(-1e-6) << std::endl; 
+  std::cout << cat_map.get_category(-1e-5) << std::endl; 
+  std::cout << cat_map.get_category(-1e-4) << std::endl; 
+
+  for (CategoryMap::const_iterator itr = cat_map.begin(); 
+       itr != cat_map.end(); 
+       itr++){ 
+    std::cout << itr->first << "\t " << itr->second << std::endl; 
+  }
+
+
   srand(time(0)); 
   TH1F* hist = new TH1F("c","", 10, 0,10); 
   
@@ -35,11 +52,6 @@ int main (int narg, char* argv[]){
     hist->Fill(cat); 
 
     assert(cat >= 0); 
-  }
-  for (CategoryMap::const_iterator itr = cat_map.begin(); 
-       itr != cat_map.end(); 
-       itr++){ 
-    std::cout << itr->first << " " << itr->second << std::endl; 
   }
 
   TCanvas can("can","",100,100,600,400); 

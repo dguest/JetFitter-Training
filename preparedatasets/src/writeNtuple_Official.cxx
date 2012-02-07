@@ -3,7 +3,7 @@
 #include <TTree.h>
 #include <iostream>
 #include "writeNtuple_Official.hh"
-#include "getPtEtaCategoryLikelihood.hh"
+#include "PtEtaCategoryTool.hh"
 #include "TRandom.h"
 #include <cmath>
 #include <vector>
@@ -35,7 +35,20 @@ int writeNtuple_Official(SVector input_files,
 			 bool forNN,
 			 bool randomize) 
 {
-  
+
+  std::vector<float> pt_cat_vec; 
+  pt_cat_vec.push_back(25);
+  pt_cat_vec.push_back(35);
+  pt_cat_vec.push_back(50);
+  pt_cat_vec.push_back(80);
+  pt_cat_vec.push_back(120);
+  pt_cat_vec.push_back(200);
+  CategoryMap pt_categories(pt_cat_vec); 
+
+  std::vector<float> eta_cat_vec; 
+  eta_cat_vec.push_back(0.7); 
+  eta_cat_vec.push_back(1.5); 
+  CategoryMap abs_eta_categories(eta_cat_vec); 
 
   std::string jetCollection = jetCollectionName + suffix;
 
@@ -153,8 +166,8 @@ int writeNtuple_Official(SVector input_files,
   double correctionfactor=1;
 
   
-  int numPtBins=getNPtBins();
-  int numEtaBins=getNEtaBins();
+  int numPtBins = pt_categories.size(); 
+  int numEtaBins = abs_eta_categories.size(); 
 
   Double_t* weightsb=0;
   Double_t* weightsl=0;
@@ -202,9 +215,15 @@ int writeNtuple_Official(SVector input_files,
       
       if (fabs(readTreeJF->JetEta)>2.5||readTreeJF->JetPt<=15.)  continue;
 
+      pair<int,double> ptInfo;
+      pair<int,double> etaInfo;
+
+      ptInfo.first = pt_categories.get_category(readTreeJF->JetPt); 
+      ptInfo.second = 1; 	// MAGIC!
       
-      pair<int,double> ptInfo=getPtCategory(readTreeJF->JetPt);
-      pair<int,double> etaInfo=getEtaCategory(readTreeJF->JetEta);
+      etaInfo.first = abs_eta_categories.get_category
+	(fabs(readTreeJF->JetEta));
+      etaInfo.second = 1; 	// MAGIC!
 
       int actualpT=ptInfo.first;
       int actualeta=etaInfo.first;
@@ -350,8 +369,8 @@ int writeNtuple_Official(SVector input_files,
 
       JetPt=readTreeJF->JetPt;
       JetEta=readTreeJF->JetEta;
-      cat_pT=getPtCategory(JetPt).first;
-      cat_eta=getEtaCategory(JetEta).first;
+      cat_pT=pt_categories.get_category(JetPt);
+      cat_eta=abs_eta_categories.get_category(fabs(JetEta)); 
       
       cat_flavour=abs(readTreeJF->Flavour);
       if (forNN){

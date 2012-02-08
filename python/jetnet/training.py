@@ -1,6 +1,33 @@
 import sys, dl, os, glob
 from jetnet.dirs import OverwriteError
 
+def _get_pt_eta_categories(file_name): 
+    from ROOT import TFile
+
+    if not os.path.isfile(file_name): 
+        return None, None
+    
+    the_file = TFile(file_name)
+    pt_categories = []
+    eta_categories = []
+    for key in TIter(the_file): 
+        key_name = key.GetName()
+        key_class = key.GetClassName()
+
+        if not key_class == 'TTree': continue
+        
+        if key_name == 'pt_cat': 
+            tree = key.ReadObj()
+            for entry in tree: 
+                pt_categories.append(entry.pt_gev)
+
+        elif key_name == 'eta_cat': 
+            tree = key.ReadObj()
+            for entry in tree: 
+                eta_categories.append(entry.abs_eta)
+            
+    return pt_categories, eta_categories
+
 
 def _set_linker_flags(): 
     """without this root has trouble"""
@@ -70,10 +97,17 @@ def run_test_ntuple(reduced_dataset,
     if not os.path.isdir(output_dir): 
         os.makedirs(output_dir)
 
+    pt_categories, eta_categories = _get_pt_eta_categories(reduced_dataset)
+
+    if print_and_exit: 
+        pt_categories = range(10)
+        eta_categories = range(3)
 
     pynn.makeNtuple(weights_file = weights_file, 
                     reduced_dataset = reduced_dataset,
                     output_file = output_file, 
                     output_tree = output_tree, 
+                    pt_categories = pt_categories, 
+                    eta_categories = eta_categories, 
                     debug = print_and_exit)
     

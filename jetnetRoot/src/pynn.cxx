@@ -209,18 +209,24 @@ extern "C" PyObject* make_test_ntuple(PyObject *self,
     "reduced_dataset", 
     "output_file", 
     "output_tree", 
+    "pt_categories", 
+    "eta_categories", 
     "debug", 
     NULL};
  
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "sss|sb", 
-				   // this function should take a const, and 
-				   // may be changed, until then we'll cast
-				   const_cast<char**>(kwlist),
-				   &input_weights_name,
-				   &input_dataset_name, 
-				   &output_file_name, 
-				   &output_tree_name, 
-				   &debug))
+  if (!PyArg_ParseTupleAndKeywords
+      (args, keywds, "sss|sOOb", 
+       // this function should take a const, and 
+       // may be changed, until then we'll cast
+       const_cast<char**>(kwlist),
+       &input_weights_name,
+       &input_dataset_name, 
+       &output_file_name, 
+       &output_tree_name, 
+       &pt_categories, 
+       &eta_categories, 
+       &debug)
+      )
     return NULL;
 
   CategoryVectors categories; 

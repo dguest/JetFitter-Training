@@ -64,6 +64,7 @@ T_DICTS := $(T_OBJ:.o=Dict.o)
 
 CXX_OBJECTS := trainNN.o testNN.o doNormalization.o 
 CXX_OBJECTS += makeTestNtuple.o readReducedDataset.o 
+CXX_OBJECTS += PtEtaCategoryTool.o
 CXX_OBJECTS += $(T_OBJ) $(T_DICTS)
 
 LIB_OBJECTS := $(JETNET_OBJ)

@@ -376,5 +376,5 @@ std::ostream& operator<<(std::ostream& out, const CategoryVectors& v)
     out << cat << ": " << *itr << ", "; 
     cat++; 
   }
-
+  return out; 
 }

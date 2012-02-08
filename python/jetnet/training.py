@@ -100,8 +100,8 @@ def run_test_ntuple(reduced_dataset,
     pt_categories, eta_categories = _get_pt_eta_categories(reduced_dataset)
 
     if print_and_exit: 
-        pt_categories = range(10)
-        eta_categories = range(3)
+        pt_categories = [1.0,20.3]
+        eta_categories = [0.0,1.0,3.5]
 
     pynn.makeNtuple(weights_file = weights_file, 
                     reduced_dataset = reduced_dataset,

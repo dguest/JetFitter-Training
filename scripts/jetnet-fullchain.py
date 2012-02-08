@@ -102,11 +102,16 @@ if __name__ == '__main__':
     if len(sys.argv) == 1: 
         sys.exit(__doc__)
 
-    elif len(sys.argv) == 2: 
+    do_test = False
+    if '--test' in sys.argv: 
+        do_test = True
+        print 'doing test' 
+
+    if len(sys.argv) >= 2: 
         input_files = []
         with open(sys.argv[1]) as file_list: 
             for line in file_list: 
                 input_files.append(line.strip())
 
-
-        run_full_chain(input_files, do_test = False)
+        print 'running full chain' 
+        run_full_chain(input_files, do_test = do_test)

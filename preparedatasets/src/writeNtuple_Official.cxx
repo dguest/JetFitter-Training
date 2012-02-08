@@ -471,6 +471,27 @@ int writeNtuple_Official(SVector input_files,
 
 
   file->WriteTObject(output_tree.get()); 
+
+  // --- save configuration in tree 
+  typedef std::vector<float>::const_iterator FVecItr; 
+  TTree pt_cat_config("pt_cat","pt_cat"); 
+  float pt_val_buffer; 
+  pt_cat_config.Branch("pt_gev",&pt_val_buffer); 
+  for (FVecItr itr = pt_cat_vec.begin(); itr != pt_cat_vec.end(); itr++){ 
+    pt_val_buffer = *itr; 
+    pt_cat_config.Fill(); 
+  }
+  file->WriteTObject(&pt_cat_config); 
+
+  TTree eta_cat_config("eta_cat","eta_cat"); 
+  float eta_val_buffer; 
+  eta_cat_config.Branch("abs_eta",&eta_val_buffer); 
+  for (FVecItr itr = eta_cat_vec.begin(); itr != eta_cat_vec.end(); itr++){ 
+    eta_val_buffer = *itr; 
+    eta_cat_config.Fill(); 
+  }
+  file->WriteTObject(&eta_cat_config); 
+
   std::cout << "done!\n";
 
   return 0; 

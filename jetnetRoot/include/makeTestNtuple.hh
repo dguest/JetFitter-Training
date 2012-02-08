@@ -2,11 +2,26 @@
 #define MAKE_TEST_NTUPLE_H
 
 #include <string>
+#include <vector>
 
-void makeTestNtuple(std::string input_weights_name,
-		    std::string input_dataset_name, 
-		    std::string output_file_name, 
-		    std::string output_tree_name);  
+struct IONames
+{
+  std::string input_weights; 
+  std::string reduced_dataset; 
+  std::string output_file; 
+  std::string output_tree; 
+};
+
+struct CategoryVectors
+{
+  std::vector<float> pt; 
+  std::vector<float> eta; 
+  bool build_default_values(); 
+};
+
+
+void makeTestNtuple(IONames io_names, 
+		    CategoryVectors category_vectors = CategoryVectors());  
 
 int nothing();
 

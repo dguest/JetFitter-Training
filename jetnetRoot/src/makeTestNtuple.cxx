@@ -16,26 +16,34 @@
 #include <string> 
 #include "nnExceptions.hh"
 
-#include "getPtEtaCategoryLikelihood.hh" //FIXME: remove this dependence
-
+#include "PtEtaCategoryTool.hh"
 
 using namespace std;
 
 
-void makeTestNtuple(std::string input_weights_name,
-		    std::string input_dataset_name, 
-		    std::string output_file_name, 
-		    std::string output_tree_name)
+void makeTestNtuple(IONames io_names, 
+		    CategoryVectors category_vectors)
 
 {
+  std::string input_weights_name = io_names.input_weights; 
+  std::string input_dataset_name = io_names.reduced_dataset;
+  std::string output_file_name = io_names.output_file; 
+  std::string output_tree_name = io_names.output_tree; 
+
+  bool used_def_categories = category_vectors.build_default_values(); 
+  if (used_def_categories){ 
+    printf("WARNING: using hardcoded pt / eta categories\n"); 
+  }
+
+  CategoryMap pt_categories(category_vectors.pt); 
+  CategoryMap abs_eta_categories(category_vectors.eta); 
 
   TFile input_weights_file(input_weights_name.c_str());
   TTrainedNetwork* trainedNetwork = dynamic_cast<TTrainedNetwork*>
     (input_weights_file.Get("TTrainedNetwork"));
 
   
-  if (!trainedNetwork) 
-  {
+  if (!trainedNetwork) {
     throw LoadNetworkException(); 
   }
 
@@ -52,7 +60,7 @@ void makeTestNtuple(std::string input_weights_name,
   nneurons[3]=trainedNetwork->getnOutput();
   
   cout << " [0]: " <<  nneurons[0] << " [1]: " << nneurons[1] << 
-      " [2]: " << nneurons[2] << " [3] :" << nneurons[3] << endl;
+    " [2]: " << nneurons[2] << " [3] :" << nneurons[3] << endl;
   
   Int_t nInput=trainedNetwork->getnInput();
   cout << " Input size: " << nInput;
@@ -60,10 +68,9 @@ void makeTestNtuple(std::string input_weights_name,
   vector<Int_t> nHiddenLayerSize=trainedNetwork->getnHiddenLayerSize();
   Int_t nHidden=nHiddenLayerSize.size();
   
-  for (Int_t o=0;o<nHidden;++o)
-  {
-    cout << " Hidden lay: " << o << " size: " << nHiddenLayerSize[o];
-  }
+  for (Int_t o=0;o<nHidden;++o) {
+      cout << " Hidden lay: " << o << " size: " << nHiddenLayerSize[o];
+    }
   Int_t nOutput=trainedNetwork->getnOutput();
   
   cout << " Output size: " << nOutput << endl;
@@ -72,12 +79,11 @@ void makeTestNtuple(std::string input_weights_name,
   //now calculate the value using:
   TVectorD** resultVector=new TVectorD*[nHidden+1];
   
-  for (Int_t o=0;o<nHidden+1;++o)
-  {
-    int sizeActualLayer=(o<nHidden)?nHiddenLayerSize[o]:nOutput;
-    int sizePreviousLayer=(o==0)?nInput:nHiddenLayerSize[o-1];
-    resultVector[o]=new TVectorD(sizeActualLayer);
-  }
+  for (Int_t o=0;o<nHidden+1;++o) {
+      int sizeActualLayer=(o<nHidden)?nHiddenLayerSize[o]:nOutput;
+      int sizePreviousLayer=(o==0)?nInput:nHiddenLayerSize[o-1];
+      resultVector[o]=new TVectorD(sizeActualLayer);
+    }
 
   std::vector<TVectorD*> thresholdVectors=trainedNetwork->getThresholdVectors();
   std::vector<TMatrixD*> weightMatrices=trainedNetwork->weightMatrices();
@@ -88,7 +94,7 @@ void makeTestNtuple(std::string input_weights_name,
 
   TJetNet* jn = new TJetNet( 3000, 7000, nLayers, nneurons );
 
-   jn->SetUpdatesPerEpoch( 10 );
+  jn->SetUpdatesPerEpoch( 10 );
   jn->SetUpdatingProcedure( 0 );
   jn->SetErrorMeasure( 0 );
   jn->SetActivationFunction( 1 );
@@ -98,11 +104,11 @@ void makeTestNtuple(std::string input_weights_name,
   jn->SetInitialWeightsWidth( 0.6 );
   jn->SetLearningRateDecrease( 0.999 );
 
-jn->Init();
+  jn->Init();
 
-jn->readBackTrainedNetwork(trainedNetwork);
+  jn->readBackTrainedNetwork(trainedNetwork);
 
-//END CROSS CHECK HERE 
+  //END CROSS CHECK HERE 
 
   
 
@@ -155,8 +161,7 @@ jn->readBackTrainedNetwork(trainedNetwork);
 
   TTree* myTree=new TTree(output_tree_name.c_str(),output_tree_name.c_str());
 
-  if (!true) // longterm: make out variables read in from a list 
-  {
+  if (!true) {// longterm: make out variables read in from a list 
     myTree->Branch("nVTX",&nVTX,"nVTX/I");
     myTree->Branch("nTracksAtVtx",&nTracksAtVtx,"nTracksAtVtx/I");
     myTree->Branch("nSingleTracks",&nSingleTracks,"nSingleTracks/I");
@@ -189,30 +194,30 @@ jn->readBackTrainedNetwork(trainedNetwork);
   cout << "Total entries are: " << num_entries << endl;
 
   for (Int_t i=0;i<num_entries;++i)
- {
+    {
 
 
-    if (i % 500000 == 0 ) {
-      std::cout << " processing event number " << i << std::endl;
-    }
+      if (i % 500000 == 0 ) {
+	std::cout << " processing event number " << i << std::endl;
+      }
     
-    readTreeJF->GetEntry(i);
+      readTreeJF->GetEntry(i);
 
 
-    JetPt=readTreeJF->JetPt;
-    JetEta=readTreeJF->JetEta;
-    cat_pT=getPtCategory(JetPt).first;
-    cat_eta=getEtaCategory(JetEta).first;
-    cat_flavour=readTreeJF->cat_flavour;
-    weight=readTreeJF->weight;
+      JetPt=readTreeJF->JetPt;
+      JetEta=readTreeJF->JetEta;
+      cat_pT = pt_categories.get_category(JetPt);
+      cat_eta = abs_eta_categories.get_category(JetEta); 
+      cat_flavour=readTreeJF->cat_flavour;
+      weight=readTreeJF->weight;
     
-    discriminatorIP3D=readTreeJF->discriminatorIP3D;
-    discriminatorIP2D=readTreeJF->discriminatorIP2D;
-    discriminatorSV1=readTreeJF->discriminatorSV1;
-    discriminatorCOMB=readTreeJF->discriminatorCOMB;
-    deltaR=readTreeJF->deltaR;
+      discriminatorIP3D=readTreeJF->discriminatorIP3D;
+      discriminatorIP2D=readTreeJF->discriminatorIP2D;
+      discriminatorSV1=readTreeJF->discriminatorSV1;
+      discriminatorCOMB=readTreeJF->discriminatorCOMB;
+      deltaR=readTreeJF->deltaR;
 
-    float input[9]=
+      float input[9]=
         {   norm_nVTX(readTreeJF->nVTX),
             norm_nTracksAtVtx(readTreeJF->nTracksAtVtx),
             norm_nSingleTracks(readTreeJF->nSingleTracks),
@@ -224,105 +229,105 @@ jn->readBackTrainedNetwork(trainedNetwork);
             norm_cat_eta(cat_eta) };
 
 
-    if (i<10)
-    {
-      cout << " input variables: ";
-      for (int o=0;o<9;++o)
-      {
-        cout << "var " << o << ": " << input[o] << endl;
-      }
+      if (i<10)
+	{
+	  cout << " input variables: ";
+	  for (int o=0;o<9;++o)
+	    {
+	      cout << "var " << o << ": " << input[o] << endl;
+	    }
+	}
+
+      //CALCULATION STARTS HERE
+
+      for (Int_t o=0;o<nHidden+1;++o)
+	{
+	  int sizeActualLayer=(o<nHidden)?nHiddenLayerSize[o]:nOutput;
+	  int sizePreviousLayer=(o==0)?nInput:nHiddenLayerSize[o-1];
+  
+	  for (Int_t s=0;s<sizeActualLayer;++s)
+	    {
+	      // TODO: change this ->operator() syntax
+	      Double_t nodeValue=0.;
+	      if (o==0)
+		{
+		  for (Int_t p=0;p<nInput;++p)
+		    {
+		      nodeValue+=weightMatrices[o]->operator() (p,s)*input[p];
+		    }
+		}
+	      else
+		{
+		  for (Int_t p=0;p<nHiddenLayerSize[o-1];++p)
+		    {
+		      nodeValue+=weightMatrices[o]->operator() (p,s)*resultVector[o-1]->operator()(p);
+		    }
+		}
+	      nodeValue+=thresholdVectors[o]->operator() (s);
+	      resultVector[o]->operator()(s) = sigmoid(nodeValue);
+	    }
+	}      
+  
+      TVectorD result(nOutput);
+      for (Int_t jjj = 0; jjj < nOutput; jjj++)
+	{
+	  result.operator()(jjj)=
+	    resultVector[nHidden]->operator()(jjj);
+	}
+
+      //CALCULATION ENDS HERE
+
+      NNb=result.operator()(0);
+      NNc=result.operator()(1);
+      NNu=result.operator()(2);
+    
+      if (i<10)
+	{
+	  cout << " NNb: " << NNb << " NNc: " << NNc << " NNu: " << NNu << endl;
+	}
+  
+      //cross check
+
+      for (Int_t i=0;i<trainedNetwork->getnInput();++i)
+	{
+	  jn->SetInputs(i,input[i]);
+	}
+
+      jn->Evaluate();
+
+      //  cout << "Result 0:" << jn->GetOutput(0);
+      //  cout << " Result 1:" << jn->GetOutput(1);
+      //  cout << " Result 2:" << jn->GetOutput(2) << endl;
+
+      if (fabs(NNb-jn->GetOutput(0))>1e-4)
+	{
+	  cout << " Different: NNb: " << NNb << " output0: " << jn->GetOutput(0) << endl;
+	}
+  
+      if (fabs(NNc-jn->GetOutput(1))>1e-4)
+	{
+	  cout << " Different: NNc: " << NNc << " output0: " << jn->GetOutput(1) << endl;
+	}
+
+      if (fabs(NNu-jn->GetOutput(2))>1e-4)
+	{
+	  cout << " Different: NNu: " << NNu << " output0: " << jn->GetOutput(2) << endl;
+	}
+
+      //end cross check
+
+      /*
+	nVTX=readTreeJF->nVTX;
+	nSingleTracks=readTreeJF->nSingleTracks;
+	nTracksAtVtx=readTreeJF->nTracksAtVtx;
+	energyFraction=readTreeJF->energyFraction;
+	mass=readTreeJF->mass;
+	significance3d=readTreeJF->significance3d;
+      */
+
+    
+      myTree->Fill();
     }
-
-    //CALCULATION STARTS HERE
-
-    for (Int_t o=0;o<nHidden+1;++o)
-    {
-      int sizeActualLayer=(o<nHidden)?nHiddenLayerSize[o]:nOutput;
-      int sizePreviousLayer=(o==0)?nInput:nHiddenLayerSize[o-1];
-  
-      for (Int_t s=0;s<sizeActualLayer;++s)
-      {
-	// TODO: change this ->operator() syntax
-        Double_t nodeValue=0.;
-        if (o==0)
-        {
-          for (Int_t p=0;p<nInput;++p)
-          {
-            nodeValue+=weightMatrices[o]->operator() (p,s)*input[p];
-          }
-        }
-        else
-        {
-          for (Int_t p=0;p<nHiddenLayerSize[o-1];++p)
-          {
-            nodeValue+=weightMatrices[o]->operator() (p,s)*resultVector[o-1]->operator()(p);
-          }
-        }
-        nodeValue+=thresholdVectors[o]->operator() (s);
-        resultVector[o]->operator()(s) = sigmoid(nodeValue);
-      }
-  }      
-  
-  TVectorD result(nOutput);
-  for (Int_t jjj = 0; jjj < nOutput; jjj++)
-  {
-    result.operator()(jjj)=
-      resultVector[nHidden]->operator()(jjj);
-  }
-
-  //CALCULATION ENDS HERE
-
-  NNb=result.operator()(0);
-  NNc=result.operator()(1);
-  NNu=result.operator()(2);
-    
-  if (i<10)
-  {
-    cout << " NNb: " << NNb << " NNc: " << NNc << " NNu: " << NNu << endl;
-  }
-  
-  //cross check
-
-   for (Int_t i=0;i<trainedNetwork->getnInput();++i)
-  {
-    jn->SetInputs(i,input[i]);
-  }
-
-  jn->Evaluate();
-
-//  cout << "Result 0:" << jn->GetOutput(0);
-//  cout << " Result 1:" << jn->GetOutput(1);
-//  cout << " Result 2:" << jn->GetOutput(2) << endl;
-
-  if (fabs(NNb-jn->GetOutput(0))>1e-4)
-  {
-    cout << " Different: NNb: " << NNb << " output0: " << jn->GetOutput(0) << endl;
-  }
-  
-  if (fabs(NNc-jn->GetOutput(1))>1e-4)
-  {
-    cout << " Different: NNc: " << NNc << " output0: " << jn->GetOutput(1) << endl;
-  }
-
-  if (fabs(NNu-jn->GetOutput(2))>1e-4)
-  {
-    cout << " Different: NNu: " << NNu << " output0: " << jn->GetOutput(2) << endl;
-  }
-
-  //end cross check
-
-/*
-  nVTX=readTreeJF->nVTX;
-  nSingleTracks=readTreeJF->nSingleTracks;
-  nTracksAtVtx=readTreeJF->nTracksAtVtx;
-  energyFraction=readTreeJF->energyFraction;
-  mass=readTreeJF->mass;
-  significance3d=readTreeJF->significance3d;
-*/
-
-    
-    myTree->Fill();
-  }
 
 
   outputFile->WriteTObject(myTree); 
@@ -333,3 +338,25 @@ jn->readBackTrainedNetwork(trainedNetwork);
   
 }
   
+bool CategoryVectors::build_default_values()
+{
+  bool init_pt = false; 
+  if (pt.size() == 0){ 
+    pt.push_back(25); 
+    pt.push_back(35); 
+    pt.push_back(50); 
+    pt.push_back(80); 
+    pt.push_back(120); 
+    pt.push_back(200); 
+    init_pt = true; 
+  }
+
+  bool init_eta = false; 
+  if(eta.size() == 0){
+    eta.push_back(0.7); 
+    eta.push_back(1.5); 
+    init_eta = true; 
+  }
+  return init_pt || init_eta; 
+
+}

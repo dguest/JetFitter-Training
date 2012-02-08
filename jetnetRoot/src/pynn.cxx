@@ -227,10 +227,14 @@ extern "C" PyObject* make_test_ntuple(PyObject *self,
   }
 
   else{ 
-    makeTestNtuple(input_weights_name, 
-    		   input_dataset_name,
-    		   output_file_name, 
-    		   output_tree_name); 
+    IONames io_names = { 
+      input_weights_name, 
+      input_dataset_name, 
+      output_file_name, 
+      output_tree_name
+    }; 
+
+    makeTestNtuple(io_names); 
   }
 
   Py_INCREF(Py_None);

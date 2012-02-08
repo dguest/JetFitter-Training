@@ -5,7 +5,7 @@
 # --- set dirs
 BIN          := bin
 SRC          := src
-INC          := include
+INC          := src
 
 # --- external dirs 
 EXT_SRC      := ext_src
@@ -32,7 +32,7 @@ PY_LIB   +=   $(shell $(PY_CONFIG) --libs)
 
 # --- set compiler and flags
 CXX          := g++
-CXXFLAGS     := -O2 -Wall -fPIC -I$(INC)
+CXXFLAGS     := -O2 -Wall -fPIC -I$(INC) -I$(EXT_INC)
 LDFLAGS      := -Wl,-no-undefined 
 
 # rootstuff 

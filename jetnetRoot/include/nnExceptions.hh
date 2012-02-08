@@ -15,7 +15,8 @@ class WriteFileException: public NNException {};
 class ParseException {}; 
 class TupleParseException: public ParseException{}; 
 class IntParseException: public ParseException{};
-
+class ListParseException: public ParseException{}; 
+class FloatParseException: public ParseException{}; 
 
 
 #endif // NN_EXCEPTIONS_H

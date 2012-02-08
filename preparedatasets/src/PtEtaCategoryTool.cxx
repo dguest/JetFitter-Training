@@ -5,10 +5,11 @@
 #include <utility>
 #include <cmath>
 
-CategoryMap::CategoryMap(const std::vector<float>& v)
+
+CategoryMap::CategoryMap(const std::vector<double>& v)
 { 
-  float low = -INFINITY; 
-  float high = low; 
+  double low = -INFINITY; 
+  double high = low; 
   for (size_t category = 0; category < v.size(); category++){ 
     low = high;
     high = v.at(category); 
@@ -28,7 +29,7 @@ std::ostream& operator<<(std::ostream& out, const CategoryRange& range)
 } 
 
 
-int CategoryMap::get_category(float value)
+int CategoryMap::get_category(double value)
 {
   CategoryRange r(value,value);// + fabs(value*1e-5)); 
   std::map<CategoryRange,int>::iterator loc = this->find(r); 
@@ -37,7 +38,7 @@ int CategoryMap::get_category(float value)
   else return loc->second; 
 }
 
-CategoryRange::CategoryRange(float min, float max): 
+CategoryRange::CategoryRange(double min, double max): 
   _min(min), 
   _max(max)
 { 

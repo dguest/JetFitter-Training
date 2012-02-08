@@ -8,20 +8,20 @@
 class CategoryRange
 {
 public: 
-  CategoryRange(float min, float max); 
-  CategoryRange(float one_point); 
+  CategoryRange(double min, double max); 
+  CategoryRange(double one_point); 
   bool operator<(const CategoryRange& r) const ; 
   friend std::ostream& operator<<(std::ostream&, const CategoryRange&); 
 private: 
-  float _min; 
-  float _max; 
+  double _min; 
+  double _max; 
 }; 
 
 class CategoryMap: public std::map<CategoryRange,int> 
 { 
 public: 
-  CategoryMap(const std::vector<float>& v); 
-  int get_category(float value); 
+  CategoryMap(const std::vector<double>& v); 
+  int get_category(double value); 
 
 }; 
 

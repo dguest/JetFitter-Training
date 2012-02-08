@@ -9,7 +9,7 @@
 
 int main (int narg, char* argv[]){ 
   
-  std::vector<float> values; 
+  std::vector<double> values; 
 
 
   values.push_back(-4); 

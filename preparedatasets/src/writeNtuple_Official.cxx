@@ -36,7 +36,7 @@ int writeNtuple_Official(SVector input_files,
 			 bool randomize) 
 {
 
-  std::vector<float> pt_cat_vec; 
+  std::vector<double> pt_cat_vec; 
   pt_cat_vec.push_back(25);
   pt_cat_vec.push_back(35);
   pt_cat_vec.push_back(50);
@@ -45,7 +45,7 @@ int writeNtuple_Official(SVector input_files,
   pt_cat_vec.push_back(200);
   CategoryMap pt_categories(pt_cat_vec); 
 
-  std::vector<float> eta_cat_vec; 
+  std::vector<double> eta_cat_vec; 
   eta_cat_vec.push_back(0.7); 
   eta_cat_vec.push_back(1.5); 
   CategoryMap abs_eta_categories(eta_cat_vec); 
@@ -473,20 +473,20 @@ int writeNtuple_Official(SVector input_files,
   file->WriteTObject(output_tree.get()); 
 
   // --- save configuration in tree 
-  typedef std::vector<float>::const_iterator FVecItr; 
+  typedef std::vector<double>::const_iterator DVecItr; 
   TTree pt_cat_config("pt_cat","pt_cat"); 
-  float pt_val_buffer; 
+  double pt_val_buffer; 
   pt_cat_config.Branch("pt_gev",&pt_val_buffer); 
-  for (FVecItr itr = pt_cat_vec.begin(); itr != pt_cat_vec.end(); itr++){ 
+  for (DVecItr itr = pt_cat_vec.begin(); itr != pt_cat_vec.end(); itr++){ 
     pt_val_buffer = *itr; 
     pt_cat_config.Fill(); 
   }
   file->WriteTObject(&pt_cat_config); 
 
   TTree eta_cat_config("eta_cat","eta_cat"); 
-  float eta_val_buffer; 
+  double eta_val_buffer; 
   eta_cat_config.Branch("abs_eta",&eta_val_buffer); 
-  for (FVecItr itr = eta_cat_vec.begin(); itr != eta_cat_vec.end(); itr++){ 
+  for (DVecItr itr = eta_cat_vec.begin(); itr != eta_cat_vec.end(); itr++){ 
     eta_val_buffer = *itr; 
     eta_cat_config.Fill(); 
   }

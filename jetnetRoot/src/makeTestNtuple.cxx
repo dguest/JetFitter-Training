@@ -360,3 +360,21 @@ bool CategoryVectors::build_default_values()
   return init_pt || init_eta; 
 
 }
+
+std::ostream& operator<<(std::ostream& out, const CategoryVectors& v)
+{
+  typedef std::vector<double>::const_iterator FVecItr; 
+  int cat = 0; 
+  out << "pT -- "; 
+  for (FVecItr itr = v.pt.begin(); itr != v.pt.end(); itr++){ 
+    out << cat << ": " << *itr << " [GeV], "; 
+    cat++; 
+  }
+  cat = 0; 
+  out << "abs(eta) -- "; 
+  for (FVecItr itr = v.eta.begin(); itr != v.eta.end(); itr++){ 
+    out << cat << ": " << *itr << ", "; 
+    cat++; 
+  }
+
+}

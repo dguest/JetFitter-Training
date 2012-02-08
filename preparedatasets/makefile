@@ -7,10 +7,14 @@ BIN          := bin
 SRC          := src
 INC          := include
 
+# --- external dirs 
+EXT_SRC      := ext_src
+EXT_INC      := ext_inc
+
 #  set search path
 vpath %.o    $(BIN)
-vpath %.cxx  $(SRC)
-vpath %.hh   $(INC)
+vpath %.cxx  $(SRC) $(EXT_SRC)
+vpath %.hh   $(INC) $(EXT_INC)
 
 # --- load in root config
 ROOTCFLAGS    := $(shell root-config --cflags)
@@ -49,7 +53,7 @@ EXE_OBJ     := $(GEN_OBJ) main.o
 
 PY_OBJ       := pyprep.o
 
-ALLOBJ       := $(GEN_OBJ) $(PY_OBJ) 
+ALLOBJ       := $(GEN_OBJ) $(PY_OBJ) main.o test.o
 
 ALLOUTPUT    := pyprep.so # prepareAllNtuplesForNN
 

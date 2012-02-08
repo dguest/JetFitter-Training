@@ -2,6 +2,7 @@
 // Author: Daniel Guest (dguest@cern.ch)
 #include <Python.h>
 #include <string> 
+#include <iostream>
 #include "trainNN.hh"
 #include "testNN.hh"
 #include "nnExceptions.hh"
@@ -199,6 +200,8 @@ extern "C" PyObject* make_test_ntuple(PyObject *self,
   const char* input_dataset_name; 
   const char* output_file_name; 
   const char* output_tree_name = "performance"; 
+  PyObject* pt_categories = 0; 
+  PyObject* eta_categories = 0; 
   bool debug = false; 
 
   const char *kwlist[] = {
@@ -220,10 +223,23 @@ extern "C" PyObject* make_test_ntuple(PyObject *self,
 				   &debug))
     return NULL;
 
+  CategoryVectors categories; 
+  try {
+    categories.pt = parse_double_list(pt_categories); 
+    categories.eta = parse_double_list(eta_categories); 
+  }
+  catch(ParseException e) { 
+    PyErr_SetString(PyExc_TypeError,
+		    "expected a list of floats, found something else"); 
+    return 0;
+  }
+
+
   if (debug){ 
     printf("in wt = %s, in ds = %s, out file = %s, out tree = %s\n", 
   	   input_weights_name, input_dataset_name, 
 	   output_file_name, output_tree_name); 
+    std::cout << "categories: " << categories << std::endl;
   }
 
   else{ 
@@ -296,5 +312,30 @@ std::vector<int> parse_int_tuple(PyObject* py_list){
     ints.push_back(the_int); 
   }
   return ints; 
+
+}
+
+std::vector<double> parse_double_list(PyObject* py_list){ 
+  std::vector<double> out_vals; 
+  if (py_list == 0) { 
+    return out_vals; 
+  }
+
+  bool ok = PyList_Check(py_list); 
+  if (!ok) {
+    throw ListParseException(); 
+  }
+
+  int n_items = PyList_Size(py_list); 
+  for (int i = 0; i < n_items; i++){ 
+    PyObject* the_ob = PyList_GetItem(py_list, i); 
+    if (!PyFloat_Check(the_ob)){ 
+      throw FloatParseException(); 
+    }
+
+    float the_value = PyFloat_AsDouble(the_ob); 
+    out_vals.push_back(the_value); 
+  }
+  return out_vals; 
 
 }

@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <ostream>
 
 struct IONames
 {
@@ -14,11 +15,12 @@ struct IONames
 
 struct CategoryVectors
 {
-  std::vector<float> pt; 
-  std::vector<float> eta; 
+  std::vector<double> pt; 
+  std::vector<double> eta; 
   bool build_default_values(); 
 };
 
+std::ostream& operator<<(std::ostream&, const CategoryVectors&); 
 
 void makeTestNtuple(IONames io_names, 
 		    CategoryVectors category_vectors = CategoryVectors());  

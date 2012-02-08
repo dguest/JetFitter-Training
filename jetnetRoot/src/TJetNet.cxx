@@ -1051,58 +1051,58 @@ void TJetNet::SetUpdatesPerEpoch( Int_t aValue )
 { 
   // Sets the number of the updates per epoch
   JNDAT1.MSTJN[ 8 ] = aValue; 
-  if( !mInitLocked ) this->Init();
+  // if( !mInitLocked ) this->Init();
 }
 //______________________________________________________________________________
 void TJetNet::SetUpdatingProcedure( Int_t aValue )
 {  
   // Set specific weights update function
   JNDAT1.MSTJN[ 4 ] = aValue; 
-  if( !mInitLocked ) this->Init();
+  // if( !mInitLocked ) this->Init();
 }
 //______________________________________________________________________________
 void TJetNet::SetErrorMeasure( Int_t aValue )
 {  
   JNDAT1.MSTJN[ 3 ] = aValue; 
-  if( !mInitLocked ) this->Init();
+  // if( !mInitLocked ) this->Init();
 }
 //______________________________________________________________________________
 void TJetNet::SetActivationFunction( Int_t aValue )
 { 
   // Set the kind of activation function used
   JNDAT1.MSTJN[ 2 ] = aValue; 
-  if( !mInitLocked ) this->Init();
+  // if( !mInitLocked ) this->Init();
 }
 //______________________________________________________________________________
 void TJetNet::SetPatternsPerUpdate( Int_t aValue )
 { 
   JNDAT1.MSTJN[ 1 ] = aValue; 
-  if( !mInitLocked ) this->Init();
+  // if( !mInitLocked ) this->Init();
 }
 //______________________________________________________________________________
 void TJetNet::SetLearningRate( Double_t aValue )
 { 
   // Change the Learning Rate
   JNDAT1.PARJN[ 0 ] = aValue; 
-  if( !mInitLocked ) this->Init();
+  // if( !mInitLocked ) this->Init();
 }
 //______________________________________________________________________________
 void TJetNet::SetMomentum( Double_t aValue )
 { 
   JNDAT1.PARJN[ 1 ] = aValue; 
-  if( !mInitLocked ) this->Init();
+  // if( !mInitLocked ) this->Init();
 }
 //______________________________________________________________________________
 void TJetNet::SetInitialWeightsWidth( Double_t aValue )
 { 
   JNDAT1.PARJN[ 3 ] = aValue; 
-  if( !mInitLocked ) this->Init();
+  // if( !mInitLocked ) this->Init();
 }
 //______________________________________________________________________________
 void TJetNet::SetLearningRateDecrease( Double_t aValue )
 { 
   JNDAT1.PARJN[ 10 ] = aValue; 
-  if( !mInitLocked ) this->Init();
+  // if( !mInitLocked ) this->Init();
 }
 //______________________________________________________________________________
 Int_t TJetNet::GetUpdatesPerEpoch( void )

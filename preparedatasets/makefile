@@ -43,6 +43,7 @@ PY_LDFLAGS += -shared
 
 # ---- define objects
 GEN_OBJ     := readJFBTagAna.o writeNtuple_Official.o
+GEN_OBJ     += PtEtaCategoryTool.o
 # GEN_OBJ     += writeNtupleAll.o readBaseBTagAnaTree.o
 EXE_OBJ     := $(GEN_OBJ) main.o
 

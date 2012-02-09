@@ -2,7 +2,7 @@ import sys, dl, os, glob
 from jetnet.dirs import OverwriteError
 
 def _get_pt_eta_categories(file_name): 
-    from ROOT import TFile
+    from ROOT import TFile, TIter
 
     if not os.path.isfile(file_name): 
         return None, None
@@ -10,7 +10,8 @@ def _get_pt_eta_categories(file_name):
     the_file = TFile(file_name)
     pt_categories = []
     eta_categories = []
-    for key in TIter(the_file): 
+    file_keys = the_file.GetListOfKeys()
+    for key in TIter(file_keys): 
         key_name = key.GetName()
         key_class = key.GetClassName()
 

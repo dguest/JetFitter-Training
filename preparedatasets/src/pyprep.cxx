@@ -19,6 +19,9 @@ PyObject* prep_ntuple(PyObject *self,
   PyObject* observer_discriminators = 0; 
   const char* jet_collection_name = "AntiKt4TopoEMJets"; 
   const char* output_file_name = "reduced.root"; 
+  const char* suffix = "AOD"; 
+  bool for_nn = true; 
+  bool randomize = false; 
   bool debug = false; 
 
   const char *kwlist[] = {
@@ -26,11 +29,14 @@ PyObject* prep_ntuple(PyObject *self,
     "observer_discriminators", 
     "jet_collection", 
     "output_file", 
+    "suffix", 
+    "for_nn", 
+    "randomize", 
     "debug", 
     NULL};
     
   bool ok = PyArg_ParseTupleAndKeywords
-    (args, keywds, "O|Ossb", 
+    (args, keywds, "O|Osssbbb", 
      // this function should take a const, and 
      // may be changed. until then we'll cast
      const_cast<char**>(kwlist),
@@ -38,6 +44,9 @@ PyObject* prep_ntuple(PyObject *self,
      &observer_discriminators, 
      &jet_collection_name, 
      &output_file_name, 
+     &suffix, 
+     &for_nn, 
+     &randomize, 
      &debug); 
 
   if (!ok) return NULL;
@@ -78,7 +87,10 @@ PyObject* prep_ntuple(PyObject *self,
 
     writeNtuple_Official(files, observers, 
 			 jet_collection_name, 
-			 output_file_name); 
+			 output_file_name, 
+			 suffix, 
+			 for_nn, 
+			 randomize); 
 
   }
 

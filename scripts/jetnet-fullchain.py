@@ -21,7 +21,8 @@ observer_discriminators = ['IP2D','IP3D','SV1','COMB']
 def run_full_chain(input_files, working_dir = None, output_path = None, 
                    rds_name = 'reduced_dataset.root', 
                    jet_collection = 'AntiKt4TopoEMJets', 
-                   do_test = False): 
+                   do_test = False, 
+                   randomize_reduced_dataset = False): 
     
     if working_dir is None: 
         working_dir = jet_collection
@@ -41,7 +42,8 @@ def run_full_chain(input_files, working_dir = None, output_path = None,
                            observer_discriminators = observer_discriminators, 
                            jet_collection = jet_collection, 
                            output_file = rds_path, 
-                           debug = do_test)
+                           debug = do_test, 
+                           randomize = randomize_reduced_dataset)
 
     # --- training part 
     training_dir = os.path.join(working_dir,'training')
@@ -122,6 +124,12 @@ if __name__ == '__main__':
         do_test = True
         print 'doing test' 
 
+    randomize_reduced_dataset = False
+    if '--random' in sys.argv: 
+        randomize_reduced_dataset = True
+        print 'doing random' 
+
+
     if len(sys.argv) >= 2: 
         input_files = []
         with open(sys.argv[1]) as file_list: 
@@ -129,4 +137,5 @@ if __name__ == '__main__':
                 input_files.append(line.strip())
 
         print 'running full chain' 
-        run_full_chain(input_files, do_test = do_test)
+        run_full_chain(input_files, do_test = do_test, 
+                       randomize_reduced_dataset = randomize_reduced_dataset)

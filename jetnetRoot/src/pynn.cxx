@@ -256,7 +256,8 @@ extern "C" PyObject* make_test_ntuple(PyObject *self,
       output_tree_name
     }; 
 
-    makeTestNtuple(io_names); 
+    makeTestNtuple(io_names, 
+		   categories); 
   }
 
   Py_INCREF(Py_None);

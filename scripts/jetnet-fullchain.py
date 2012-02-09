@@ -10,7 +10,7 @@ runs full chain
 
 
 from jetnet import training, pyprep
-from jetnet.perf import rejection
+from jetnet.perf import rejection, performance
 import os, sys
 from warnings import warn
 
@@ -81,14 +81,14 @@ def run_full_chain(input_files, working_dir = None, output_path = None,
 
 
     if not do_test: 
-        all_canvas = rejection.make_plots_from(test_ntuple_path)
-        
-        formats = ['.pdf','.png']
-
         try: 
             import AtlasStyle
         except ImportError: 
             warn('could not import AtlasStyle', UglyWarning)
+
+        all_canvas = rejection.make_plots_from(test_ntuple_path)
+
+        formats = ['.pdf','.png']
 
         for ext in formats: 
             for plot in all_canvas: 
@@ -96,6 +96,21 @@ def run_full_chain(input_files, working_dir = None, output_path = None,
                 fullpath = os.path.join(rej_hist_path,fullname)
                 print 'printing to %s' % fullpath
                 plot.Print(fullpath)
+
+        for signal in ['charm','bottom']: 
+
+            perf_canvases = performance.b_tag_plots(
+                ovrtrn_hist_path, 
+                normalize = False, 
+                signal = signal)
+
+            output_name = '%s_perf_result' % (signal)
+            output_path = os.path.join(rej_hist_path, output_name)
+            for output_format in formats: 
+                full_name = output_path + output_format
+                perf_canvases[0].Print(full_name)
+
+        
 
     
 if __name__ == '__main__': 

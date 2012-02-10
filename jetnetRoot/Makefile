@@ -6,15 +6,16 @@
 # on: Fri Dec 16 21:00:00 CET 2011
 
 # --- set dirs
-BIN          := bin/
+BIN          := bin
 LIB          := #lib/ 
 SRC          := src
 INC          := include
 DICT         := dict
+COMMON_INC   := common_include
 
 vpath %.cxx $(SRC)
 vpath %.f   $(SRC)
-vpath %.hh  $(INC)
+vpath %.hh  $(INC) $(COMMON_INC)
 vpath %.h  $(INC)
 vpath %Dict.h $(DICT)
 vpath %Dict.cxx $(DICT)
@@ -36,20 +37,21 @@ FC := gfortran
 CC := g++
 LIBS := -lgfortran $(ROOTLIBS) 
 
-COPT := -O2 -fPIC -g -I$(INC)
+COPT := -O2 -fPIC -g -I$(INC) -I$(COMMON_INC)
 FOPT := -ffixed-form -ffixed-line-length-none -g -m32
 
 # LINKER_OPTS := -L$(LIB) -Wl,-rpath,$(LIB) 
 
-# ifndef USER_LIB
 HERE := $(shell pwd)
-# endif 
 LINKER_OPTS += -L$(HERE) -Wl,-rpath,$(HERE)
+COMMON_LIBS := $(HERE)/../common
+LINKER_OPTS += -L$(COMMON_LIBS) -Wl,-rpath,$(COMMON_LIBS)
 
 
 LINKER_OPTS += -Wl,-no-undefined 
 LINKER_OPTS += -lTJetNet
 LINKER_OPTS += $(ROOTLD)
+LINKER_OPTS += -lJetnetTools
 
 PY_LINKER_OPTS := $(LINKER_OPTS)
 PY_LINKER_OPTS += $(PY_LIB)
@@ -64,7 +66,7 @@ T_DICTS := $(T_OBJ:.o=Dict.o)
 
 CXX_OBJECTS := trainNN.o testNN.o doNormalization.o 
 CXX_OBJECTS += makeTestNtuple.o readReducedDataset.o 
-CXX_OBJECTS += PtEtaCategoryTool.o
+# CXX_OBJECTS += PtEtaCategoryTool.o
 CXX_OBJECTS += $(T_OBJ) $(T_DICTS)
 
 LIB_OBJECTS := $(JETNET_OBJ)
@@ -81,26 +83,26 @@ $(DICT)/%Dict.cxx: %.h LinkDef.h
 	@mkdir -p $(DICT)
 	@rm -f $(DICT)/$*Dict.h $(DICT)/$*Dict.cxx 
 	@rootcint $@ -c $(INC)/$*.h	
-	@sed -i 's,#include "include/\(.*\)",#include "\1",g' $(DICT)/$*Dict.h
+	@sed -i 's,#include "$(INC)/\(.*\)",#include "\1",g' $(DICT)/$*Dict.h
 
 
-$(BIN)T%Dict.o: T%Dict.cxx 
+$(BIN)/T%Dict.o: T%Dict.cxx 
 	@echo compiling dict $@
 	@$(CC) $(COPT) $(ROOTCFLAGS) -c $< -o $@
 
-$(BIN)T%.o: T%.cxx 
+$(BIN)/T%.o: T%.cxx 
 	@echo compiling $@
 	@$(CC) $(COPT) $(ROOTCFLAGS) -c $< -o $@
 
-$(BIN)py%.o: py%.cxx 
+$(BIN)/py%.o: py%.cxx 
 	@echo compiling python object $@
 	@$(CC) $(COPT) $(ROOTCFLAGS) -c $< -o $@ $(PY_FLAGS)
 
-$(BIN)%.o: %.cxx 
+$(BIN)/%.o: %.cxx 
 	@echo compiling $@
 	@$(CC) $(COPT) $(ROOTCFLAGS) -c $< -o $@
 
-$(BIN)$(JETNET_OBJ): $(JETNET_SRC) 
+$(BIN)/$(JETNET_OBJ): $(JETNET_SRC) 
 	@echo compiling $@
 	@$(FC) $(FOPT) -c $^ -o $@
 
@@ -108,12 +110,12 @@ $(BIN)$(JETNET_OBJ): $(JETNET_SRC)
 	@echo making executable $@
 	@$(CC) $^ -o $@ $(ROOTCFLAGS) $(LIBS) $(LINKER_OPTS)
 
-$(LIB)pynn.so: $(BIN)pynn.o 
+$(LIB)pynn.so: $(BIN)/pynn.o 
 #	@mkdir -p $(LIB)
 	@echo "linking $^ --> $@"
 	@$(CC) $^ -o $@ $(PY_LINKER_OPTS) $(ROOTCFLAGS) $(LIBS) 
 
-$(LIB)libTJetNet.so: $(LIB_OBJECTS:%.o=$(BIN)%.o)
+$(LIB)libTJetNet.so: $(LIB_OBJECTS:%.o=$(BIN)/%.o)
 #	@mkdir -p $(LIB)
 	@echo "linking $^ --> $@"
 	@$(CC) -shared -o $@ $^ $(ROOTCFLAGS) $(LIBS) #-Wl,-soname,libTJetNet.so.0
@@ -121,24 +123,31 @@ $(LIB)libTJetNet.so: $(LIB_OBJECTS:%.o=$(BIN)%.o)
 # --- auto dep
 DEP = $(BIN)
 
-ifneq ($(MAKECMDGOALS),clean)
-include  $(CXX_OBJECTS:%.o=$(DEP)%.d)
+ifeq ($(MAKECMDGOALS),clean)
+CLEANING=true
 endif
 
-$(DEP)%.d: %.cxx
+ifeq ($(MAKECMDGOALS),rmdep)
+CLEANING=true
+endif
+
+ifndef $(CLEANING)
+include  $(CXX_OBJECTS:%.o=$(DEP)/%.d)
+endif
+
+
+$(DEP)/%.d: %.cxx
 	@echo making dependencies for $<
 	@mkdir -p $(DEP)
-	@$(CXX) -MM -I$(INC) $(ROOTCFLAGS) $< -o $@
+	@$(CXX) -MM -I$(INC) $(ROOTCFLAGS) -I$(COMMON_INC) $< -o $@
 	@sed -i 's,$*\.o,$(BIN)& $@ ,g' $@
 
-$(DEP)%Dict.d: $(DICT)/%Dict.cxx
+$(DEP)/%Dict.d: $(DICT)/%Dict.cxx
 	@echo making dependencies for $<
 	@mkdir -p $(DEP)
-	@$(CXX) -MM $(ROOTCFLAGS) -I$(INC) $< -o $@
+	@$(CXX) -MM $(ROOTCFLAGS) -I$(INC)  $< -o $@
 	@sed -i 's,$*\.o,$(BIN)& $@ ,g' $@
 
-
-# --- cleanup 
 
 # --- install 
 
@@ -148,6 +157,10 @@ install: all
 	@mkdir -p $(USER_LIB)
 	cp -f *.so $(USER_LIB)
 endif
+
+# --- cleanup 
+
+
 
 DIRTY_THINGS := *~ $(JETNET_OBJ) *.o *.bak core
 DIRTY_THINGS += *Dict.h *Dict.cxx *.exe 
@@ -165,4 +178,7 @@ backup:
 	@$(RM) backup.tar.gz
 	@tar czvf backup.tar.gz *.cxx *.h *.c *.C Makefile* *.f
 
-.PHONY: clean cleanlib backup all install check-py
+.PHONY: clean cleanlib backup all install check-py rmdep
+
+rmdep: 
+	rm -f $(DEP)/*.d

@@ -2,17 +2,21 @@
 # Author: Daniel Guest (dguest@cern.ch)
 
 """
-usage: 
-jetnet-chain.py  <input file list> 
-
-runs full chain
+runs full chain on <file list>
 """
+
+# hide this godawful abomination of a framework
+import ROOT
+ROOT.PyConfig.IgnoreCommandLineOptions = True
 
 
 from jetnet import training, pyprep
 from jetnet.perf import rejection, performance
 import os, sys
 from warnings import warn
+
+from optparse import OptionParser, OptionGroup
+
 
 class UglyWarning(UserWarning): pass
 
@@ -116,23 +120,30 @@ def run_full_chain(input_files, working_dir = None, output_path = None,
 
     
 if __name__ == '__main__': 
-    if len(sys.argv) == 1: 
-        sys.exit(__doc__)
 
-    do_test = False
-    if '--test' in sys.argv: 
-        do_test = True
-        print 'doing test' 
+    usage = 'usage: %prog <file list> [options]'
+    description = __doc__
 
-    randomize_reduced_dataset = False
-    if '--random' in sys.argv: 
-        randomize_reduced_dataset = True
-        print 'doing random' 
+    parser = OptionParser(usage = usage, description = description)
+    parser.set_defaults(
+        test = False, 
+        randomize_reduced_dataset = False
+        )
+
+    parser.add_option('--test', action = 'store_true')
+    parser.add_option('--random', action = 'store_true', 
+                      dest = 'randomize_reduced_dataset', 
+                      help = 'randomize the reduced dataset' )
+
+    (options, args) = parser.parse_args(sys.argv)
+
+    do_test = options.test
+    randomize_reduced_dataset = options.randomize_reduced_dataset
 
 
-    if len(sys.argv) >= 2: 
+    if len(args) == 2: 
         input_files = []
-        with open(sys.argv[1]) as file_list: 
+        with open(args[1]) as file_list: 
             for line in file_list: 
                 input_files.append(line.strip())
 

@@ -123,18 +123,11 @@ $(LIB)libTJetNet.so: $(LIB_OBJECTS:%.o=$(BIN)/%.o)
 # --- auto dep
 DEP = $(BIN)
 
-ifeq ($(MAKECMDGOALS),clean)
-CLEANING=true
+ifneq ($(MAKECMDGOALS),clean)
+ifneq ($(MAKECMDGOALS),rmdep)
+include  $(ALLOBJ:%.o=$(DEP)/%.d)
 endif
-
-ifeq ($(MAKECMDGOALS),rmdep)
-CLEANING=true
 endif
-
-ifndef $(CLEANING)
-include  $(CXX_OBJECTS:%.o=$(DEP)/%.d)
-endif
-
 
 $(DEP)/%.d: %.cxx
 	@echo making dependencies for $<

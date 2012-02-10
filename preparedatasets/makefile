@@ -95,15 +95,10 @@ $(BIN)/%.o: %.cxx
 # use auto dependency generation
 DEP = $(BIN)
 
-ifeq ($(MAKECMDGOALS),clean)
-CLEANING=true
-endif
-ifeq ($(MAKECMDGOALS),rmdep)
-CLEANING=true
-endif
-
-ifndef $(CLEANING)
+ifneq ($(MAKECMDGOALS),clean)
+ifneq ($(MAKECMDGOALS),rmdep)
 include  $(ALLOBJ:%.o=$(DEP)/%.d)
+endif
 endif
 
 $(DEP)/%.d: %.cxx

@@ -43,9 +43,9 @@ FOPT := -ffixed-form -ffixed-line-length-none -g -m32
 # LINKER_OPTS := -L$(LIB) -Wl,-rpath,$(LIB) 
 
 HERE := $(shell pwd)
-LINKER_OPTS += -L$(HERE) -Wl,-rpath,$(HERE)
+LIBS += -L$(HERE) -Wl,-rpath,$(HERE)
 COMMON_LIBS := $(HERE)/../common
-LINKER_OPTS += -L$(COMMON_LIBS) -Wl,-rpath,$(COMMON_LIBS)
+LIBS += -L$(COMMON_LIBS) -Wl,-rpath,$(COMMON_LIBS)
 
 
 LINKER_OPTS += -Wl,-no-undefined 
@@ -117,12 +117,12 @@ $(BIN)/$(JETNET_OBJ): $(JETNET_SRC)
 $(LIB)pynn.so: $(BIN)/pynn.o 
 #	@mkdir -p $(LIB)
 	@echo "linking $^ --> $@"
-	@$(CC) $^ -o $@ $(PY_LINKER_OPTS) $(ROOTCFLAGS) $(LIBS) 
+	@$(CC) $^ -o $@ $(PY_LINKER_OPTS) $(LIBS) 
 
 $(LIB)libTJetNet.so: $(LIB_OBJECTS:%.o=$(BIN)/%.o)
 #	@mkdir -p $(LIB)
 	@echo "linking $^ --> $@"
-	@$(CC) -shared -o $@ $^ $(ROOTCFLAGS) $(LIBS) #-Wl,-soname,libTJetNet.so.0
+	@$(CC) -shared -o $@ $^ $(ROOTLD) $(LIBS) #-Wl,-soname,libTJetNet.so.0
 
 # --- auto dep
 DEP = $(BIN)

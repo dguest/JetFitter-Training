@@ -78,33 +78,37 @@ ALL_LIBS += $(LIB)pynn.so
 all: $(ALL_LIBS) #cxx_test.exe # root_test.exe
 
 
-$(DICT)/%Dict.cxx: %.h LinkDef.h
+$(DICT)/%Dict.cxx: %.h LinkDef.h 
 	@echo making dict $@
 	@mkdir -p $(DICT)
 	@rm -f $(DICT)/$*Dict.h $(DICT)/$*Dict.cxx 
 	@rootcint $@ -c $(INC)/$*.h	
 	@sed -i 's,#include "$(INC)/\(.*\)",#include "\1",g' $(DICT)/$*Dict.h
 
-
-$(BIN)/T%Dict.o: T%Dict.cxx 
+$(BIN)/T%Dict.o: $(DICT)/T%Dict.cxx 
+	@mkdir -p $(BIN)
 	@echo compiling dict $@
 	@$(CC) $(COPT) $(ROOTCFLAGS) -c $< -o $@
 
 $(BIN)/T%.o: T%.cxx 
+	@mkdir -p $(BIN)
 	@echo compiling $@
 	@$(CC) $(COPT) $(ROOTCFLAGS) -c $< -o $@
 
 $(BIN)/py%.o: py%.cxx 
+	@mkdir -p $(BIN)
 	@echo compiling python object $@
 	@$(CC) $(COPT) $(ROOTCFLAGS) -c $< -o $@ $(PY_FLAGS)
 
 $(BIN)/%.o: %.cxx 
+	@mkdir -p $(BIN)
 	@echo compiling $@
 	@$(CC) $(COPT) $(ROOTCFLAGS) -c $< -o $@
 
 $(BIN)/$(JETNET_OBJ): $(JETNET_SRC) 
+	@mkdir -p $(BIN)
 	@echo compiling $@
-	@$(FC) $(FOPT) -c $^ -o $@
+	@$(FC) $(FOPT) -c $< -o $@
 
 %.exe: $(BIN)%.o 
 	@echo making executable $@

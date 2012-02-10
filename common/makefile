@@ -44,7 +44,7 @@ PY_LDFLAGS += -shared
 
 # ---- define objects
 GEN_OBJ     := PtEtaCategoryTool.o
-PY_OBJ       := 
+PY_OBJ       := pyparse.o
 
 ALLOBJ       := $(GEN_OBJ) $(PY_OBJ) 
 

@@ -6,6 +6,7 @@
 #include <iostream>
 #include "writeNtuple_Official.hh"
 #include "pyprep.hh"
+#include "pyparse.hh"
 
   
 static const char* doc_string = 

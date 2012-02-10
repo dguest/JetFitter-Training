@@ -47,15 +47,19 @@ LIBS += -L$(HERE) -Wl,-rpath,$(HERE)
 COMMON_LIBS := $(HERE)/../common
 LIBS += -L$(COMMON_LIBS) -Wl,-rpath,$(COMMON_LIBS)
 
+OUTLIB_OPTS := -Wl,-no-undefined 
+OUTLIB_OPTS += $(ROOTLD)
+OUTLIB_OPTS += -lJetnetTools
 
-LINKER_OPTS += -Wl,-no-undefined 
-LINKER_OPTS += -lTJetNet
-LINKER_OPTS += $(ROOTLD)
-LINKER_OPTS += -lJetnetTools
+JN_OUTLIB_OPTS := $(OUTLIB_OPTS)
+JN_OUTLIB_OPTS += $(LIBS)
+JN_OUTLIB_OPTS += -shared
 
-PY_LINKER_OPTS := $(LINKER_OPTS)
-PY_LINKER_OPTS += $(PY_LIB)
-PY_LINKER_OPTS += -shared
+PY_OUTLIB_OPTS := $(OUTLIB_OPTS)
+PY_OUTLIB_OPTS += $(LIBS)
+PY_OUTLIB_OPTS += $(PY_LIB)
+PY_OUTLIB_OPTS += -lTJetNet
+PY_OUTLIB_OPTS += -shared
 
 # --- define specific files
 JETNET_OBJ := jetnet.o
@@ -112,17 +116,17 @@ $(BIN)/$(JETNET_OBJ): $(JETNET_SRC)
 
 %.exe: $(BIN)%.o 
 	@echo making executable $@
-	@$(CC) $^ -o $@ $(ROOTCFLAGS) $(LIBS) $(LINKER_OPTS)
+	@$(CC) $^ -o $@ $(ROOTCFLAGS) $(LIBS) $(OUTLIB_OPTS)
 
 $(LIB)pynn.so: $(BIN)/pynn.o 
 #	@mkdir -p $(LIB)
 	@echo "linking $^ --> $@"
-	@$(CC) $^ -o $@ $(PY_LINKER_OPTS) $(LIBS) 
+	@$(CC) $^ -o $@ $(PY_OUTLIB_OPTS) 
 
 $(LIB)libTJetNet.so: $(LIB_OBJECTS:%.o=$(BIN)/%.o)
 #	@mkdir -p $(LIB)
 	@echo "linking $^ --> $@"
-	@$(CC) -shared -o $@ $^ $(ROOTLD) $(LIBS) #-Wl,-soname,libTJetNet.so.0
+	@$(CC) $^ -o $@ $(JN_OUTLIB_OPTS)  #-Wl,-soname,libTJetNet.so.0
 
 # --- auto dep
 DEP = $(BIN)

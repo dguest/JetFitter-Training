@@ -1,5 +1,7 @@
 import sys, dl, os, glob
 from jetnet.dirs import OverwriteError
+import pynn
+
 
 def _get_pt_eta_categories(file_name): 
     from ROOT import TFile, TIter
@@ -39,9 +41,6 @@ def run_training(reduced_dataset,
                  output_directory,
                  with_ip3d = True, nodes = None, 
                  debug = False): 
-    # _set_linker_flags()
-
-    import pynn
 
     if not os.path.isdir(output_directory): 
         os.mkdir(output_directory)
@@ -69,9 +68,6 @@ def run_performance(reduced_dataset, weights_file,
             with_ip3d = True, 
             print_and_exit = False): 
 
-    # _set_linker_flags()
-    
-    import pynn
 
     output_dir = os.path.dirname(output_file)
     if not os.path.isdir(output_dir): 
@@ -91,8 +87,6 @@ def run_test_ntuple(reduced_dataset,
                     output_file, 
                     output_tree = 'performance', 
                     print_and_exit = False): 
-
-    import pynn
 
     output_dir = os.path.dirname(output_file)
     if not os.path.isdir(output_dir): 

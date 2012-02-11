@@ -129,9 +129,9 @@ PY_OUTLIB_OPTS += $(LIBS)
 PY_OUTLIB_OPTS += $(PY_LIB)
 PY_OUTLIB_OPTS += -lTJetNet
 PY_OUTLIB_OPTS += -shared
-pynn.so: $(BIN)/pynn.o 
+pynn.so: $(BIN)/pynn.o libTJetNet.so
 	@echo "linking $^ --> $@"
-	@$(CC) $^ -o $@ $(PY_OUTLIB_OPTS) 
+	@$(CC) $< -o $@ $(PY_OUTLIB_OPTS) 
 
 
 # --- auto dep

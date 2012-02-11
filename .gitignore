@@ -16,3 +16,4 @@
 .__afs*
 *.sh.o*
 *.sh.e*
+.REVISION_STAMP

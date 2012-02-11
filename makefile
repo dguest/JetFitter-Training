@@ -3,6 +3,7 @@
 # Created: Tue Feb  7 17:08:15 CET 2012
 
 all: training prepare common 
+	@git rev-parse HEAD > .REVISION_STAMP
 
 prepare: common 
 	@$(MAKE) -C preparedatasets

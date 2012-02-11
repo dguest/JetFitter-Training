@@ -7,7 +7,6 @@
 
 # --- set dirs
 BIN          := bin
-LIB          := #lib/ 
 SRC          := src
 INC          := include
 DICT         := dict
@@ -31,7 +30,7 @@ PY_LIB   += $(shell $(PY_CONFIG) --libs)
 
 ROOTLIBS   := $(shell root-config --libs)
 ROOTCFLAGS := $(shell root-config --cflags)
-ROOTLD     := $(shell root-config --ldflags)
+ROOTLD_OPT := $(shell root-config --ldflags)
 
 FC := gfortran
 CC := g++
@@ -47,19 +46,6 @@ LIBS += -L$(HERE) -Wl,-rpath,$(HERE)
 COMMON_LIBS := $(HERE)/../common
 LIBS += -L$(COMMON_LIBS) -Wl,-rpath,$(COMMON_LIBS)
 
-OUTLIB_OPTS := -Wl,-no-undefined 
-OUTLIB_OPTS += $(ROOTLD)
-OUTLIB_OPTS += -lJetnetTools
-
-JN_OUTLIB_OPTS := $(OUTLIB_OPTS)
-JN_OUTLIB_OPTS += $(LIBS)
-JN_OUTLIB_OPTS += -shared
-
-PY_OUTLIB_OPTS := $(OUTLIB_OPTS)
-PY_OUTLIB_OPTS += $(LIBS)
-PY_OUTLIB_OPTS += $(PY_LIB)
-PY_OUTLIB_OPTS += -lTJetNet
-PY_OUTLIB_OPTS += -shared
 
 # --- define specific files
 JETNET_OBJ := jetnet.o
@@ -70,17 +56,21 @@ T_DICTS := $(T_OBJ:.o=Dict.o)
 
 CXX_OBJECTS := trainNN.o testNN.o doNormalization.o 
 CXX_OBJECTS += makeTestNtuple.o readReducedDataset.o 
-# CXX_OBJECTS += PtEtaCategoryTool.o
 CXX_OBJECTS += $(T_OBJ) $(T_DICTS)
 
-LIB_OBJECTS := $(JETNET_OBJ)
-LIB_OBJECTS += $(CXX_OBJECTS)
+TJETNET_OBJECTS := $(JETNET_OBJ)
+TJETNET_OBJECTS += $(CXX_OBJECTS)
+
+# --------------------------------------------
+# -------- start here --------------
+# --------------------------------------------
 
 ALL_LIBS := $(LIB)libTJetNet.so
 ALL_LIBS += $(LIB)pynn.so
-
 all: $(ALL_LIBS) #cxx_test.exe # root_test.exe
 
+
+# ---build rules
 
 $(DICT)/%Dict.cxx: %.h LinkDef.h 
 	@echo making dict $@
@@ -92,11 +82,6 @@ $(DICT)/%Dict.cxx: %.h LinkDef.h
 $(BIN)/T%Dict.o: $(DICT)/T%Dict.cxx 
 	@mkdir -p $(BIN)
 	@echo compiling dict $@
-	@$(CC) $(COPT) $(ROOTCFLAGS) -c $< -o $@
-
-$(BIN)/T%.o: T%.cxx 
-	@mkdir -p $(BIN)
-	@echo compiling $@
 	@$(CC) $(COPT) $(ROOTCFLAGS) -c $< -o $@
 
 $(BIN)/py%.o: py%.cxx 
@@ -114,26 +99,47 @@ $(BIN)/$(JETNET_OBJ): $(JETNET_SRC)
 	@echo compiling $@
 	@$(FC) $(FOPT) -c $< -o $@
 
-%.exe: $(BIN)%.o 
-	@echo making executable $@
-	@$(CC) $^ -o $@ $(ROOTCFLAGS) $(LIBS) $(OUTLIB_OPTS)
 
-$(LIB)pynn.so: $(BIN)/pynn.o 
-#	@mkdir -p $(LIB)
+# --------------------------------------------
+# ------- build the final products ----------
+# --------------------------------------------
+
+OUTLIB_OPTS := -Wl,-no-undefined 
+OUTLIB_OPTS += $(ROOTLD_OPT)
+OUTLIB_OPTS += -lJetnetTools
+
+EXE_OPTS := $(OUTLIB_OPTS)
+EXE_OPTS += $(LIBS)
+%.exe: $(BIN)/%.o 
+	@echo making executable $@
+	@$(CC) $^ -o $@ $(OUTLIB_OPTS)
+
+
+# --- library TJetnet
+JN_OUTLIB_OPTS := $(OUTLIB_OPTS)
+JN_OUTLIB_OPTS += $(LIBS)
+JN_OUTLIB_OPTS += -shared
+libTJetNet.so: $(TJETNET_OBJECTS:%.o=$(BIN)/%.o)
+	@echo "linking $^ --> $@"
+	@$(CC) $^ -o $@ $(JN_OUTLIB_OPTS)  #-Wl,-soname,libTJetNet.so.0
+
+# --- python extension 
+PY_OUTLIB_OPTS := $(OUTLIB_OPTS)
+PY_OUTLIB_OPTS += $(LIBS)
+PY_OUTLIB_OPTS += $(PY_LIB)
+PY_OUTLIB_OPTS += -lTJetNet
+PY_OUTLIB_OPTS += -shared
+pynn.so: $(BIN)/pynn.o 
 	@echo "linking $^ --> $@"
 	@$(CC) $^ -o $@ $(PY_OUTLIB_OPTS) 
 
-$(LIB)libTJetNet.so: $(LIB_OBJECTS:%.o=$(BIN)/%.o)
-#	@mkdir -p $(LIB)
-	@echo "linking $^ --> $@"
-	@$(CC) $^ -o $@ $(JN_OUTLIB_OPTS)  #-Wl,-soname,libTJetNet.so.0
 
 # --- auto dep
 DEP = $(BIN)
 
 ifneq ($(MAKECMDGOALS),clean)
 ifneq ($(MAKECMDGOALS),rmdep)
-include  $(ALLOBJ:%.o=$(DEP)/%.d)
+include  $(CXX_OBJECTS:%.o=$(DEP)/%.d)
 endif
 endif
 
@@ -141,13 +147,13 @@ $(DEP)/%.d: %.cxx
 	@echo making dependencies for $<
 	@mkdir -p $(DEP)
 	@$(CXX) -MM -I$(INC) $(ROOTCFLAGS) -I$(COMMON_INC) $< -o $@
-	@sed -i 's,$*\.o,$(BIN)& $@ ,g' $@
+	@sed -i 's,$*\.o,$(BIN)/& $@ ,g' $@
 
 $(DEP)/%Dict.d: $(DICT)/%Dict.cxx
 	@echo making dependencies for $<
 	@mkdir -p $(DEP)
 	@$(CXX) -MM $(ROOTCFLAGS) -I$(INC)  $< -o $@
-	@sed -i 's,$*\.o,$(BIN)& $@ ,g' $@
+	@sed -i 's,$*\.o,$(BIN)/& $@ ,g' $@
 
 
 # --- install 
@@ -161,15 +167,7 @@ endif
 
 # --- cleanup 
 
-
-
-DIRTY_THINGS := *~ $(JETNET_OBJ) *.o *.bak core
-DIRTY_THINGS += *Dict.h *Dict.cxx *.exe 
-DIRTY_THINGS += $(INC)/*Dict.h $(SRC)/*Dict.cxx 
-DIRTY_THINGS += pynn.so libTJetNet.so
-
-clean:
-	@$(RM) $(DIRTY_THINGS)
+clean: cleanlib
 	@$(RM) -rf $(DEP) $(BIN) $(DICT)
 
 cleanlib: 
@@ -182,4 +180,4 @@ backup:
 .PHONY: clean cleanlib backup all install check-py rmdep
 
 rmdep: 
-	rm -f $(DEP)/*.d
+	$(RM) -f $(DEP)/*.d

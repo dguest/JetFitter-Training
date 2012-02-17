@@ -17,3 +17,4 @@
 *.sh.o*
 *.sh.e*
 .REVISION_STAMP
+*.log

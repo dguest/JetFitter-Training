@@ -536,7 +536,6 @@ bool Observers::build_default_values()
   if (double_variables.size() == 0) { 
     double_variables.push_back("energyFraction"); 
     double_variables.push_back("significance3d"); 
-    double_variables.push_back("deltaR"); // not filled? 
     init_doubles = true; 
   }
   bool init_ints = false; 

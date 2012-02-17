@@ -28,7 +28,7 @@ struct number_pair
 
 
 int writeNtuple_Official(SVector input_files, 
-			 SVector observer_discriminators, 
+			 Observers observers, 
 			 std::string jetCollectionName,
 			 std::string output_file, 
 			 std::string suffix,
@@ -36,6 +36,7 @@ int writeNtuple_Official(SVector input_files,
 			 bool randomize) 
 {
 
+  // --- setup pt / eta categories
   std::vector<double> pt_cat_vec; 
   pt_cat_vec.push_back(25);
   pt_cat_vec.push_back(35);
@@ -49,6 +50,13 @@ int writeNtuple_Official(SVector input_files,
   eta_cat_vec.push_back(0.7); 
   eta_cat_vec.push_back(1.5); 
   CategoryMap abs_eta_categories(eta_cat_vec); 
+
+  // --- setup observer variables (if they aren't given)
+  bool built_observers = observers.build_default_values(); 
+  if (built_observers){ 
+    std::cout << "used some default observers:\n"; 
+    std::cout << observers << std::endl;
+  }
 
   std::string jetCollection = jetCollectionName + suffix;
 
@@ -66,17 +74,18 @@ int writeNtuple_Official(SVector input_files,
   
   std::string baseBTag("BTag_");
 
-  // --- write tree
+  // --- io trees 
   boost::scoped_ptr<TFile> file(new TFile(output_file.c_str(),"recreate"));
   boost::scoped_ptr<TTree> output_tree(new TTree("SVTree","SVTree"));
 
   // --- observer variables
   boost::ptr_vector<TChain> observer_chains; 
   boost::ptr_vector<double> observer_write_buffers; 
+  boost::ptr_vector<int> int_observer_write_buffers;
 
   // ---- loop to set observer variables and chains
-  for (SVector::const_iterator name_itr = observer_discriminators.begin(); 
-       name_itr != observer_discriminators.end(); 
+  for (SVector::const_iterator name_itr = observers.discriminators.begin(); 
+       name_itr != observers.discriminators.end(); 
        name_itr++){ 
     std::cout << "instantiating " << *name_itr << endl;
     std::string chain_name = baseBTag + jetCollection + 
@@ -108,7 +117,8 @@ int writeNtuple_Official(SVector input_files,
 
   }
 
-  // --- jetfitter variables
+
+  // --- load jetfitter chain 
   std::string suffixJF("_JetFitterTagNN/PerfTreeAll");
   std::cout << "instantiating JetFitterTagNN " << endl;
   boost::scoped_ptr<TChain> treeJF
@@ -123,14 +133,91 @@ int writeNtuple_Official(SVector input_files,
   if (treeJF->GetEntries()==0) 
       throw LoadOfficialDSException();
 
-  boost::scoped_ptr<readJFBTagAna> readTreeJF
-    (new readJFBTagAna(treeJF.get()));
+  // --- variables used in slimming
+  int Flavour; 
+  Double_t JetPt;
+  Double_t JetEta;
+  double mass; 
 
+  treeJF->SetBranchStatus("*",0); 
+  treeJF->SetBranchStatus("Flavour",1); 
+  treeJF->SetBranchStatus("JetPt",1); 
+  treeJF->SetBranchStatus("JetEta",1); 
+  treeJF->SetBranchStatus("mass",1); 
+
+  treeJF->SetBranchAddress("Flavour",&Flavour); 
+  treeJF->SetBranchAddress("JetPt"  ,&JetPt); 
+  treeJF->SetBranchAddress("JetEta" ,&JetEta); 
+  treeJF->SetBranchAddress("mass"   ,&mass); 
+
+  // mass, pt, and eta all pass through 
+  output_tree->Branch("mass",&mass); 
+  output_tree->Branch("JetPt",&JetPt,"JetPt/D");
+  output_tree->Branch("JetEta",&JetEta,"JetEta/D");
+
+  // --- varaibles set in slimming 
+  Int_t cat_flavour;
+  Int_t bottom;
+  Int_t charm;
+  Int_t light;
+  Double_t weight;
+  Int_t cat_pT;
+  Int_t cat_eta;
+
+  if (forNN){
+    output_tree->Branch("cat_pT",&cat_pT,"cat_pT/I");
+    output_tree->Branch("cat_eta",&cat_eta,"cat_eta/I");
+    output_tree->Branch("weight",&weight,"weight/D");
+
+    output_tree->Branch("bottom",&bottom,"bottom/I");
+    output_tree->Branch("charm",&charm,"charm/I");
+    output_tree->Branch("light",&light,"light/I");
+  }
+
+  output_tree->Branch("cat_flavour",&cat_flavour,"cat_flavour/I");  
+
+
+  // --- observer variables 
+  for (SVector::const_iterator name_itr = observers.double_variables.begin(); 
+       name_itr != observers.double_variables.end(); 
+       name_itr++){ 
+
+    // define buffers in which to store the vars
+    double* the_buffer = new double; 
+    observer_write_buffers.push_back(the_buffer); 
+    std::string name = *name_itr; 
+    output_tree->Branch(name.c_str(), the_buffer); 
+
+    // set the chain to write to this branch 
+    treeJF->SetBranchStatus(name.c_str(),1); 
+    treeJF->SetBranchAddress(name.c_str(), the_buffer); 
+  }
+
+  // --- descrete observer variables 
+  for (SVector::const_iterator name_itr = observers.int_variables.begin(); 
+       name_itr != observers.int_variables.end(); 
+       name_itr++){ 
+
+    // define buffers in which to store the vars
+    int* the_buffer = new int; 
+    int_observer_write_buffers.push_back(the_buffer); 
+    std::string name = *name_itr; 
+    output_tree->Branch(name.c_str(), the_buffer); 
+
+    // set the chain to write to this branch 
+    treeJF->SetBranchStatus(name.c_str(),1); 
+    treeJF->SetBranchAddress(name.c_str(), the_buffer); 
+  }
+
+  //=======================================================
+  //============ the real stuff starts here ============
+  //=======================================================
+  
 
   //for the NN you need to get the number of b,c or light jets
 
   std::cout << "counting entries, will take a while\n"; 
-  Int_t num_entries=readTreeJF->fChain->GetEntries();
+  Int_t num_entries=treeJF->GetEntries();
 
   int numberb=0;
   int numberc=0;
@@ -140,16 +227,16 @@ int writeNtuple_Official(SVector input_files,
 
     for (Long64_t i=0;i<num_entries;i++) {
 
-      readTreeJF->GetEntry(i);
+      treeJF->GetEntry(i);
       
-      if (readTreeJF->mass > -100){
-	if (abs(readTreeJF->Flavour)==5){
+      if (mass > -100){
+	if (abs(Flavour)==5){
 	  numberb+=1;
 	}
-	if (abs(readTreeJF->Flavour)==4){
+	if (abs(Flavour)==4){
 	  numberc+=1;
 	}
-	if (abs(readTreeJF->Flavour==1)){
+	if (abs(Flavour==1)){
 	  numberl+=1;
 	}
       }
@@ -209,26 +296,26 @@ int writeNtuple_Official(SVector input_files,
     
     for (Long64_t i=0;i<num_entries;i++) {
       
-      readTreeJF->GetEntry(i);
+      treeJF->GetEntry(i);
       
-      if (readTreeJF->mass < -100) continue;
+      if (mass < -100) continue;
       
-      if (fabs(readTreeJF->JetEta)>2.5||readTreeJF->JetPt<=15.)  continue;
+      if (fabs(JetEta) > 2.5 || JetPt <= magic::min_jet_pt_gev)  
+	continue;
 
       pair<int,double> ptInfo;
       pair<int,double> etaInfo;
 
-      ptInfo.first = pt_categories.get_category(readTreeJF->JetPt); 
+      ptInfo.first = pt_categories.get_category(JetPt); 
       ptInfo.second = 1; 	// MAGIC!
       
-      etaInfo.first = abs_eta_categories.get_category
-	(fabs(readTreeJF->JetEta));
+      etaInfo.first = abs_eta_categories.get_category(fabs(JetEta));
       etaInfo.second = 1; 	// MAGIC!
 
       int actualpT=ptInfo.first;
       int actualeta=etaInfo.first;
       
-      int flavour=abs(readTreeJF->Flavour);
+      int flavour=abs(Flavour);
 
       //      std::cout << " actualpT " << actualpT << " actualeta " << actualeta << endl;
       
@@ -264,53 +351,7 @@ int writeNtuple_Official(SVector input_files,
   std::cout << " maxweightb: " << maxweightb << " maxweightc: " << maxweightc << 
     " maxweightl: " << maxweightl << endl;
 
-  // --- things to write out
-  Int_t nVTX;
-  Int_t nTracksAtVtx;
-  Int_t nSingleTracks;
-  Double_t energyFraction;
-  Double_t mass;
-  Double_t significance3d;
-
-  Int_t cat_flavour;
-  Int_t bottom;
-  Int_t charm;
-  Int_t light;
- 
-  Double_t weight;
- 
-  Double_t deltaR;
-  Double_t JetPt;
-  Double_t JetEta;
-  Int_t cat_pT;
-  Int_t cat_eta;
-
-
   
-  output_tree->Branch("nVTX",&nVTX,"nVTX/I");
-  output_tree->Branch("nTracksAtVtx",&nTracksAtVtx,"nTracksAtVtx/I");
-  output_tree->Branch("nSingleTracks",&nSingleTracks,"nSingleTracks/I");
-  output_tree->Branch("energyFraction",&energyFraction,"energyFraction/D");
-  output_tree->Branch("mass",&mass,"mass/D");
-  output_tree->Branch("significance3d",&significance3d,"significance3d/D");
-
-  
-  if (forNN){
-    output_tree->Branch("cat_pT",&cat_pT,"cat_pT/I");
-    output_tree->Branch("cat_eta",&cat_eta,"cat_eta/I");
-    output_tree->Branch("weight",&weight,"weight/D");
-
-    output_tree->Branch("bottom",&bottom,"bottom/I");
-    output_tree->Branch("charm",&charm,"charm/I");
-    output_tree->Branch("light",&light,"light/I");
-  }
-  
-
-
-  output_tree->Branch("deltaR",&deltaR,"deltaR/D");    
-  output_tree->Branch("JetPt",&JetPt,"JetPt/D");
-  output_tree->Branch("JetEta",&JetEta,"JetEta/D");
-  output_tree->Branch("cat_flavour",&cat_flavour,"cat_flavour/I");  
 
 
 
@@ -359,20 +400,17 @@ int writeNtuple_Official(SVector input_files,
     counter+=1;
      
     
-    readTreeJF->GetEntry(i);
+    treeJF->GetEntry(i);
 
 
-    if (fabs(readTreeJF->JetEta) < 2.5 &&
-	readTreeJF->JetPt > 15.0 &&
-	readTreeJF->mass > -100) {
+    if (fabs(JetEta) < 2.5 &&
+	JetPt > magic::min_jet_pt_gev &&
+	mass > -100) {
 
-
-      JetPt=readTreeJF->JetPt;
-      JetEta=readTreeJF->JetEta;
       cat_pT=pt_categories.get_category(JetPt);
       cat_eta=abs_eta_categories.get_category(fabs(JetEta)); 
       
-      cat_flavour=abs(readTreeJF->Flavour);
+      cat_flavour=abs(Flavour);
       if (forNN){
 	bottom=0;
 	charm=0;
@@ -457,12 +495,6 @@ int writeNtuple_Official(SVector input_files,
 	observer_chains.at(j).GetEntry(i); 
       }
 
-      nVTX=readTreeJF->nVTX;
-      nSingleTracks=readTreeJF->nSingleTracks;
-      nTracksAtVtx=readTreeJF->nTracksAtVtx;
-      energyFraction=readTreeJF->energyFraction;
-      mass=readTreeJF->mass;
-      significance3d=readTreeJF->significance3d;
       output_tree->Fill();
       
     }
@@ -498,3 +530,43 @@ int writeNtuple_Official(SVector input_files,
   
 }
   
+bool Observers::build_default_values()
+{ 
+  bool init_doubles = false; 
+  if (double_variables.size() == 0) { 
+    double_variables.push_back("energyFraction"); 
+    double_variables.push_back("significance3d"); 
+    double_variables.push_back("deltaR"); // not filled? 
+    init_doubles = true; 
+  }
+  bool init_ints = false; 
+  if (int_variables.size() == 0) { 
+    int_variables.push_back("nVTX"); 
+    int_variables.push_back("nTracksAtVtx"); 
+    int_variables.push_back("nSingleTracks"); 
+    
+    init_ints = true; 
+  }
+  return init_ints || init_doubles;
+}
+
+std::ostream& operator<<(std::ostream& out, const Observers& v)
+{
+  typedef std::vector<std::string>::const_iterator SVecItr; 
+  out << "discriminators: "; 
+  for (SVecItr itr = v.discriminators.begin(); 
+       itr != v.discriminators.end(); itr++){ 
+    out << *itr << ", "; 
+  }
+  out << "continuous variables: "; 
+  for (SVecItr itr = v.double_variables.begin(); 
+       itr != v.double_variables.end(); itr++){ 
+    out << *itr << ", "; 
+  }
+  out << "discrete variables: "; 
+  for (SVecItr itr = v.int_variables.begin(); itr != v.int_variables.end(); 
+       itr++){ 
+    out << *itr << ", "; 
+  }
+  return out; 
+}

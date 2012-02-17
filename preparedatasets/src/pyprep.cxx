@@ -53,10 +53,10 @@ PyObject* prep_ntuple(PyObject *self,
   if (!ok) return NULL;
 
   std::vector<std::string> files; 
-  std::vector<std::string> observers; 
+  Observers observers; 
   try { 
     files = parse_string_list(input_file_list); 
-    observers = parse_string_list(observer_discriminators); 
+    observers.discriminators = parse_string_list(observer_discriminators); 
   }
   catch(ParseException e) { 
     PyErr_SetString(PyExc_TypeError,
@@ -73,12 +73,8 @@ PyObject* prep_ntuple(PyObject *self,
     }
 
     std::cout << "observers: " << std::endl;
-    for (std::vector<std::string>::const_iterator itr = observers.begin(); 
-	 itr != observers.end(); 
-	 itr++){ 
-      std::cout << *itr << std::endl;
-    }
-      
+    std::cout << observers << std::endl; 
+
     printf("jet collection: %s\n" , jet_collection_name);
     printf("output file: %s\n", output_file_name); 
 

@@ -54,12 +54,15 @@ JETNET_SRC := jetnet_35.f
 T_OBJ := TNeuralDataSet.o TJetNet.o TTrainedNetwork.o TNetworkToHistoTool.o
 T_DICTS := $(T_OBJ:.o=Dict.o)
 
-CXX_OBJECTS := trainNN.o testNN.o doNormalization.o 
-CXX_OBJECTS += makeTestNtuple.o readReducedDataset.o 
-CXX_OBJECTS += $(T_OBJ) $(T_DICTS)
+JETNET_CXX_OBJECTS := trainNN.o testNN.o doNormalization.o 
+JETNET_CXX_OBJECTS += makeTestNtuple.o readReducedDataset.o 
+JETNET_CXX_OBJECTS += $(T_OBJ) $(T_DICTS)
 
 TJETNET_OBJECTS := $(JETNET_OBJ)
-TJETNET_OBJECTS += $(CXX_OBJECTS)
+TJETNET_OBJECTS += $(JETNET_CXX_OBJECTS)
+
+
+CXX_OBJECTS := $(JETNET_CXX_OBJECTS) pynn.o
 
 # --------------------------------------------
 # -------- start here --------------

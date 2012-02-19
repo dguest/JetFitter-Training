@@ -4,8 +4,15 @@
 #include "TString.h"
 #include <string>
 
-// int nothing();
+struct InputVariableInfo { 
+  std::string name; 
+  float offset; 
+  float scale; 
+}; 
 
+namespace train_nn { 
+  const std::vector<InputVariableInfo> INPUT_VARS; 
+}
 
 void trainNN(TString inputfile,
 	     std::string out_dir = "weights", 
@@ -15,6 +22,7 @@ void trainNN(TString inputfile,
              bool withIP3D=true,
              int nodesFirstLayer=10,
              int nodesSecondLayer=9,
-             int restartTrainingFrom=0);
+             int restartTrainingFrom=0, 
+	     std::vector<InputVariableInfo> = train_nn::INPUT_VARS);
 
 #endif // TRAIN_NN_H

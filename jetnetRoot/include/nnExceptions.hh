@@ -10,6 +10,7 @@ class WrongNetworkSizeException: public LoadNetworkException {};
 
 class WriteFileException: public NNException {};
 
+class ReadFileException: public NNException {}; 
 
 
 #endif // NN_EXCEPTIONS_H

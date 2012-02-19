@@ -14,6 +14,10 @@
 // #include "Riostream.h"
 #include "TNetworkToHistoTool.h"
 
+#include "normedInput.hh"
+#include <boost/ptr_container/ptr_vector.hpp> 
+#include "nnExceptions.hh"
+
 #include "TTrainedNetwork.h"
 #include "trainNN.hh"
 
@@ -52,7 +56,8 @@ void trainNN(TString inputfile,
              bool withIP3D,
              int nodesFirstLayer,
              int nodesSecondLayer,
-             int restartTrainingFrom) {
+             int restartTrainingFrom, 
+	     std::vector<InputVariableInfo> input_variables) {
 
   double bweight=1;
   double cweight=1.;
@@ -71,8 +76,13 @@ void trainNN(TString inputfile,
   
   
   TFile *file= new TFile(inputfile);
-  TTree *simu = (TTree*)file->Get("SVTree");
-
+  TTree *simu = dynamic_cast<TTree*>(file->Get("SVTree"));
+  if (! simu){ 
+    std::cerr << "ERROR, could not find SVTree in " << inputfile << 
+      std::endl; 
+    throw LoadReducedDSException(); 
+  }
+  
   Int_t           nVTX;
   Int_t           nTracksAtVtx;
   Int_t           nSingleTracks;

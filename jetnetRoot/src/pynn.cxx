@@ -19,6 +19,7 @@ static const char* train_doc_string =
   "n_iterations\n"
   "dilution_factor\n"
   "use_sd\n"
+  "normalization\n"
   "with_ip3d\n"
   "nodes_first_layer\n"
   "nodes_second_layer\n"
@@ -34,6 +35,7 @@ extern "C" PyObject* train_py(PyObject *self,
   int n_iterations = 10; 
   int dilution_factor = 2; 
   bool use_sd = false; 
+  PyObject* normalization = 0; 
   bool with_ip3d = true; 
   PyObject* nodes = 0; 
   int restart_training_from = 0; 
@@ -45,6 +47,7 @@ extern "C" PyObject* train_py(PyObject *self,
     "n_iterations", 
     "dilution_factor",
     "use_sd",
+    "normalization", 
     "with_ip3d",
     "nodes", 
     "restart_training_from",
@@ -52,7 +55,7 @@ extern "C" PyObject* train_py(PyObject *self,
     NULL};
  
   if (!PyArg_ParseTupleAndKeywords
-      (args, keywds, "s|siibbOib", 
+      (args, keywds, "s|siibObOib", 
        // this function should take a const, and 
        // may be changed, until then we'll cast
        const_cast<char**>(kwlist),
@@ -61,11 +64,23 @@ extern "C" PyObject* train_py(PyObject *self,
        &n_iterations, 
        &dilution_factor, 
        &use_sd, 
+       &normalization, 
        &with_ip3d, 
        &nodes, 
        &restart_training_from, 
        &debug)
       ) return NULL;
+
+  std::vector<InputVariableInfo> input_variable_info; 
+  try {
+    input_variable_info = parse_input_variable_info(normalization); 
+  }
+  catch (ParseException e) { 
+    PyErr_SetString(PyExc_TypeError, 
+		    "expected a dict, "
+		    "key = varname, value = (offset, scale)"); 
+    return 0; 
+  }
 
   std::vector<int> node_vec; 
   try {
@@ -96,6 +111,15 @@ extern "C" PyObject* train_py(PyObject *self,
       printf("%i", *itr); 
     }
     printf(")\n"); 
+    
+    for (std::vector<InputVariableInfo>::const_iterator itr = 
+	   input_variable_info.begin(); 
+	 itr != input_variable_info.end(); 
+	 itr++){ 
+      printf("name = %s, offset = %f, scale = %f\n", 
+	     itr->name.c_str(), itr->offset, itr->scale); 
+    }
+    
   }
   else { 
     trainNN(input_file, 
@@ -296,3 +320,50 @@ extern "C" PyMODINIT_FUNC initpynn(void)
 }
 
 
+//=======================================================
+//========= helpers ========================
+//=======================================================
+
+std::vector<InputVariableInfo> parse_input_variable_info(PyObject* in_dict)
+{
+  std::vector<InputVariableInfo> input_variable_info; 
+  if (in_dict == 0) { 
+    return input_variable_info; 
+  }
+
+  bool ok = PyDict_Check(in_dict); 
+  if (!ok) { 
+    throw ParseException(); 
+  }
+
+  PyObject* key = 0; 
+  PyObject* value = 0; 
+  Py_ssize_t pos = 0; 
+  while (PyDict_Next(in_dict, &pos, &key, &value) ) { 
+    bool ok_key = PyString_Check(key); 
+    bool ok_tuple = PyTuple_Check(value); 
+    if (!ok_key || !ok_tuple) { 
+      throw ParseException(); 
+    }
+    InputVariableInfo this_input; 
+    this_input.name = PyString_AsString(key); 
+    
+    int tup_size = PyTuple_Size(value); 
+    if (tup_size != 2) { 
+      throw ParseException(); 
+    }
+    PyObject* offset = PyTuple_GetItem(value,0); 
+    PyObject* scale = PyTuple_GetItem(value,1); 
+    bool ok_offset = PyFloat_Check(offset); 
+    bool ok_scale = PyFloat_Check(scale); 
+    if (!ok_offset || !ok_scale){ 
+      throw ParseException(); 
+    }
+    this_input.offset = PyFloat_AsDouble(offset); 
+    this_input.scale = PyFloat_AsDouble(scale); 
+    
+    input_variable_info.push_back(this_input); 
+  }
+  
+  return input_variable_info; 
+}

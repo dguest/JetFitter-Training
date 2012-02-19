@@ -1,21 +1,14 @@
 #include <TTree.h>
 #include <TFile.h>
-// #include <TCanvas.h>
 #include <TH1F.h>
-// #include <TLegend.h>
-// #include <iostream>
-// #include <TPad.h>
-//#include <stdio.h>
+
 #include <string.h>
-//#include <stdlib.h>
 #include <cmath>
 #include "TJetNet.h"
 #include "doNormalization.hh"
-// #include "Riostream.h"
 #include "TNetworkToHistoTool.h"
 
 #include "normedInput.hh"
-#include <boost/ptr_container/ptr_vector.hpp> 
 #include "nnExceptions.hh"
 
 #include "TTrainedNetwork.h"

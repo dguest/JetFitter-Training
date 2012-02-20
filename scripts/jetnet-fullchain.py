@@ -10,7 +10,7 @@ import ROOT
 ROOT.PyConfig.IgnoreCommandLineOptions = True
 
 
-from jetnet import training, pyprep
+from jetnet import training, pyprep, profile
 from jetnet.perf import rejection, performance
 import os, sys
 from warnings import warn
@@ -85,6 +85,8 @@ def run_full_chain(input_files, working_dir = None, output_path = None,
     if not os.path.isdir(rej_hist_path): 
         os.mkdir(rej_hist_path)
 
+    if not do_test: 
+        make_profile_file(rds_path)
 
     if not do_test: 
         try: 

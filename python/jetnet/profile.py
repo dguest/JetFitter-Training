@@ -1,10 +1,10 @@
 
 
-def profile_rds(rds_file): 
+def profile_rds(rds_file, tree_name = 'SVTree'): 
     from ROOT import TH1D, TTree, TFile, TIter, gROOT
     
     root_file = TFile(rds_file)
-    sv_tree = root_file.Get('SVTree')
+    sv_tree = root_file.Get(tree_name)
 
     leaf_values = {}
     leaf_types = {}

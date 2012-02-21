@@ -12,8 +12,12 @@
 #include <cassert>
 #include <iostream>
 
-// -- destructor for virtual base class
-NormedInputBase::~NormedInputBase() {}
+// -- stuff for virtual base class
+std::ostream& operator<<(std::ostream& out, const NormedInputBase& n)
+{
+  n.print_to(out); 
+  return out; 
+}
 
 
 int InputVariableContainer::write_to_file(TFile* file, 

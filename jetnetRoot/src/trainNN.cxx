@@ -90,6 +90,15 @@ void trainNN(TString inputfile,
     in_var.push_back(new DI("discriminatorIP3D"  , - 6.3,  6.0, simu)); 
     in_var.push_back(new II("cat_pT"             , - 3.0,  3.0, simu)); 
     in_var.push_back(new II("cat_eta"            , - 1.0,  1.0, simu)); 
+    for (InputVariableContainer::const_iterator itr = in_var.begin(); 
+	 itr != in_var.end(); itr++){ 
+      std::cout << *itr << std::endl;
+    }
+  }
+  else { 
+    std::cerr << "ERROR: feeding normed variables to trainNN not yet "
+      "implemented\n"; 
+    throw NormalizationException(); 
   }
 
   // training variables

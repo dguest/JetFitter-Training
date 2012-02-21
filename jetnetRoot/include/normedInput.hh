@@ -25,12 +25,14 @@ private:
 class NormedInputBase
 {
 public: 
-  virtual ~NormedInputBase() = 0; 
   virtual int set_tree(TTree* ) {}; 
   virtual float get_normed() const {}; 
   virtual float get_offset() const {}; 
   virtual float get_scale() const {}; 
   virtual std::string get_name() const {}; 
+  friend std::ostream& operator<<(std::ostream&, const NormedInputBase&);
+private: 
+  virtual void print_to(std::ostream&) const = 0; 
 }; 
 
 
@@ -59,6 +61,7 @@ private:
   float _offset; 
   float _scale; 
   std::string _name; 
+  void print_to(std::ostream& out) const; 
 }; 
 
 
@@ -123,12 +126,17 @@ float NormedInput<T>::get_normed() const
   return output; 
 }
 
+template<typename T>
+void NormedInput<T>::print_to(std::ostream& out) const
+{
+  out << "input \"" << _name << "\" -- offset: " << _offset << 
+    " scale: " << _scale; 
+}
 
 template <typename Q>
 std::ostream& operator<<(std::ostream& out, const NormedInput<Q>& n)
 { 
-  out << "input \"" << n._name << "\"-- offset: " << n._offset << 
-    " scale: " << n._scale; 
+  n.print_to(out); 
   return out; 
 }; 
 

@@ -75,30 +75,29 @@ void trainNN(TString inputfile,
       std::endl; 
     throw LoadReducedDSException(); 
   }
-  
-  Int_t           nVTX;
-  Int_t           nTracksAtVtx;
-  Int_t           nSingleTracks;
-  Double_t        energyFraction;
-  Double_t        mass;
-  Double_t        significance3d;
-  Double_t        discriminatorIP3D;
-  Int_t        cat_pT;
-  Int_t        cat_eta;
+
+  InputVariableContainer in_var; 
+  if (input_variables.size() == 0) { 
+    typedef NormedInput<int> II; 
+    typedef NormedInput<double> DI; 
+    std::cout << "WARNING: no input variables given, using defaults\n"; 
+    in_var.push_back(new II("nVTX"               , -0.30, 0.50, simu)); 
+    in_var.push_back(new II("nTracksAtVtx"       , -1.00, 1.60, simu)); 
+    in_var.push_back(new II("nSingleTracks"      , -0.20, 0.50, simu)); 
+    in_var.push_back(new DI("energyFraction"     , -0.23, 0.33, simu)); 
+    in_var.push_back(new DI("mass"               , - 974, 1600, simu)); 
+    in_var.push_back(new DI("significance3d"     , -   7, 14.0, simu)); 
+    in_var.push_back(new DI("discriminatorIP3D"  , - 6.3,  6.0, simu)); 
+    in_var.push_back(new II("cat_pT"             , - 3.0,  3.0, simu)); 
+    in_var.push_back(new II("cat_eta"            , - 1.0,  1.0, simu)); 
+  }
+
+  // training variables
   Double_t        weight;
-  Int_t bottom;
-  Int_t charm;
-  Int_t light;
+  Int_t           bottom;
+  Int_t           charm;
+  Int_t           light;
   
-  simu->SetBranchAddress("nVTX",&nVTX);
-  simu->SetBranchAddress("nTracksAtVtx",&nTracksAtVtx);
-  simu->SetBranchAddress("nSingleTracks",&nSingleTracks);
-  simu->SetBranchAddress("energyFraction",&energyFraction);
-  simu->SetBranchAddress("mass",&mass);
-  simu->SetBranchAddress("significance3d",&significance3d);
-  simu->SetBranchAddress("discriminatorIP3D",&discriminatorIP3D);
-  simu->SetBranchAddress("cat_pT",&cat_pT);
-  simu->SetBranchAddress("cat_eta",&cat_eta);
   simu->SetBranchAddress("weight",&weight);
   simu->SetBranchAddress("bottom",   &bottom);
   simu->SetBranchAddress("charm",   &charm);
@@ -220,20 +219,10 @@ void trainNN(TString inputfile,
 
     if (bottom==0 && charm==0 && light==0) continue;
 
-    jn->SetInputTrainSet( counter, 0, norm_nVTX(nVTX) );
-    jn->SetInputTrainSet( counter, 1, norm_nTracksAtVtx(nTracksAtVtx) );
-    jn->SetInputTrainSet( counter, 2, norm_nSingleTracks(nSingleTracks) );
-    jn->SetInputTrainSet( counter, 3, norm_energyFraction(energyFraction) );
-    jn->SetInputTrainSet( counter, 4, norm_mass(mass) );
-    jn->SetInputTrainSet( counter, 5, norm_significance3d(significance3d ) );
-    if (withIP3D){
-      jn->SetInputTrainSet( counter, 6, norm_IP3D(discriminatorIP3D) );
-      jn->SetInputTrainSet( counter, 7, norm_cat_pT(cat_pT) );
-      jn->SetInputTrainSet( counter, 8, norm_cat_eta(cat_eta) );
-    }
-    else {
-      jn->SetInputTrainSet( counter, 6, norm_cat_pT(cat_pT) );
-      jn->SetInputTrainSet( counter, 7, norm_cat_eta(cat_eta) );
+    for (int var_num = 0; var_num < in_var.size(); var_num++){ 
+      jn->SetInputTrainSet( counter, 
+			    var_num, 
+			    in_var.at(var_num).get_normed() );
     }
 
     jn->SetOutputTrainSet( counter, 0, bottom );
@@ -286,20 +275,10 @@ void trainNN(TString inputfile,
 
     if (bottom==0 && charm==0 && light==0) continue;
 
-    jn->SetInputTestSet( counter, 0, norm_nVTX(nVTX) );
-    jn->SetInputTestSet( counter, 1, norm_nTracksAtVtx(nTracksAtVtx) );
-    jn->SetInputTestSet( counter, 2, norm_nSingleTracks(nSingleTracks) );
-    jn->SetInputTestSet( counter, 3, norm_energyFraction(energyFraction) );
-    jn->SetInputTestSet( counter, 4, norm_mass(mass) );
-    jn->SetInputTestSet( counter, 5, norm_significance3d(significance3d ) );
-    if (withIP3D){
-	jn->SetInputTestSet( counter, 6, norm_IP3D(discriminatorIP3D) );
-	jn->SetInputTestSet( counter, 7, norm_cat_pT(cat_pT) );
-	jn->SetInputTestSet( counter, 8, norm_cat_eta(cat_eta) );
-    }
-    else {
-      jn->SetInputTestSet( counter, 6, norm_cat_pT(cat_pT) );
-      jn->SetInputTestSet( counter, 7, norm_cat_eta(cat_eta) );
+    for (int var_num = 0; var_num < in_var.size(); var_num++){ 
+      jn->SetInputTestSet( counter, 
+			   var_num, 
+			   in_var.at(var_num).get_normed() );
     }
 
     jn->SetOutputTestSet( counter, 0, bottom );
@@ -460,6 +439,10 @@ void trainNN(TString inputfile,
       TTrainedNetwork* trainedNetwork=jn->createTrainedNetwork();
       trainedNetwork->Write();
       file->Write(); //*** SUSPICIOUS: may result in two copies in the file
+      
+      // --- write in variable tree too 
+      in_var.write_to_file(file); 
+
       file->Close();
       delete file;
 

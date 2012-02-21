@@ -12,5 +12,6 @@ class WriteFileException: public NNException {};
 
 class ReadFileException: public NNException {}; 
 
+class NormalizationException: public NNException {};
 
 #endif // NN_EXCEPTIONS_H

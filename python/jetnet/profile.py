@@ -31,8 +31,6 @@ def profile_rds(rds_file, tree_name = 'SVTree'):
 
             leaf_values[leaf].append(value)
 
-    # for leaf, value_list in leaf_ranges.items(): 
-    #     print leaf, min(value_list), '--', max(value_list)
         
     leaf_ranges = {}
     for leaf, v in leaf_values.iteritems(): 
@@ -73,8 +71,6 @@ def profile_rds(rds_file, tree_name = 'SVTree'):
     for n, entry in enumerate(sv_tree): 
         if n % 10000 == 0: 
             print '%i entries processed' % n
-
-        if n > 30000: break 
 
         for leaf, hist in hists.items(): 
             hist.fill(entry)

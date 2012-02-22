@@ -49,58 +49,46 @@ int InputVariableContainer::build_from_tree(TTree* info_tree,
     throw LoadNormalizationException(); 
   }
 
-  std::string name; 
-  float offset; 
-  float scale; 
+  InputVariableInfo in_var; 
   info_tree->SetBranchStatus("*",1); 
-  info_tree->SetBranchAddress("name",   &name); 
-  info_tree->SetBranchAddress("offset", &offset); 
-  info_tree->SetBranchAddress("scale",  &scale); 
-
-  // TODO: replace with boost::scoped_ptr 
-  TObjArray* list_of_leaves = reduced_dataset->GetListOfLeaves(); 
-  int n_leaves = list_of_leaves->GetSize(); 
+  info_tree->SetBranchAddress("name",   &in_var.name); 
+  info_tree->SetBranchAddress("offset", &in_var.offset); 
+  info_tree->SetBranchAddress("scale",  &in_var.scale); 
 
   int n_inputs = info_tree->GetEntries(); 
   for (int input_n = 0; input_n < n_inputs; input_n++){ 
     info_tree->GetEntry(input_n); 
     
-    std::string leaf_type_name = ""; 
-    for (int leaf_n = 0; leaf_n < n_leaves; leaf_n++){ 
-      TLeaf* the_leaf = dynamic_cast<TLeaf*>(list_of_leaves->At(leaf_n)); 
-      assert(the_leaf); 
-      std::string leaf_name = the_leaf->GetName(); 
-      if (leaf_name == name){ 
-	leaf_type_name = the_leaf->GetTypeName(); 
-	break; 
-      }
-    }
-    if (leaf_type_name.size() == 0){ 
-      throw MissingLeafException(name, reduced_dataset->GetName()); 
-    }
-
-    if (leaf_type_name == "Int_t") { 
-      NormedInput<int>* the_input = 
-	new NormedInput<int>(name, offset, scale);
-      the_input->set_tree(reduced_dataset); 
-      push_back(the_input);
-    } 
-    else if (leaf_type_name == "Double_t"){ 
-      NormedInput<double>* the_input = 
-	new NormedInput<double>(name, offset, scale); 
-      the_input->set_tree(reduced_dataset); 
-      push_back(the_input); 
-    }
-    else{ 
-      std::cerr << "ERROR: I don't know what to do with " << leaf_type_name
-		<< "\n"; 
-      assert(false); 
-    }
-
+    add_variable(in_var, reduced_dataset); 
+ 
   }
+  return 0; 
 
 }
 
+int InputVariableContainer::add_variable(const InputVariableInfo& in_var, 
+					 TTree* reduced_dataset){ 
+  // TODO: replace with boost::scoped_ptr 
+  TLeaf* the_leaf = reduced_dataset->GetLeaf(in_var.name.c_str()); 
+  if (the_leaf == 0){ 
+    throw MissingLeafException(in_var.name, reduced_dataset->GetName()); 
+  }
+  std::string leaf_type_name = the_leaf->GetName(); 
+
+  if (leaf_type_name == "Int_t") { 
+    push_back(new NormedInput<int>(in_var, reduced_dataset));
+  } 
+  else if (leaf_type_name == "Double_t"){ 
+    push_back(new NormedInput<double>(in_var, reduced_dataset)); 
+  }
+  else{ 
+    std::cerr << "ERROR: I don't know what to do with " << leaf_type_name
+	      << "\n"; 
+    assert(false); 
+  }
+
+  return 0; 
+}
 
 // --- exceptions
 

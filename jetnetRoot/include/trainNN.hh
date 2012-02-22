@@ -4,11 +4,7 @@
 #include "TString.h"
 #include <string>
 
-struct InputVariableInfo { 
-  std::string name; 
-  float offset; 
-  float scale; 
-}; 
+#include "normedInput.hh"
 
 namespace train_nn { 
   const std::vector<InputVariableInfo> INPUT_VARS; 

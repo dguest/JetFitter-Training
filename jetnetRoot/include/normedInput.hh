@@ -7,6 +7,13 @@
 #include <boost/ptr_container/ptr_vector.hpp>
 #include "nnExceptions.hh"
 
+// --- data structure for input info
+struct InputVariableInfo { 
+  std::string name; 
+  float offset; 
+  float scale; 
+}; 
+
 
 // --- exceptions 
 class LoadNormalizationException: public NormalizationException {}; 
@@ -40,27 +47,30 @@ template<typename T>
 class NormedInput : public NormedInputBase
 {
 public: 
-  NormedInput(std::string name, 
-	      float offset, 
-	      float scale); 
-  NormedInput(std::string name, 
-	      float offset, 
-	      float scale, 
-	      TTree*); 
+  // -- setup
+  NormedInput(const InputVariableInfo& info,TTree* = 0); 
+  NormedInput(const std::string& name, TTree* = 0); 
+  NormedInput(const std::string& name, 
+	      float offset, float scale, TTree* = 0); 
   ~NormedInput(); 
   int set_tree(TTree*); 
+
+  // --getters 
   float get_normed() const; 
-  float get_offset() const { return _offset; }
-  float get_scale() const { return _scale; }  
-  std::string get_name() const { return _name; }
+  float get_offset() const { return _info.offset; }
+  float get_scale() const { return _info.scale; }  
+  std::string get_name() const { return _info.name; }
   T get() const { return _buffer; } 
+
+  // --- output 
+  int add_passthrough_branch_to(TTree* output_tree, 
+				std::string branch_name = ""); 
+
   template <typename Q>
   friend std::ostream& operator<<(std::ostream&, const NormedInput<Q>&); 
 private: 
   T* _buffer; 
-  float _offset; 
-  float _scale; 
-  std::string _name; 
+  InputVariableInfo _info; 
   void print_to(std::ostream& out) const; 
 }; 
 
@@ -75,41 +85,59 @@ public:
   int write_to_file(TFile*, 
 		    std::string tree_name = "normalization_info") const; 
 
+  // builds from info_tree, if an entry in info_tree is not found, 
   int build_from_tree(TTree* info_tree, TTree* reduced_dataset); 
+
+  // throws a MissingLeafException if variable not found
+  int add_variable(const InputVariableInfo& variable, TTree* reduced_dataset); 
+  int add_variable(std::string name, TTree* reduced_dataset); 
+
 }; 
 
 //=======================================================
 //========= template implementation =====================
 //=======================================================
 
-
 template<typename T>
-NormedInput<T>::NormedInput(std::string name, 
-			    float offset, float scale): 
-  _offset(offset), 
-  _scale(scale), 
-  _name(name)
+NormedInput<T>::NormedInput(const InputVariableInfo& info, TTree* tree): 
+  _info(info)
 { 
   _buffer = new T; 
+  if (tree){ 
+    this->set_tree(tree); 
+  }
 }
 
 template<typename T>
-NormedInput<T>::NormedInput(std::string name, 
+NormedInput<T>::NormedInput(const std::string& name, TTree* tree)
+{
+  _info.name = name; 
+  _info.offset = 0; 
+  _info.scale = 0; 
+  if (tree){ 
+    this->set_tree(tree); 
+  }
+}
+
+template<typename T>
+NormedInput<T>::NormedInput(const std::string& name, 
 			    float offset, float scale, 
-			    TTree* tree): 
-  _offset(offset), 
-  _scale(scale), 
-  _name(name)
+			    TTree* tree)
 { 
+  _info.name = name; 
+  _info.offset = offset; 
+  _info.scale = scale; 
   _buffer = new T; 
-  this->set_tree(tree); 
+  if (tree){ 
+    this->set_tree(tree); 
+  }
 }
 
 
 template<typename T>
 int NormedInput<T>::set_tree(TTree* input_tree){ 
-  input_tree->SetBranchStatus(_name.c_str(),1); 
-  input_tree->SetBranchAddress(_name.c_str(), _buffer); 
+  input_tree->SetBranchStatus(_info.name.c_str(),1); 
+  input_tree->SetBranchAddress(_info.name.c_str(), _buffer); 
   return 0; 
 }
 
@@ -122,15 +150,26 @@ NormedInput<T>::~NormedInput(){
 template<typename T>
 float NormedInput<T>::get_normed() const 
 {
-  float output = (float(*_buffer) + _offset) * _scale; 
+  float output = (float(*_buffer) + _info.offset) * _info.scale; 
   return output; 
+}
+
+template<typename T>
+int NormedInput<T>::add_passthrough_branch_to(TTree* output_tree, 
+					      std::string branch_name)
+{
+  if (branch_name.size() == 0){ 
+    branch_name = _info.name; 
+  }
+  output_tree->Branch(branch_name.c_str(), _buffer); 
+  return 0; 
 }
 
 template<typename T>
 void NormedInput<T>::print_to(std::ostream& out) const
 {
-  out << "input \"" << _name << "\" -- offset: " << _offset << 
-    " scale: " << _scale; 
+  out << "input \"" << _info.name << "\" -- offset: " << _info.offset << 
+    " scale: " << _info.scale; 
 }
 
 template <typename Q>

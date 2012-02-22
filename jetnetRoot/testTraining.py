@@ -17,11 +17,15 @@ else:
 
 output_directory = 'test' 
              
-pynn.trainNN(reduced_dataset = reduced_dataset, 
-             output_directory = output_directory, 
-             n_iterations = 10, 
-             dilution_factor = 2, 
-             use_sd = False, 
-             with_ip3d = True, 
-             nodes = (10,10), 
-             debug = False)
+# pynn.trainNN(reduced_dataset = reduced_dataset, 
+#              output_directory = output_directory, 
+#              n_iterations = 10, 
+#              dilution_factor = 2, 
+#              use_sd = False, 
+#              with_ip3d = True, 
+#              nodes = (10,10), 
+#              debug = False)
+
+pynn.makeNtuple(weights_file = output_directory + '/weightMinimum.root', 
+                reduced_dataset = reduced_dataset, 
+                output_file = output_directory + '/test_ntuple.root')

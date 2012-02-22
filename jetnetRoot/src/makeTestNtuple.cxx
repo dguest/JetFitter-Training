@@ -24,6 +24,8 @@ void makeTestNtuple(IONames io_names, bool debug)
 
 
 {
+  // gROOT->ProcessLine("#include <string>");
+
   std::string input_weights_name = io_names.input_weights; 
   std::string input_dataset_name = io_names.reduced_dataset;
   std::string output_file_name = io_names.output_file; 
@@ -115,10 +117,14 @@ void makeTestNtuple(IONames io_names, bool debug)
 
   std::string normalization_info_tree_name = norm::info_tree_name; 
   TTree* normalization_info = dynamic_cast<TTree*>
-    (file.Get(normalization_info_tree_name.c_str())); 
+    (input_weights_file.Get(normalization_info_tree_name.c_str())); 
 
   InputVariableContainer in_var; 
   if ( normalization_info ){ 
+    if (debug) { 
+      std::cout << "reading normalization from \"" << 
+	normalization_info_tree_name.c_str() << "\"\n";
+    }
     in_var.build_from_tree(normalization_info, simu); 
   }
   else {

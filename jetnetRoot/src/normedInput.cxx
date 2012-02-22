@@ -48,12 +48,12 @@ int InputVariableContainer::build_from_tree(TTree* info_tree,
       "container\n"; 
     throw LoadNormalizationException(); 
   }
-
-  InputVariableInfo in_var; 
+  // *************** the tree needs to read the address of a std string
+  InputVariableInfo in_var = {"",0,0}; 
   info_tree->SetBranchStatus("*",1); 
-  info_tree->SetBranchAddress("name",   &in_var.name); 
-  info_tree->SetBranchAddress("offset", &in_var.offset); 
-  info_tree->SetBranchAddress("scale",  &in_var.scale); 
+  info_tree->SetBranchAddress("name",   &(in_var.name) ); 
+  info_tree->SetBranchAddress("offset", &(in_var.offset) ); 
+  info_tree->SetBranchAddress("scale",  &(in_var.scale) ); 
 
   int n_inputs = info_tree->GetEntries(); 
   for (int input_n = 0; input_n < n_inputs; input_n++){ 
@@ -73,7 +73,7 @@ int InputVariableContainer::add_variable(const InputVariableInfo& in_var,
   if (the_leaf == 0){ 
     throw MissingLeafException(in_var.name, reduced_dataset->GetName()); 
   }
-  std::string leaf_type_name = the_leaf->GetName(); 
+  std::string leaf_type_name = the_leaf->GetTypeName(); 
 
   if (leaf_type_name == "Int_t") { 
     push_back(new NormedInput<int>(in_var, reduced_dataset));

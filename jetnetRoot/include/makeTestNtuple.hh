@@ -13,17 +13,9 @@ struct IONames
   std::string output_tree; 
 };
 
-struct CategoryVectors
-{
-  std::vector<double> pt; 
-  std::vector<double> eta; 
-  bool build_default_values(); 
-};
 
-std::ostream& operator<<(std::ostream&, const CategoryVectors&); 
 
-void makeTestNtuple(IONames io_names, 
-		    CategoryVectors category_vectors = CategoryVectors());  
+void makeTestNtuple(IONames io_names, bool debug = true);  
 
 int nothing();
 

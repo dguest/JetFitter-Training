@@ -50,7 +50,8 @@ void trainNN(TString inputfile,
              int nodesFirstLayer,
              int nodesSecondLayer,
              int restartTrainingFrom, 
-	     std::vector<InputVariableInfo> input_variables) {
+	     std::vector<InputVariableInfo> input_variables, 
+	     bool debug) {
 
   double bweight=1;
   double cweight=1.;
@@ -90,15 +91,22 @@ void trainNN(TString inputfile,
     in_var.push_back(new DI("discriminatorIP3D"  , - 6.3,  6.0, simu)); 
     in_var.push_back(new II("cat_pT"             , - 3.0,  3.0, simu)); 
     in_var.push_back(new II("cat_eta"            , - 1.0,  1.0, simu)); 
+  }
+  else { 
+    for (std::vector<InputVariableInfo>::const_iterator 
+	   itr = input_variables.begin(); 
+	 itr != input_variables.end(); 
+	 itr++){
+      in_var.add_variable(*itr, simu); 
+    }
+  }
+
+  if (debug){ 
+    std::cout << "input variables: \n"; 
     for (InputVariableContainer::const_iterator itr = in_var.begin(); 
 	 itr != in_var.end(); itr++){ 
       std::cout << *itr << std::endl;
     }
-  }
-  else { 
-    std::cerr << "ERROR: feeding normed variables to trainNN not yet "
-      "implemented\n"; 
-    throw NormalizationException(); 
   }
 
   // training variables
@@ -219,7 +227,8 @@ void trainNN(TString inputfile,
   for (Int_t i = 0; i < n_entries; i++) {
     
     if (i % 100000 == 0 ) {
-      std::cout << " Copying over training events. Looping over event " << i << std::endl;
+      std::cout << " Copying over training events. Looping over event " 
+		<< i << std::endl;
     }
 
     if (i%dilutionFactor!=0) continue;
@@ -608,8 +617,11 @@ void trainNN(TString inputfile,
 
     std::string min_weights_name = out_dir + "/weightMinimum.root"; 
     TFile* file=new TFile(min_weights_name.c_str(),"recreate");
-    trainedNetwork->Write();
-    file->Write();
+    file->WriteTObject(trainedNetwork);
+
+    // write in variable tree too 
+    in_var.write_to_file(file); 
+
     file->Close();
     delete file;
 

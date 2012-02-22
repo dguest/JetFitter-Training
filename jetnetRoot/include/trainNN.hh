@@ -19,6 +19,7 @@ void trainNN(TString inputfile,
              int nodesFirstLayer=10,
              int nodesSecondLayer=9,
              int restartTrainingFrom=0, 
-	     std::vector<InputVariableInfo> = train_nn::INPUT_VARS);
+	     std::vector<InputVariableInfo> = train_nn::INPUT_VARS, 
+	     bool debug = true);
 
 #endif // TRAIN_NN_H

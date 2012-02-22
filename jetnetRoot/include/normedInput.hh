@@ -7,6 +7,11 @@
 #include <boost/ptr_container/ptr_vector.hpp>
 #include "nnExceptions.hh"
 
+namespace norm { 
+  const std::string info_tree_name = "normalization_info"; 
+}
+
+
 // --- data structure for input info
 struct InputVariableInfo { 
   std::string name; 
@@ -14,6 +19,72 @@ struct InputVariableInfo {
   float scale; 
 }; 
 
+
+
+class NormedInputBase
+{
+public: 
+  virtual int set_tree(TTree* ) {}; 
+  virtual float get_normed() const {}; 
+  virtual float get_offset() const {}; 
+  virtual float get_scale() const {}; 
+  virtual std::string get_name() const {}; 
+  virtual int add_passthrough_branch_to(TTree*, std::string = "") const {}; 
+  friend std::ostream& operator<<(std::ostream&, const NormedInputBase&);
+private: 
+  virtual void print_to(std::ostream&) const = 0; 
+}; 
+
+
+template<typename T>
+class NormedInput : public NormedInputBase
+{
+public: 
+  // -- setup
+  NormedInput(const InputVariableInfo& info,TTree* = 0); 
+  // NormedInput(const std::string& name, TTree* = 0); 
+  NormedInput(const std::string& name, 
+	      float offset, float scale, TTree* = 0); 
+  ~NormedInput(); 
+  int set_tree(TTree*); 
+
+  // --getters 
+  float get_normed() const; 
+  float get_offset() const { return _info.offset; }
+  float get_scale() const { return _info.scale; }  
+  std::string get_name() const { return _info.name; }
+  T get() const { return _buffer; } 
+
+  // --- output 
+  int add_passthrough_branch_to(TTree* output_tree, 
+				std::string branch_name = "") const; 
+
+  template <typename Q>
+  friend std::ostream& operator<<(std::ostream&, const NormedInput<Q>&); 
+private: 
+  T* _buffer; 
+  InputVariableInfo _info; 
+  void print_to(std::ostream& out) const; 
+}; 
+
+
+// ---- container 
+
+class InputVariableContainer : public boost::ptr_vector<NormedInputBase>
+{
+public: 
+  int write_to_file(TFile*, 
+		    std::string tree_name = norm::info_tree_name) const; 
+
+  // builds from info_tree, if an entry in info_tree is not found, 
+  int build_from_tree(TTree* info_tree, TTree* reduced_dataset); 
+
+  // throws a MissingLeafException if variable not found
+  int add_variable(const InputVariableInfo& variable, 
+		   TTree* reduced_dataset); 
+  int add_variable(const std::string& name, TTree* reduced_dataset); 
+
+}; 
 
 // --- exceptions 
 class LoadNormalizationException: public NormalizationException {}; 
@@ -29,70 +100,6 @@ private:
 }; 
 
 
-class NormedInputBase
-{
-public: 
-  virtual int set_tree(TTree* ) {}; 
-  virtual float get_normed() const {}; 
-  virtual float get_offset() const {}; 
-  virtual float get_scale() const {}; 
-  virtual std::string get_name() const {}; 
-  friend std::ostream& operator<<(std::ostream&, const NormedInputBase&);
-private: 
-  virtual void print_to(std::ostream&) const = 0; 
-}; 
-
-
-template<typename T>
-class NormedInput : public NormedInputBase
-{
-public: 
-  // -- setup
-  NormedInput(const InputVariableInfo& info,TTree* = 0); 
-  NormedInput(const std::string& name, TTree* = 0); 
-  NormedInput(const std::string& name, 
-	      float offset, float scale, TTree* = 0); 
-  ~NormedInput(); 
-  int set_tree(TTree*); 
-
-  // --getters 
-  float get_normed() const; 
-  float get_offset() const { return _info.offset; }
-  float get_scale() const { return _info.scale; }  
-  std::string get_name() const { return _info.name; }
-  T get() const { return _buffer; } 
-
-  // --- output 
-  int add_passthrough_branch_to(TTree* output_tree, 
-				std::string branch_name = ""); 
-
-  template <typename Q>
-  friend std::ostream& operator<<(std::ostream&, const NormedInput<Q>&); 
-private: 
-  T* _buffer; 
-  InputVariableInfo _info; 
-  void print_to(std::ostream& out) const; 
-}; 
-
-
-// ----------- persistence helpers -----------------
-
-
-
-class InputVariableContainer : public boost::ptr_vector<NormedInputBase>
-{
-public: 
-  int write_to_file(TFile*, 
-		    std::string tree_name = "normalization_info") const; 
-
-  // builds from info_tree, if an entry in info_tree is not found, 
-  int build_from_tree(TTree* info_tree, TTree* reduced_dataset); 
-
-  // throws a MissingLeafException if variable not found
-  int add_variable(const InputVariableInfo& variable, TTree* reduced_dataset); 
-  int add_variable(std::string name, TTree* reduced_dataset); 
-
-}; 
 
 //=======================================================
 //========= template implementation =====================
@@ -108,16 +115,16 @@ NormedInput<T>::NormedInput(const InputVariableInfo& info, TTree* tree):
   }
 }
 
-template<typename T>
-NormedInput<T>::NormedInput(const std::string& name, TTree* tree)
-{
-  _info.name = name; 
-  _info.offset = 0; 
-  _info.scale = 0; 
-  if (tree){ 
-    this->set_tree(tree); 
-  }
-}
+// template<typename T>
+// NormedInput<T>::NormedInput(const std::string& name, TTree* tree)
+// {
+//   _info.name = name; 
+//   _info.offset = 0; 
+//   _info.scale = 0; 
+//   if (tree){ 
+//     this->set_tree(tree); 
+//   }
+// }
 
 template<typename T>
 NormedInput<T>::NormedInput(const std::string& name, 
@@ -156,7 +163,7 @@ float NormedInput<T>::get_normed() const
 
 template<typename T>
 int NormedInput<T>::add_passthrough_branch_to(TTree* output_tree, 
-					      std::string branch_name)
+					      std::string branch_name) const
 {
   if (branch_name.size() == 0){ 
     branch_name = _info.name; 

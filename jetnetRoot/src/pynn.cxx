@@ -225,8 +225,6 @@ extern "C" PyObject* make_test_ntuple(PyObject *self,
   const char* input_dataset_name; 
   const char* output_file_name; 
   const char* output_tree_name = "performance"; 
-  PyObject* pt_categories = 0; 
-  PyObject* eta_categories = 0; 
   bool debug = false; 
 
   const char *kwlist[] = {
@@ -234,13 +232,11 @@ extern "C" PyObject* make_test_ntuple(PyObject *self,
     "reduced_dataset", 
     "output_file", 
     "output_tree", 
-    "pt_categories", 
-    "eta_categories", 
     "debug", 
     NULL};
  
   if (!PyArg_ParseTupleAndKeywords
-      (args, keywds, "sss|sOOb", 
+      (args, keywds, "sss|sb", 
        // this function should take a const, and 
        // may be changed, until then we'll cast
        const_cast<char**>(kwlist),
@@ -248,29 +244,15 @@ extern "C" PyObject* make_test_ntuple(PyObject *self,
        &input_dataset_name, 
        &output_file_name, 
        &output_tree_name, 
-       &pt_categories, 
-       &eta_categories, 
        &debug)
       )
     return NULL;
-
-  CategoryVectors categories; 
-  try {
-    categories.pt = parse_double_list(pt_categories); 
-    categories.eta = parse_double_list(eta_categories); 
-  }
-  catch(ParseException e) { 
-    PyErr_SetString(PyExc_TypeError,
-		    "expected a list of floats, found something else"); 
-    return 0;
-  }
 
 
   if (debug){ 
     printf("in wt = %s, in ds = %s, out file = %s, out tree = %s\n", 
   	   input_weights_name, input_dataset_name, 
 	   output_file_name, output_tree_name); 
-    std::cout << "categories: " << categories << std::endl;
   }
 
   else{ 
@@ -281,8 +263,7 @@ extern "C" PyObject* make_test_ntuple(PyObject *self,
       output_tree_name
     }; 
 
-    makeTestNtuple(io_names, 
-		   categories); 
+    makeTestNtuple(io_names); 
   }
 
   Py_INCREF(Py_None);

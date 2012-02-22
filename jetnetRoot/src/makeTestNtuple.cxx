@@ -1,42 +1,33 @@
 #include "makeTestNtuple.hh"
-#include "readReducedDataset.hh"
 #include <TFile.h>
 #include <TTree.h>
+#include <TLeaf.h>
 #include <iostream>
 #include "TRandom.h"
 #include <cmath>
 #include <vector>
+#include <set>
 #include <algorithm>
 #include <TH1D.h>
-#include "doNormalization.hh"
 #include "TTrainedNetwork.h"
 #include "TJetNet.h"
 #include <TVectorD.h>
 #include <TMatrixD.h>
 #include <string> 
 #include "nnExceptions.hh"
-
-#include "PtEtaCategoryTool.hh"
+#include "normedInput.hh"
 
 using namespace std;
 
 
-void makeTestNtuple(IONames io_names, 
-		    CategoryVectors category_vectors)
+void makeTestNtuple(IONames io_names, bool debug)
+
 
 {
   std::string input_weights_name = io_names.input_weights; 
   std::string input_dataset_name = io_names.reduced_dataset;
   std::string output_file_name = io_names.output_file; 
   std::string output_tree_name = io_names.output_tree; 
-
-  bool used_def_categories = category_vectors.build_default_values(); 
-  if (used_def_categories){ 
-    printf("WARNING: using hardcoded pt / eta categories\n"); 
-  }
-
-  CategoryMap pt_categories(category_vectors.pt); 
-  CategoryMap abs_eta_categories(category_vectors.eta); 
 
   TFile input_weights_file(input_weights_name.c_str());
   TTrainedNetwork* trainedNetwork = dynamic_cast<TTrainedNetwork*>
@@ -110,224 +101,118 @@ void makeTestNtuple(IONames io_names,
 
   //END CROSS CHECK HERE 
 
-  
 
-
-
-  Int_t nVTX;
-  Int_t nTracksAtVtx;
-  Int_t nSingleTracks;
-  Double_t energyFraction;
-  Double_t mass;
-  Double_t significance3d;
-
-  
-  Int_t cat_flavour;
-
-  Double_t discriminatorIP2D;
-  Double_t discriminatorIP3D;
-  Double_t discriminatorSV1;
-  Double_t discriminatorCOMB;
- 
-  Double_t weight;
- 
-  Double_t deltaR;
-  Double_t JetPt;
-  Double_t JetEta;
-  Int_t cat_pT;
-  Int_t cat_eta;
-
-  Double_t NNb;
-  Double_t NNc;
-  Double_t NNu;
-  
-  
 
   cout << " file name to open is: " << input_dataset_name << endl;
 
   TFile file(input_dataset_name.c_str());
 
-  TString inputTreeName=("SVTree");
-
-  TTree* inputTree = dynamic_cast<TTree*>(file.Get(inputTreeName));
-  if (! inputTree){ 
+  TTree* simu = dynamic_cast<TTree*>(file.Get("SVTree"));
+  if (! simu){ 
     throw LoadReducedDSException(); 
   }
 
-  readReducedDataset* readTreeJF=new readReducedDataset(inputTree);
 
-  TFile* outputFile=new TFile(output_file_name.c_str(),"recreate");
+  std::string normalization_info_tree_name = norm::info_tree_name; 
+  TTree* normalization_info = dynamic_cast<TTree*>
+    (file.Get(normalization_info_tree_name.c_str())); 
 
+  InputVariableContainer in_var; 
+  if ( normalization_info ){ 
+    in_var.build_from_tree(normalization_info, simu); 
+  }
+  else {
+    std::cout << "WARNING: " << normalization_info_tree_name << 
+      " not found using default hardcoded normalization values\n"; 
+
+    typedef NormedInput<int> II; 
+    typedef NormedInput<double> DI; 
+    in_var.push_back(new II("nVTX"               , -0.30, 0.50, simu)); 
+    in_var.push_back(new II("nTracksAtVtx"       , -1.00, 1.60, simu)); 
+    in_var.push_back(new II("nSingleTracks"      , -0.20, 0.50, simu)); 
+    in_var.push_back(new DI("energyFraction"     , -0.23, 0.33, simu)); 
+    in_var.push_back(new DI("mass"               , - 974, 1600, simu)); 
+    in_var.push_back(new DI("significance3d"     , -   7, 14.0, simu)); 
+    in_var.push_back(new DI("discriminatorIP3D"  , - 6.3,  6.0, simu)); 
+    in_var.push_back(new II("cat_pT"             , - 3.0,  3.0, simu)); 
+    in_var.push_back(new II("cat_eta"            , - 1.0,  1.0, simu)); 
+    
+  }
+
+  if (debug) { 
+    std::cout << "input variables: \n"; 
+    for (InputVariableContainer::const_iterator itr = in_var.begin(); 
+	 itr != in_var.end(); itr++){ 
+      std::cout << *itr << std::endl;
+    }
+
+  }
+
+
+  // ------- setup output ------------
+
+
+  TFile* outputFile = new TFile(output_file_name.c_str(),"recreate");
 
   TTree* myTree=new TTree(output_tree_name.c_str(),output_tree_name.c_str());
 
-  if (!true) {// longterm: make out variables read in from a list 
-    myTree->Branch("nVTX",&nVTX,"nVTX/I");
-    myTree->Branch("nTracksAtVtx",&nTracksAtVtx,"nTracksAtVtx/I");
-    myTree->Branch("nSingleTracks",&nSingleTracks,"nSingleTracks/I");
-    myTree->Branch("energyFraction",&energyFraction,"energyFraction/D");
-    myTree->Branch("mass",&mass,"mass/D");
-    myTree->Branch("significance3d",&significance3d,"significance3d/D");
-  }
-  
-  myTree->Branch("cat_pT",&cat_pT,"cat_pT/I");
-  myTree->Branch("cat_eta",&cat_eta,"cat_eta/I");
-  myTree->Branch("weight",&weight,"weight/D");
-
-  myTree->Branch("cat_flavour",&cat_flavour,"cat_flavour/I");
-  myTree->Branch("deltaR",&deltaR,"deltaR/D");    
-  myTree->Branch("JetPt",&JetPt,"JetPt/D");
-  myTree->Branch("JetEta",&JetEta,"JetEta/D");
-
-  myTree->Branch("discriminatorIP3D",&discriminatorIP3D,"discriminatorIP3D/D");
-  myTree->Branch("discriminatorIP2D",&discriminatorIP2D,"discriminatorIP2D/D");
-  myTree->Branch("discriminatorSV1",&discriminatorSV1,"discriminatorSV1/D");
-  myTree->Branch("discriminatorCOMB",&discriminatorCOMB,"discriminatorCOMB/D");
+  Double_t NNb;
+  Double_t NNc;
+  Double_t NNu;
 
   myTree->Branch("NNb",&NNb,"NNb/D");
   myTree->Branch("NNc",&NNc,"NNc/D");
   myTree->Branch("NNu",&NNu,"NNu/D");
-  
-  Int_t num_entries=readTreeJF->fChain->GetEntries();
 
+  std::set<std::string> nn_input_variables; 
+  for (InputVariableContainer::const_iterator itr = in_var.begin(); 
+       itr != in_var.end(); itr++){ 
+    itr->add_passthrough_branch_to(myTree); 
+    nn_input_variables.insert(itr->get_name()); 
+  }
+
+  InputVariableContainer pass_through_vars; 
+  TObjArray* leaf_array = simu->GetListOfLeaves(); 
+  int n_leafs = leaf_array->GetSize();
+  for (int leaf_n = 0; leaf_n < n_leafs; leaf_n++){ 
+    TLeaf* the_leaf = dynamic_cast<TLeaf*>(leaf_array->At(leaf_n)); 
+    assert(the_leaf); 
+    std::string leaf_name = the_leaf->GetName(); 
+    if ( !nn_input_variables.count(leaf_name) ) { 
+      pass_through_vars.add_variable(leaf_name, simu); 
+    }
+  }
+  for (InputVariableContainer::const_iterator itr = pass_through_vars.begin(); 
+       itr != pass_through_vars.end(); itr++){ 
+    itr->add_passthrough_branch_to(myTree); 
+  }
+
+  
+  Int_t num_entries = simu->GetEntries(); 
 
   cout << "Total entries are: " << num_entries << endl;
 
-  for (Int_t i=0;i<num_entries;++i)
-    {
+  for (Int_t i = 0;i < num_entries; ++i){
 
 
-      if (i % 500000 == 0 ) {
-	std::cout << " processing event number " << i << std::endl;
-      }
-    
-      readTreeJF->GetEntry(i);
-
-
-      JetPt=readTreeJF->JetPt;
-      JetEta=readTreeJF->JetEta;
-      cat_pT = pt_categories.get_category(JetPt);
-      cat_eta = abs_eta_categories.get_category(JetEta); 
-      cat_flavour=readTreeJF->cat_flavour;
-      weight=readTreeJF->weight;
-    
-      discriminatorIP3D=readTreeJF->discriminatorIP3D;
-      discriminatorIP2D=readTreeJF->discriminatorIP2D;
-      discriminatorSV1=readTreeJF->discriminatorSV1;
-      discriminatorCOMB=readTreeJF->discriminatorCOMB;
-      deltaR=readTreeJF->deltaR;
-
-      float input[9]=
-        {   norm_nVTX(readTreeJF->nVTX),
-            norm_nTracksAtVtx(readTreeJF->nTracksAtVtx),
-            norm_nSingleTracks(readTreeJF->nSingleTracks),
-            norm_energyFraction(readTreeJF->energyFraction),
-            norm_mass(readTreeJF->mass),
-            norm_significance3d(readTreeJF->significance3d),
-            norm_IP3D(readTreeJF->discriminatorIP3D),
-            norm_cat_pT(cat_pT),
-            norm_cat_eta(cat_eta) };
-
-
-      if (i<10)
-	{
-	  cout << " input variables: ";
-	  for (int o=0;o<9;++o)
-	    {
-	      cout << "var " << o << ": " << input[o] << endl;
-	    }
-	}
-
-      //CALCULATION STARTS HERE
-
-      for (Int_t o=0;o<nHidden+1;++o)
-	{
-	  int sizeActualLayer=(o<nHidden)?nHiddenLayerSize[o]:nOutput;
-	  int sizePreviousLayer=(o==0)?nInput:nHiddenLayerSize[o-1];
-  
-	  for (Int_t s=0;s<sizeActualLayer;++s)
-	    {
-	      // TODO: change this ->operator() syntax
-	      Double_t nodeValue=0.;
-	      if (o==0)
-		{
-		  for (Int_t p=0;p<nInput;++p)
-		    {
-		      nodeValue+=weightMatrices[o]->operator() (p,s)*input[p];
-		    }
-		}
-	      else
-		{
-		  for (Int_t p=0;p<nHiddenLayerSize[o-1];++p)
-		    {
-		      nodeValue+=weightMatrices[o]->operator() (p,s)*resultVector[o-1]->operator()(p);
-		    }
-		}
-	      nodeValue+=thresholdVectors[o]->operator() (s);
-	      resultVector[o]->operator()(s) = sigmoid(nodeValue);
-	    }
-	}      
-  
-      TVectorD result(nOutput);
-      for (Int_t jjj = 0; jjj < nOutput; jjj++)
-	{
-	  result.operator()(jjj)=
-	    resultVector[nHidden]->operator()(jjj);
-	}
-
-      //CALCULATION ENDS HERE
-
-      NNb=result.operator()(0);
-      NNc=result.operator()(1);
-      NNu=result.operator()(2);
-    
-      if (i<10)
-	{
-	  cout << " NNb: " << NNb << " NNc: " << NNc << " NNu: " << NNu << endl;
-	}
-  
-      //cross check
-
-      for (Int_t i=0;i<trainedNetwork->getnInput();++i)
-	{
-	  jn->SetInputs(i,input[i]);
-	}
-
-      jn->Evaluate();
-
-      //  cout << "Result 0:" << jn->GetOutput(0);
-      //  cout << " Result 1:" << jn->GetOutput(1);
-      //  cout << " Result 2:" << jn->GetOutput(2) << endl;
-
-      if (fabs(NNb-jn->GetOutput(0))>1e-4)
-	{
-	  cout << " Different: NNb: " << NNb << " output0: " << jn->GetOutput(0) << endl;
-	}
-  
-      if (fabs(NNc-jn->GetOutput(1))>1e-4)
-	{
-	  cout << " Different: NNc: " << NNc << " output0: " << jn->GetOutput(1) << endl;
-	}
-
-      if (fabs(NNu-jn->GetOutput(2))>1e-4)
-	{
-	  cout << " Different: NNu: " << NNu << " output0: " << jn->GetOutput(2) << endl;
-	}
-
-      //end cross check
-
-      /*
-	nVTX=readTreeJF->nVTX;
-	nSingleTracks=readTreeJF->nSingleTracks;
-	nTracksAtVtx=readTreeJF->nTracksAtVtx;
-	energyFraction=readTreeJF->energyFraction;
-	mass=readTreeJF->mass;
-	significance3d=readTreeJF->significance3d;
-      */
-
-    
-      myTree->Fill();
+    if (i % 500000 == 0 ) {
+      std::cout << " processing event number " << i << std::endl;
     }
+    
+    simu->GetEntry(i); 
+
+    for (int var_num = 0; var_num < in_var.size(); var_num++){ 
+      jn->SetInputs(var_num, in_var.at(var_num).get_normed() ); 
+    }
+
+    jn->Evaluate();
+
+    NNb = jn->GetOutput(0);
+    NNc = jn->GetOutput(1); 
+    NNu = jn->GetOutput(2);
+    
+    myTree->Fill();
+  }
 
 
   outputFile->WriteTObject(myTree); 
@@ -338,43 +223,3 @@ void makeTestNtuple(IONames io_names,
   
 }
   
-bool CategoryVectors::build_default_values()
-{
-  bool init_pt = false; 
-  if (pt.size() == 0){ 
-    pt.push_back(25); 
-    pt.push_back(35); 
-    pt.push_back(50); 
-    pt.push_back(80); 
-    pt.push_back(120); 
-    pt.push_back(200); 
-    init_pt = true; 
-  }
-
-  bool init_eta = false; 
-  if(eta.size() == 0){
-    eta.push_back(0.7); 
-    eta.push_back(1.5); 
-    init_eta = true; 
-  }
-  return init_pt || init_eta; 
-
-}
-
-std::ostream& operator<<(std::ostream& out, const CategoryVectors& v)
-{
-  typedef std::vector<double>::const_iterator FVecItr; 
-  int cat = 0; 
-  out << "pT -- "; 
-  for (FVecItr itr = v.pt.begin(); itr != v.pt.end(); itr++){ 
-    out << cat << ": " << *itr << " [GeV], "; 
-    cat++; 
-  }
-  cat = 0; 
-  out << "abs(eta) -- "; 
-  for (FVecItr itr = v.eta.begin(); itr != v.eta.end(); itr++){ 
-    out << cat << ": " << *itr << ", "; 
-    cat++; 
-  }
-  return out; 
-}

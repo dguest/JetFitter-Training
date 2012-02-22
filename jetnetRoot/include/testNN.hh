@@ -11,7 +11,8 @@ void testNN(std::string inputfile,
 	    // int nodesSecondLayer = 9, 
 	    bool useSD = false,
 	    bool withIP3D = true, 
-	    std::string out_file = "all_hists.root");
+	    std::string out_file = "all_hists.root", 
+	    bool debug = true);
 
 
 

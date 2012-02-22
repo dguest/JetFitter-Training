@@ -90,6 +90,12 @@ int InputVariableContainer::add_variable(const InputVariableInfo& in_var,
   return 0; 
 }
 
+int InputVariableContainer::add_variable(const std::string& name, 
+					 TTree* reduced_dataset){ 
+  InputVariableInfo info = { name, 0, 0}; 
+  add_variable(info, reduced_dataset); 
+}
+
 // --- exceptions
 
 MissingLeafException::MissingLeafException(std::string leaf_name, 

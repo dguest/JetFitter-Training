@@ -12,8 +12,7 @@
 #include <stdexcept>
 #include <cassert>
 #include "TJetNet.h"
-#include "doNormalization.hh"
-#include "Riostream.h"
+#include "normedInput.hh"
 #include "TNetworkToHistoTool.h"
 
 #include "TTrainedNetwork.h"
@@ -57,11 +56,13 @@ void testNN(std::string inputfile,
 	    int dilutionFactor,
 	    bool useSD,
 	    bool withIP3D, 
-	    std::string out_file) {
+	    std::string out_file, 
+	    bool debug) {
 
   double bweight=1;
   double cweight=1.;
   double lweight=5;
+  std::string normalization_info_tree_name = norm::info_tree_name; 
 
   gROOT->SetStyle("Plain");
 
@@ -77,29 +78,46 @@ void testNN(std::string inputfile,
   TFile file(inputfile.c_str());
   TTree *simu = (TTree*)file.Get("SVTree");
 
-  Int_t           nVTX;
-  Int_t           nTracksAtVtx;
-  Int_t           nSingleTracks;
-  Double_t        energyFraction;
-  Double_t        mass;
-  Double_t        significance3d;
-  Double_t        discriminatorIP3D;
-  Int_t        cat_pT;
-  Int_t        cat_eta;
+  TTree* normalization_info = dynamic_cast<TTree*>
+    (file.Get(normalization_info_tree_name.c_str())); 
+
+  InputVariableContainer in_var; 
+  if ( normalization_info ){ 
+    in_var.build_from_tree(normalization_info, simu); 
+  }
+  else {
+    std::cout << "WARNING: " << normalization_info_tree_name << 
+      " not found using default hardcoded normalization values\n"; 
+
+    typedef NormedInput<int> II; 
+    typedef NormedInput<double> DI; 
+    in_var.push_back(new II("nVTX"               , -0.30, 0.50, simu)); 
+    in_var.push_back(new II("nTracksAtVtx"       , -1.00, 1.60, simu)); 
+    in_var.push_back(new II("nSingleTracks"      , -0.20, 0.50, simu)); 
+    in_var.push_back(new DI("energyFraction"     , -0.23, 0.33, simu)); 
+    in_var.push_back(new DI("mass"               , - 974, 1600, simu)); 
+    in_var.push_back(new DI("significance3d"     , -   7, 14.0, simu)); 
+    in_var.push_back(new DI("discriminatorIP3D"  , - 6.3,  6.0, simu)); 
+    in_var.push_back(new II("cat_pT"             , - 3.0,  3.0, simu)); 
+    in_var.push_back(new II("cat_eta"            , - 1.0,  1.0, simu)); 
+    
+  }
+
+  if (debug) { 
+    std::cout << "input variables: \n"; 
+    for (InputVariableContainer::const_iterator itr = in_var.begin(); 
+	 itr != in_var.end(); itr++){ 
+      std::cout << *itr << std::endl;
+    }
+
+  }
+
+  // training variables
   Double_t        weight;
-  Int_t bottom;
-  Int_t charm;
-  Int_t light;
-  
-  simu->SetBranchAddress("nVTX",&nVTX);
-  simu->SetBranchAddress("nTracksAtVtx",&nTracksAtVtx);
-  simu->SetBranchAddress("nSingleTracks",&nSingleTracks);
-  simu->SetBranchAddress("energyFraction",&energyFraction);
-  simu->SetBranchAddress("mass",&mass);
-  simu->SetBranchAddress("significance3d",&significance3d);
-  simu->SetBranchAddress("discriminatorIP3D",&discriminatorIP3D);
-  simu->SetBranchAddress("cat_pT",&cat_pT);
-  simu->SetBranchAddress("cat_eta",&cat_eta);
+  Int_t           bottom;
+  Int_t           charm;
+  Int_t           light;
+
   simu->SetBranchAddress("weight",&weight);
   simu->SetBranchAddress("bottom",   &bottom);
   simu->SetBranchAddress("charm",   &charm);
@@ -210,20 +228,8 @@ void testNN(std::string inputfile,
     
     simu->GetEntry(i);
 
-    jn->SetInputs(0, norm_nVTX(nVTX) );
-    jn->SetInputs(1, norm_nTracksAtVtx(nTracksAtVtx) );
-    jn->SetInputs(2, norm_nSingleTracks(nSingleTracks) );
-    jn->SetInputs(3, norm_energyFraction(energyFraction) );
-    jn->SetInputs(4, norm_mass(mass) );
-    jn->SetInputs(5, norm_significance3d(significance3d ) );
-    if (withIP3D) {
-      jn->SetInputs(6, norm_IP3D(discriminatorIP3D) );
-      jn->SetInputs(7, norm_cat_pT(cat_pT) );
-      jn->SetInputs(8, norm_cat_eta(cat_eta) );
-    }
-    else {
-      jn->SetInputs(6, norm_cat_pT(cat_pT) );
-      jn->SetInputs(7, norm_cat_eta(cat_eta) );
+    for (int var_num = 0; var_num < in_var.size(); var_num++){ 
+      jn->SetInputs(var_num, in_var.at(var_num).get_normed() ); 
     }
 
     jn->Evaluate();

@@ -85,6 +85,7 @@ def run_full_chain(input_files, working_dir = None, output_path = None,
     if not os.path.isdir(rej_hist_path): 
         os.mkdir(rej_hist_path)
 
+    # --- other diagnostics 
     if not do_test: 
         profile_file = os.path.join(reduced_dir, 'profiled.root')
         if not os.path.isfile(profile_file): 

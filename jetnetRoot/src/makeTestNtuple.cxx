@@ -159,6 +159,9 @@ void makeTestNtuple(IONames io_names, bool debug)
 
 
   TFile* outputFile = new TFile(output_file_name.c_str(),"recreate");
+  if ( outputFile->IsZombie() ) { 
+    throw WriteFileException()
+  }
 
   TTree* myTree=new TTree(output_tree_name.c_str(),output_tree_name.c_str());
 

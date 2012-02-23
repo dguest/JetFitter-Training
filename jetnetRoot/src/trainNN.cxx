@@ -352,7 +352,10 @@ void trainNN(TString inputfile,
   
   std::string chronology_name = out_dir + "/trainingCronology.txt"; 
 
-  ofstream cronology(chronology_name.c_str(),ios_base::out);//|ios_base::app);
+  ofstream cronology(chronology_name.c_str(),ios_base::out);
+  if (! cronology ) { 
+    throw WriteFileException(); 
+  }
   
   cronology << "-------------SETTINGS----------------" << endl;
   cronology << "Epochs: " << jn->GetEpochs() << std::endl;

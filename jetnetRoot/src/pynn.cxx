@@ -122,15 +122,29 @@ extern "C" PyObject* train_py(PyObject *self,
     
   }
   else { 
-    trainNN(input_file, 
-	    output_dir, 
-	    n_iterations,
-	    dilution_factor,
-	    use_sd,
-	    with_ip3d,
-	    nodes_first_layer,
-	    nodes_second_layer,
-	    restart_training_from);
+    try { 
+      trainNN(input_file, 
+	      output_dir, 
+	      n_iterations,
+	      dilution_factor,
+	      use_sd,
+	      with_ip3d,
+	      nodes_first_layer,
+	      nodes_second_layer,
+	      restart_training_from);
+    }
+    catch (LoadReducedDSException e){ 
+      PyErr_SetString(PyExc_IOError,"could not load dataset"); 
+      return NULL; 
+    }
+    catch (WriteFileException e){ 
+      PyErr_SetString(PyExc_IOError,"could not write output"); 
+      return NULL; 
+    }
+    catch (NNException e) { 
+      PyErr_SetString(PyExc_StandardError,"generic nn exception"); 
+      return NULL; 
+    }
   }  
 
   Py_INCREF(Py_None);
@@ -209,6 +223,11 @@ extern "C" PyObject* test_py(PyObject *self,
       PyErr_SetString(PyExc_IOError,"could not write output"); 
       return NULL; 
     }
+    catch (NNException e) { 
+      PyErr_SetString(PyExc_StandardError,"generic nn exception"); 
+      return NULL; 
+    }
+
   }
 
   Py_INCREF(Py_None);
@@ -263,7 +282,22 @@ extern "C" PyObject* make_test_ntuple(PyObject *self,
       output_tree_name
     }; 
 
-    makeTestNtuple(io_names); 
+    try { 
+      makeTestNtuple(io_names); 
+    }
+    catch (LoadNetworkException e){ 
+      PyErr_SetString(PyExc_IOError,"could not load network"); 
+      return NULL; 
+    }
+    catch (WriteFileException e){ 
+      PyErr_SetString(PyExc_IOError,"could not write output"); 
+      return NULL; 
+    }
+    catch (NNException e) { 
+      PyErr_SetString(PyExc_StandardError,"generic nn exception"); 
+      return NULL; 
+    }
+
   }
 
   Py_INCREF(Py_None);

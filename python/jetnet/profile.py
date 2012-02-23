@@ -80,7 +80,9 @@ def profile_rds(rds_file, tree_name = 'SVTree'):
 def make_profile_file(reduced_dataset, profile_file = None): 
     from ROOT import TFile
     if profile_file is None: 
-        profile_file = os.path.dirname(reduced_dataset) + 'profiled.root'
+        rds_dir = os.path.dirname(reduced_dataset)
+        profile_file = os.path.join(rds_dir,'profiled.root')
+
     hists = profile_rds(reduced_dataset)
     save_file = TFile(profile_file, 'recreate')
 

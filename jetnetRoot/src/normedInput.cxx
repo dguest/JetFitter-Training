@@ -2,6 +2,7 @@
 #include "nnExceptions.hh"
 
 #include <boost/ptr_container/ptr_vector.hpp>
+#include <boost/scoped_ptr.hpp>
 #include <string> 
 
 #include <TTree.h> 
@@ -48,17 +49,21 @@ int InputVariableContainer::build_from_tree(TTree* info_tree,
       "container\n"; 
     throw LoadNormalizationException(); 
   }
-  // *************** the tree needs to read the address of a std string
-  InputVariableInfo in_var = {"",0,0}; 
+
+  InputVariableInfo in_var; 
+  // ROOT wants a pointer to stl objects
+  boost::scoped_ptr<std::string> name_holder(new std::string); 
+  std::string* name_holder_raw = name_holder.get(); 
   info_tree->SetBranchStatus("*",1); 
-  info_tree->SetBranchAddress("name",   &(in_var.name) ); 
-  info_tree->SetBranchAddress("offset", &(in_var.offset) ); 
-  info_tree->SetBranchAddress("scale",  &(in_var.scale) ); 
+  info_tree->SetBranchAddress("name",   &name_holder_raw ); 
+  info_tree->SetBranchAddress("offset", &in_var.offset ); 
+  info_tree->SetBranchAddress("scale",  &in_var.scale ); 
 
   int n_inputs = info_tree->GetEntries(); 
   for (int input_n = 0; input_n < n_inputs; input_n++){ 
     info_tree->GetEntry(input_n); 
     
+    in_var.name = *name_holder; 
     add_variable(in_var, reduced_dataset); 
  
   }

@@ -188,10 +188,18 @@ void makeTestNtuple(IONames io_names, bool debug)
       pass_through_vars.add_variable(leaf_name, simu); 
     }
   }
-  for (InputVariableContainer::const_iterator itr = pass_through_vars.begin(); 
+  if (debug) std::cout << "pass-through variables: \n"; 
+
+  for (InputVariableContainer::const_iterator 
+	 itr = pass_through_vars.begin(); 
        itr != pass_through_vars.end(); itr++){ 
     itr->add_passthrough_branch_to(myTree); 
+
+    if (debug) std::cout << *itr << std::endl;
+
   }
+
+
 
   
   Int_t num_entries = simu->GetEntries(); 

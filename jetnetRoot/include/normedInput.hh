@@ -84,6 +84,8 @@ public:
 		   TTree* reduced_dataset); 
   int add_variable(const std::string& name, TTree* reduced_dataset); 
 
+  int set_hardcoded_defaults(TTree* reduced_dataset); 
+
 }; 
 
 // --- exceptions 

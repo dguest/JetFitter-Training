@@ -99,8 +99,34 @@ int InputVariableContainer::add_variable(const std::string& name,
 					 TTree* reduced_dataset){ 
   InputVariableInfo info = { name, 0, 0}; 
   add_variable(info, reduced_dataset); 
+  return 0; 
 }
 
+int InputVariableContainer::set_hardcoded_defaults(TTree* reduced_dataset)
+{ 
+  typedef InputVariableInfo I; 
+  I nVTX               = {"nVTX"                , -0.30, 1.0 / 0.50} ; 
+  I nTracksAtVtx       = {"nTracksAtVtx"        , -1.00, 1.0 / 1.60} ; 
+  I nSingleTracks      = {"nSingleTracks"       , -0.20, 1.0 / 0.50} ; 
+  I energyFraction     = {"energyFraction"      , -0.23, 1.0 / 0.33} ; 
+  I mass               = {"mass"                , - 974, 1.0 / 1600} ; 
+  I significance3d     = {"significance3d"      , -   7, 1.0 / 14.0} ; 
+  I discriminatorIP3D  = {"discriminatorIP3D"   , - 6.3, 1.0 /  6.0} ; 
+  I cat_pT             = {"cat_pT"              , - 3.0, 1.0 /  3.0} ; 
+  I cat_eta            = {"cat_eta"             , - 1.0,        1.0} ; 
+
+  add_variable(nVTX                , reduced_dataset); 
+  add_variable(nTracksAtVtx        , reduced_dataset); 
+  add_variable(nSingleTracks       , reduced_dataset); 
+  add_variable(energyFraction      , reduced_dataset); 
+  add_variable(mass                , reduced_dataset); 
+  add_variable(significance3d      , reduced_dataset); 
+  add_variable(discriminatorIP3D   , reduced_dataset); 
+  add_variable(cat_pT              , reduced_dataset); 
+  add_variable(cat_eta             , reduced_dataset); 
+
+  return 0; 
+}
 // --- exceptions
 
 MissingLeafException::MissingLeafException(std::string leaf_name, 

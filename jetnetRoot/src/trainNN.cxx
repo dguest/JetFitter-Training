@@ -79,18 +79,8 @@ void trainNN(TString inputfile,
 
   InputVariableContainer in_var; 
   if (input_variables.size() == 0) { 
-    typedef NormedInput<int> II; 
-    typedef NormedInput<double> DI; 
     std::cout << "WARNING: no input variables given, using defaults\n"; 
-    in_var.push_back(new II("nVTX"               , -0.30, 0.50, simu)); 
-    in_var.push_back(new II("nTracksAtVtx"       , -1.00, 1.60, simu)); 
-    in_var.push_back(new II("nSingleTracks"      , -0.20, 0.50, simu)); 
-    in_var.push_back(new DI("energyFraction"     , -0.23, 0.33, simu)); 
-    in_var.push_back(new DI("mass"               , - 974, 1600, simu)); 
-    in_var.push_back(new DI("significance3d"     , -   7, 14.0, simu)); 
-    in_var.push_back(new DI("discriminatorIP3D"  , - 6.3,  6.0, simu)); 
-    in_var.push_back(new II("cat_pT"             , - 3.0,  3.0, simu)); 
-    in_var.push_back(new II("cat_eta"            , - 1.0,  1.0, simu)); 
+    in_var.set_hardcoded_defaults(simu); 
   }
   else { 
     for (std::vector<InputVariableInfo>::const_iterator 

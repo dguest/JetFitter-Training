@@ -3,3 +3,4 @@
 *.out
 /weights/
 /*_weights*/
+/test/

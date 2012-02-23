@@ -86,7 +86,9 @@ def run_full_chain(input_files, working_dir = None, output_path = None,
         os.mkdir(rej_hist_path)
 
     if not do_test: 
-        make_profile_file(rds_path)
+        profile_file = os.path.join(reduced_dir, 'profiled.root')
+        if not os.path.isfile(profile_file): 
+            profile.make_profile_file(rds_path)
 
     if not do_test: 
         try: 

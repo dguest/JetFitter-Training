@@ -39,7 +39,9 @@ def _set_linker_flags():
 
 def run_training(reduced_dataset, 
                  output_directory,
-                 with_ip3d = True, nodes = None, 
+                 normalization = {}, 
+                 nodes = None, 
+                 flavor_weights = {}, 
                  debug = False): 
 
     if not os.path.isdir(output_directory): 
@@ -48,18 +50,16 @@ def run_training(reduced_dataset,
         raise OverwriteError('root files found in %s' % output_directory)
 
     if nodes is None:
-        if with_ip3d: 
-            nodes = (20, 10)
-        else: 
-            nodes = (15,  8)
+        nodes = (20, 10)
+
 
     pynn.trainNN(reduced_dataset = reduced_dataset, 
                  output_directory = output_directory, 
                  n_iterations = 10000, 
                  dilution_factor = 2, 
-                 use_sd = False, 
-                 with_ip3d = with_ip3d, 
+                 normalization = normalization, 
                  nodes = nodes, 
+                 flavor_weights = flavor_weights
                  debug = debug)
 
 

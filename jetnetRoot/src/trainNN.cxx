@@ -41,8 +41,8 @@ void trainNN(std::string inputfile,
 
   if (n_hidden_layer_nodes.size() == 0){
     std::cout << "WARNING: setting hidden layers to default sizes\n"; 
-    n_hidden_layer_nodes.push_back(10); 
-    n_hidden_layer_nodes.push_back(10); 
+    n_hidden_layer_nodes.push_back(15); 
+    n_hidden_layer_nodes.push_back(8); 
   }
   int nodesFirstLayer = n_hidden_layer_nodes.at(0); 
   int nodesSecondLayer = n_hidden_layer_nodes.at(1);
@@ -84,7 +84,7 @@ void trainNN(std::string inputfile,
     std::cout << "input variables: \n"; 
     for (InputVariableContainer::const_iterator itr = in_var.begin(); 
 	 itr != in_var.end(); itr++){ 
-      std::cout << *itr << std::endl;
+      std::cout << " " << *itr << std::endl;
     }
   }
 

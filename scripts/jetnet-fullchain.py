@@ -58,7 +58,6 @@ def run_full_chain(input_files, working_dir = None, output_path = None,
     if not os.path.isfile(weights_path): 
         training.run_training(reduced_dataset = rds_path, 
                               output_directory = training_dir, 
-                              with_ip3d = True, 
                               debug = do_test)
 
     # --- diagnostics part 

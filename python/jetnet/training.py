@@ -102,7 +102,5 @@ def run_test_ntuple(reduced_dataset,
                     reduced_dataset = reduced_dataset,
                     output_file = output_file, 
                     output_tree = output_tree, 
-                    pt_categories = pt_categories, 
-                    eta_categories = eta_categories, 
                     debug = print_and_exit)
     

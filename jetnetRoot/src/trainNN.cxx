@@ -24,38 +24,29 @@
 
 using namespace std;
 
-int main() 
-{
 
-  trainNN("../reduceddatasets/reduceddataset_AntiKt4TopoEMJets_forNN.root", 
-	  "weights",
-	  1000,
-	  200,
-	  false,
-	  false,//withIP3D
-	  10,
-	  10,
-	  0);
-  return 0;
-
-}
-
-
-void trainNN(TString inputfile,
+void trainNN(std::string inputfile,
 	     std::string out_dir, 
              int nIterations,
              int dilutionFactor,
-             bool useSD,
-             bool withIP3D,
-             int nodesFirstLayer,
-             int nodesSecondLayer,
              int restartTrainingFrom, 
+	     std::vector<int> n_hidden_layer_nodes, 
 	     std::vector<InputVariableInfo> input_variables, 
+	     FlavorWeights flavor_weights, 
 	     bool debug) {
 
-  double bweight=1;
-  double cweight=1.;
-  double lweight=5;
+  double bweight = flavor_weights.bottom;
+  double cweight = flavor_weights.charm;
+  double lweight = flavor_weights.light;
+
+  if (n_hidden_layer_nodes.size() == 0){
+    std::cout << "WARNING: setting hidden layers to default sizes\n"; 
+    n_hidden_layer_nodes.push_back(10); 
+    n_hidden_layer_nodes.push_back(10); 
+  }
+  int nodesFirstLayer = n_hidden_layer_nodes.at(0); 
+  int nodesSecondLayer = n_hidden_layer_nodes.at(1);
+
 
   gROOT->ProcessLine("#include <TTree.h>"); 
   gROOT->ProcessLine("#include <TFile.h>"); 
@@ -63,13 +54,11 @@ void trainNN(TString inputfile,
   cout << "starting with settings: " << endl;
   cout << " nIterations: " << nIterations << endl;
   cout << " dilutionFactor: " << dilutionFactor << endl;
-  cout << " useSD: " << (useSD==true?"yes":"no") << endl;
-  cout << " withIP3D: " << (withIP3D==true?"yes":"no") << endl;
   cout << " nodesFirstLayer: " << nodesFirstLayer << endl;
   cout << " nodesSecondLayer: " << nodesSecondLayer << endl;
   
   
-  TFile *file= new TFile(inputfile);
+  TFile *file= new TFile(inputfile.c_str());
   TTree *simu = dynamic_cast<TTree*>(file->Get("SVTree"));
   if (! simu){ 
     std::cerr << "ERROR, could not find SVTree in " << inputfile << 
@@ -112,31 +101,23 @@ void trainNN(TString inputfile,
 
   
   int* nneurons;
+
+  int numberinputs = in_var.size();
+  nneurons[0] = numberinputs;
+
   int nlayer=3;
-
-  int numberinputs=8;
-  if (withIP3D) {
-    numberinputs=9;
-  }
-  int numberoutputs=3;
-
-  if (nodesSecondLayer!=0){
+  if (nodesSecondLayer != 0){
     nlayer=4;
   }
 
-  if (nodesSecondLayer!=0){
+  if (nodesSecondLayer != 0){
     nneurons=new int[4];
   }
   else {
     nneurons=new int[3];
   }
   
-  if (withIP3D) {
-    nneurons[0]=9;
-  }
-  else {
-    nneurons[0]=8;
-  }
+
   
   nneurons[1]=nodesFirstLayer;
 

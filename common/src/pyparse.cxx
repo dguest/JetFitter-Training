@@ -82,3 +82,32 @@ std::vector<double> parse_double_list(PyObject* py_list){
   return out_vals; 
 
 }
+
+std::map<std::string,double> parse_double_dict(PyObject* in_dict)
+{
+  std::map<std::string, double> double_map; 
+  if (in_dict == 0){ 
+    return double_map; 
+  }
+
+  bool ok = PyDict_Check(in_dict); 
+  if (!ok) { 
+    throw DictParseException(); 
+  }
+
+  PyObject* key = 0; 
+  PyObject* value = 0; 
+  Py_ssize_t pos = 0; 
+  while (PyDict_Next(in_dict, &pos, &key, &value) ) { 
+    bool ok_key = PyString_Check(key); 
+    if (!ok_key ) throw StringParseException(); 
+    
+    bool ok_float = PyFloat_Check(value); 
+    if (!ok_float) throw FloatParseException(); 
+
+    std::string the_key = PyString_AsString(key); 
+    double_map[the_key] = PyFloat_AsDouble(value); 
+  }
+  return double_map; 
+
+}

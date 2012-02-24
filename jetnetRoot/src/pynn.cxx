@@ -18,11 +18,8 @@ static const char* train_doc_string =
   "output_directory\n"
   "n_iterations\n"
   "dilution_factor\n"
-  "use_sd\n"
   "normalization\n"
-  "with_ip3d\n"
-  "nodes_first_layer\n"
-  "nodes_second_layer\n"
+  "nodes\n"
   "restart_training_from\n"
   "debug"; 
 
@@ -34,11 +31,10 @@ extern "C" PyObject* train_py(PyObject *self,
   const char* output_dir = "weights"; 
   int n_iterations = 10; 
   int dilution_factor = 2; 
-  bool use_sd = false; 
   PyObject* normalization = 0; 
-  bool with_ip3d = true; 
   PyObject* nodes = 0; 
   int restart_training_from = 0; 
+  PyObject* flavor_weights = 0; 
   bool debug = false; 
 
   const char *kwlist[] = {
@@ -46,16 +42,15 @@ extern "C" PyObject* train_py(PyObject *self,
     "output_directory", 
     "n_iterations", 
     "dilution_factor",
-    "use_sd",
     "normalization", 
-    "with_ip3d",
     "nodes", 
     "restart_training_from",
+    "flavor_weights", 
     "debug", 
     NULL};
  
   if (!PyArg_ParseTupleAndKeywords
-      (args, keywds, "s|siibObOib", 
+      (args, keywds, "s|siiOOiOb", 
        // this function should take a const, and 
        // may be changed, until then we'll cast
        const_cast<char**>(kwlist),
@@ -63,14 +58,14 @@ extern "C" PyObject* train_py(PyObject *self,
        &output_dir, 
        &n_iterations, 
        &dilution_factor, 
-       &use_sd, 
        &normalization, 
-       &with_ip3d, 
        &nodes, 
        &restart_training_from, 
+       &flavor_weights, 
        &debug)
       ) return NULL;
 
+  // --- parse input variables
   std::vector<InputVariableInfo> input_variable_info; 
   try {
     input_variable_info = parse_input_variable_info(normalization); 
@@ -82,6 +77,7 @@ extern "C" PyObject* train_py(PyObject *self,
     return 0; 
   }
 
+  // --- parse node configuration 
   std::vector<int> node_vec; 
   try {
     node_vec = parse_int_tuple(nodes); 
@@ -92,15 +88,49 @@ extern "C" PyObject* train_py(PyObject *self,
     return 0;
   }
 
-
-  if (node_vec.size() != 2){ 
-    PyErr_SetString(PyExc_ValueError,
-		    "node tuple must have two entries (for now)"); 
+  // --- parse flavor weights 
+  typedef std::map<std::string, double>::const_iterator SDMapItr; 
+  std::map<std::string, double> flavor_weights_map; 
+  flavor_weights_map["bottom"] = 1; 
+  flavor_weights_map["charm"] = 1; 
+  flavor_weights_map["light"] = 5; 
+  try {
+    std::map<std::string, double> new_flavor_weights;
+    new_flavor_weights = parse_double_dict(flavor_weights); 
+    
+    for ( SDMapItr itr = new_flavor_weights.begin(); 
+	  itr != new_flavor_weights.end(); itr++){ 
+      flavor_weights_map[itr->first] = itr->second; 
+    }
+  }
+  catch (ParseException e){ 
+    PyErr_SetString
+      (PyExc_TypeError,
+       "flavor_weights should be a dict of the form: "
+       "{'bottom':x, 'charm':y, 'light':z}"); 
     return 0;
   }
-  int nodes_first_layer = node_vec.at(0); 
-  int nodes_second_layer = node_vec.at(1); 
+  if (flavor_weights_map.size() != 3) { 
+    flavor_weights_map.erase("bottom"); 
+    flavor_weights_map.erase("charm"); 
+    flavor_weights_map.erase("light"); 
+    std::string badkey = "I don't know what "; 
+    for (SDMapItr itr = flavor_weights_map.begin(); 
+	 itr != flavor_weights_map.end(); itr++){ 
+      badkey.append(itr->first); 
+      badkey.append(" "); 
+    }
+    badkey.append("is, allowed flavors are 'bottom', 'charm', 'light'"); 
+	   
+    PyErr_SetString(PyExc_LookupError, badkey.c_str()); 
+    return 0; 
+  }
+  FlavorWeights flavor_weights_struct; 
+  flavor_weights_struct.bottom = flavor_weights_map["bottom"]; 
+  flavor_weights_struct.charm = flavor_weights_map["charm"]; 
+  flavor_weights_struct.light = flavor_weights_map["light"]; 
 
+  // --- dump debug info 
   if (debug){ 
     printf("in = %s, out dir = %s, itr = %i, rest from = %i, nodes: (", 
   	   input_file, output_dir, n_iterations, restart_training_from); 
@@ -122,16 +152,22 @@ extern "C" PyObject* train_py(PyObject *self,
     
   }
   else { 
+
+    if (node_vec.size() != 2){ 
+      PyErr_SetString(PyExc_ValueError,
+		      "node tuple must have two entries (for now)"); 
+      return 0;
+    }
+
     try { 
       trainNN(input_file, 
 	      output_dir, 
 	      n_iterations,
 	      dilution_factor,
-	      use_sd,
-	      with_ip3d,
-	      nodes_first_layer,
-	      nodes_second_layer,
-	      restart_training_from);
+	      restart_training_from, 
+	      node_vec, 
+	      input_variable_info, 
+	      flavor_weights_struct);
     }
     catch (LoadReducedDSException e){ 
       PyErr_SetString(PyExc_IOError,"could not load dataset"); 

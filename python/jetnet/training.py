@@ -59,7 +59,7 @@ def run_training(reduced_dataset,
                  dilution_factor = 2, 
                  normalization = normalization, 
                  nodes = nodes, 
-                 flavor_weights = flavor_weights
+                 flavor_weights = flavor_weights, 
                  debug = debug)
 
 

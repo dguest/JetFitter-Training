@@ -75,11 +75,14 @@ void testNN(std::string inputfile,
   gROOT->ProcessLine("#include <TTree.h>"); 
   gROOT->ProcessLine("#include <TFile.h>"); 
 
+  // load in files 
+
   TFile file(inputfile.c_str());
   TTree *simu = (TTree*)file.Get("SVTree");
 
+  TFile trained_network_file(training_file.c_str()); 
   TTree* normalization_info = dynamic_cast<TTree*>
-    (file.Get(normalization_info_tree_name.c_str())); 
+    (trained_network_file.Get(normalization_info_tree_name.c_str())); 
 
   InputVariableContainer in_var; 
   if ( normalization_info ){ 
@@ -114,7 +117,6 @@ void testNN(std::string inputfile,
 
   // === above was from the top of the train routine
 
-  TFile trained_network_file(training_file.c_str()); 
   
   TObject* trained_network_obj = trained_network_file.Get("TTrainedNetwork");
   TTrainedNetwork* trained_network = 

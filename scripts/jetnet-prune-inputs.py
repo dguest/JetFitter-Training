@@ -9,6 +9,7 @@ directories are created with the current directory as the base
 import sys, os
 import multiprocessing
 from optparse import OptionParser, OptionGroup
+from copy import deepcopy
 
 from jetnet.dirs import OverwriteError
 from jetnet import pynn
@@ -52,7 +53,29 @@ class NNTrainingProcess(multiprocessing.Process):
                      flavor_weights = self.flavor_weights, 
                      debug = self.debug)
 
+
     
+def build_trainer_with_missing_vars(reduced_dataset, 
+                                    missing_vars): 
+
+    vars_dict = {
+        "nVTX"                : ( -0.30, 1.0 / 0.50) , 
+        "nTracksAtVtx"        : ( -1.00, 1.0 / 1.60) , 
+        "nSingleTracks"       : ( -0.20, 1.0 / 0.50) , 
+        "energyFraction"      : ( -0.23, 1.0 / 0.33) , 
+        "mass"                : ( - 974, 1.0 / 1600) , 
+        "significance3d"      : ( -   7, 1.0 / 14.0) , 
+        "discriminatorIP3D"   : ( - 6.3, 1.0 /  6.0) , 
+        "cat_pT"              : ( - 3.0, 1.0 /  3.0) , 
+        "cat_eta"             : ( - 1.0,        1.0) , 
+        }
+
+    for var in missing_vars: 
+        new_dict.pop(var)
+
+    print 'work do here' 
+        
+
 
 if __name__ == '__main__': 
 
@@ -78,3 +101,4 @@ if __name__ == '__main__':
         )
     nn_training.start()
     nn_training.join()
+

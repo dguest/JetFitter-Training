@@ -379,7 +379,7 @@ void trainNN(std::string inputfile,
 
       cronology.open(chronology_name.c_str(),ios_base::app);
 
-      testError = jn->TestBTAG();
+      testError = jn->Test(); //BTAG();
 
       if (trainingError > maximumTrain) maximumTrain=trainingError;
       if (testError > maximumTrain) maximumTrain=testError;

@@ -53,7 +53,7 @@ public:
   float get_offset() const { return _info.offset; }
   float get_scale() const { return _info.scale; }  
   std::string get_name() const { return _info.name; }
-  T get() const { return _buffer; } 
+  T* get() const { return _buffer; } 
 
   // --- output 
   int add_passthrough_branch_to(TTree* output_tree, 

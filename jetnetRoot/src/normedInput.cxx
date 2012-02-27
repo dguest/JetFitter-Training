@@ -7,7 +7,6 @@
 
 #include <TTree.h> 
 #include <TFile.h>
-#include <TObjArray.h>
 #include <TLeaf.h>
 
 #include <cassert>

@@ -40,7 +40,7 @@ if __name__ == '__main__':
     input_files = []
     with open(input_file_list) as file_list: 
         for line in file_list: 
-            input_files.append(line)
+            input_files.append(line.strip())
 
     if options.output_file is None: 
         rds_path = os.path.splitext(input_file_list)[0] + '.root'

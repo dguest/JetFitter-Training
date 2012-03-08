@@ -26,7 +26,21 @@ def run_full_chain(input_files, working_dir = None, output_path = None,
                    rds_name = 'reduced_dataset.root', 
                    jet_collection = 'AntiKt4TopoEMJets', 
                    do_test = False, 
-                   randomize_reduced_dataset = False): 
+                   randomize_reduced_dataset = False, 
+                   double_variables = None, 
+                   int_variables = None): 
+
+    if not double_variables: 
+        double_variables = [
+            'energyFraction', 
+            'significance3d', 
+            ]
+    if not int_variables: 
+        int_variables = [ 
+            'nVTX', 
+            'nTracksAtVtx', 
+            'nSingleTracks', 
+            ]
     
     if working_dir is None: 
         working_dir = jet_collection
@@ -43,6 +57,8 @@ def run_full_chain(input_files, working_dir = None, output_path = None,
     
     if not os.path.isfile(rds_path): 
         pyprep.prep_ntuple(input_files = input_files, 
+                           double_variables = double_variables, 
+                           int_variables = int_variables, 
                            observer_discriminators = observer_discriminators, 
                            jet_collection = jet_collection, 
                            output_file = rds_path, 

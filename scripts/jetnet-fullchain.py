@@ -47,8 +47,12 @@ def run_full_chain(input_files, working_dir = None, output_path = None,
     if not double_variables: 
         double_variables = [
             'energyFraction', 
-            'significance3d', 
+            'significance3d',         
+            'meanTrackRapidity', 
+            'maxTrackRapidity', 
+            'minTrackRapidity', 
             ]
+
     if not int_variables: 
         int_variables = [ 
             'nVTX', 

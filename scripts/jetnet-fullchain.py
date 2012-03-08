@@ -112,8 +112,15 @@ def run_full_chain(input_files, working_dir = None, output_path = None,
             for line in norm_file: 
                 line = line.strip()
                 if not line: continue
-                name, offset, scale = line.split()
+                name = line.split()[0]
+                offset, scale = (float(n) for n in line.split()[1:])
                 normalization_dict[name] = (offset, scale)
+
+    print 'normalization:'
+    text_size = max(len(x) for x in normalization_dict.keys()) + 1
+    for value, (offset, scale) in normalization_dict.iteritems(): 
+        print '%-*s offset: % -10.4g scale: % -10.4g' % (
+            text_size, value, offset, scale)
 
     weights_path = os.path.join(training_dir, 'weightMinimum.root')
     if not os.path.isfile(weights_path): 

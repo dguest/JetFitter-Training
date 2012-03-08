@@ -170,7 +170,6 @@ def make_normalization_file(profile_file,
     if whitelist: 
         for key in mean_rms_dict.keys(): 
             if key not in whitelist: 
-                print 'removed %s' % key
                 del mean_rms_dict[key]
     else: 
         # -- we don't care about flavors here 

@@ -21,6 +21,20 @@ from optparse import OptionParser, OptionGroup
 class UglyWarning(UserWarning): pass
 
 observer_discriminators = ['IP2D','IP3D','SV1','COMB']
+training_variable_whitelist = [
+    'nVTX', 
+    'nTracksAtVtx', 
+    'nSingleTracks', 
+    'energyFraction', 
+    'mass',  
+    'significance3d', 
+    'discriminatorIP3D', 
+    'cat_eta', 
+    'cat_pT', 
+    'minTrackRapidity', 
+    'meanTrackRapidity', 
+    'maxTrackRapidity', 
+    ]
 
 def run_full_chain(input_files, working_dir = None, output_path = None, 
                    rds_name = 'reduced_dataset.root', 
@@ -65,15 +79,47 @@ def run_full_chain(input_files, working_dir = None, output_path = None,
                            debug = do_test, 
                            randomize = randomize_reduced_dataset)
 
+    # --- profiling 
+    profile_file = os.path.join(reduced_dir, 'profiled.root')
+    mean_rms_file = os.path.join(reduced_dir, 'mean_rms.txt')
+    if not do_test: 
+        if not os.path.isfile(mean_rms_file): 
+            if not os.path.isfile(profile_file): 
+                profile.make_profile_file(rds_path, profile_file)
+            
+            profile.build_mean_rms_from_profile(
+                profile_file = profile_file, 
+                text_file_name = mean_rms_file)
+
     # --- training part 
     training_dir = os.path.join(working_dir,'training')
     if not os.path.isdir(training_dir): 
         os.mkdir(training_dir)
 
+    normalization_file = os.path.join(training_dir, 'normalization.txt')
+    if not os.path.isfile(normalization_file) and not do_test: 
+        if not os.path.isfile(profile_file): 
+            profile.make_profile_file(rds_path, profile_file)
+
+        profile.make_normalization_file(
+            profile_file, 
+            normalization_file = normalization_file, 
+            whitelist = training_variable_whitelist)
+                                        
+    normalization_dict = {}
+    if os.path.isfile(normalization_file): 
+        with open(normalization_file) as norm_file: 
+            for line in norm_file: 
+                line = line.strip()
+                if not line: continue
+                name, offset, scale = line.split()
+                normalization_dict[name] = (offset, scale)
+
     weights_path = os.path.join(training_dir, 'weightMinimum.root')
     if not os.path.isfile(weights_path): 
         training.run_training(reduced_dataset = rds_path, 
                               output_directory = training_dir, 
+                              normalization = normalization_dict, 
                               debug = do_test)
 
     # --- diagnostics part 
@@ -101,10 +147,6 @@ def run_full_chain(input_files, working_dir = None, output_path = None,
         os.mkdir(rej_hist_path)
 
     # --- other diagnostics 
-    if not do_test: 
-        profile_file = os.path.join(reduced_dir, 'profiled.root')
-        if not os.path.isfile(profile_file): 
-            profile.make_profile_file(rds_path, profile_file = profile_file)
 
     if not do_test: 
         try: 

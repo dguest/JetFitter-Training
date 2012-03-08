@@ -100,6 +100,16 @@ def write_mean_rms_textfile(mean_rms_dict, text_file_name = 'mean_rms.txt'):
         for name, (mean, rms) in mean_rms_dict.iteritems(): 
             norm_file.write(template % (max_chars + 2, name, mean, rms))
 
+def write_norm_textfile(mean_rms_dict, text_file_name = 'norm_values.txt'): 
+    max_chars = max(len(n) for n in mean_rms_dict.keys())
+    template = '%*s %10.4g %10.4g\n'
+    with open(text_file_name,'w') as norm_file: 
+        norm_file.write('#%*s %10s %10s\n' % (
+                 max_chars + 1, 'leaf_name', 'offset', 'scale'))
+        for name, (mean, rms) in mean_rms_dict.iteritems(): 
+            norm_file.write(template % (max_chars + 2, name, mean, rms))
+
+
 def build_mean_rms_tree(mean_rms_dict, tree_name = ''): 
     """
     if you want to use a tree to store information, use this, 
@@ -140,3 +150,42 @@ def read_back_profile_file(profile_file):
         hists[key_name] = hist
 
     return hists
+
+
+def build_mean_rms_from_profile(profile_file, 
+                                text_file_name = 'mean_rms.txt'): 
+    profile_hists = read_back_profile_file(profile_file)
+    mean_rms_dict = get_mean_rms_values(profile_hists)
+    write_mean_rms_textfile(mean_rms_dict, text_file_name)
+
+def make_normalization_file(profile_file, 
+                            normalization_file = 'normalization.txt', 
+                            whitelist = None): 
+    """
+    make a normalization text file from profile_file. 
+    """
+    mean_rms_dict = get_mean_rms_values(
+        read_back_profile_file(profile_file))
+
+    if whitelist: 
+        for key in mean_rms_dict.keys(): 
+            if key not in whitelist: 
+                print 'removed %s' % key
+                del mean_rms_dict[key]
+    else: 
+        # -- we don't care about flavors here 
+        flavor_tags = set(['light','charm','bottom'])
+        for key in mean_rms_dict.keys(): 
+            keyparts_set = set(key.split('_'))
+            overlap = keyparts_set & flavor_tags
+            if overlap: 
+                del mean_rms_dict[key]
+
+    max_chars = max(len(n) for n in mean_rms_dict.keys())
+    template = '%-*s % -10.4g % -10.4g\n'
+    with open(normalization_file,'w') as norm_file: 
+        for name, (mean, rms) in mean_rms_dict.iteritems(): 
+            offset = -mean 
+            scale = 1.0 / rms
+            this_var_info = template % (max_chars, name, offset, scale)
+            norm_file.write(this_var_info)

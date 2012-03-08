@@ -1,4 +1,4 @@
-import os
+import os, random, array
 
 def profile_rds(rds_file, tree_name = 'SVTree'): 
     from ROOT import TH1D, TTree, TFile, TIter, gROOT
@@ -76,6 +76,43 @@ def profile_rds(rds_file, tree_name = 'SVTree'):
             hist.fill(entry)
     
     return hists
+
+def get_mean_rms_values(hists): 
+    """
+    returns the mean and rms of each hist in 'hists' 
+    as a dict keyed by the leaf name
+    """
+    mean_rms_dict = {}
+    for leaf, hist in hists.iteritems(): 
+        mean_rms_dict[leaf] = (
+            hist.GetMean(), 
+            hist.GetRMS(), 
+            )
+
+    return mean_rms_dict
+
+def write_mean_rms_textfile(mean_rms_dict, text_file_name = 'mean_rms.txt'): 
+    max_chars = max(len(n) for n in mean_rms_dict.keys())
+    template = '%*s %10.4g %10.4g\n'
+    with open(text_file_name,'w') as norm_file: 
+        norm_file.write('#%*s %10s %10s\n' % (
+                 max_chars + 1, 'leaf_name', 'mean', 'rms'))
+        for name, (mean, rms) in mean_rms_dict.iteritems(): 
+            norm_file.write(template % (max_chars + 2, name, mean, rms))
+
+def build_mean_rms_tree(mean_rms_dict, tree_name = ''): 
+    """
+    if you want to use a tree to store information, use this, 
+    but, well, fuck root... seriously 
+    """
+    from ROOT import TTree
+    if not tree_name: 
+        tree_name = str(random.random())
+
+    the_tree = TTree(tree_name, tree_name)
+    array.array('c','nonono')
+    print "fuck this shit, I'm going textfile"
+    
         
 def make_profile_file(reduced_dataset, profile_file = None): 
     from ROOT import TFile
@@ -91,3 +128,15 @@ def make_profile_file(reduced_dataset, profile_file = None):
     
         save_file.WriteTObject(hist)
 
+def read_back_profile_file(profile_file): 
+    from ROOT import TFile, TIter, gROOT
+    root_file = TFile(profile_file)
+    list_of_keys = root_file.GetListOfKeys()
+    hists = {}
+    gROOT.cd()                  # clone into memory
+    for key_itr in TIter(list_of_keys): 
+        key_name = key_itr.GetName()
+        hist = key_itr.ReadObj().Clone(str(random.random()))
+        hists[key_name] = hist
+
+    return hists

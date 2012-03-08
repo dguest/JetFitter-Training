@@ -40,11 +40,21 @@ if __name__ == '__main__':
 
     if options.output_file is None: 
         profile_path = os.path.splitext(reduced_dataset)[0] + '_profile.root'
-        if os.path.exists(profile_path): 
-            sys.exit('%s already exists' % profile_path)
     else: 
-        rds_path = options.output_file
+        profile_path = options.output_file
 
-    profile.make_profile_file(reduced_dataset, 
-                              profile_file = profile_path)
+    if not os.path.exists(profile_path): 
+        profile.make_profile_file(reduced_dataset, 
+                                  profile_file = profile_path)
 
+    profile_hists = profile.read_back_profile_file(profile_path)
+    mean_rms_dict = profile.get_mean_rms_values(profile_hists)
+    # -- we don't care about flavors here 
+    flavor_tags = set(['light','charm','bottom'])
+    for key in mean_rms_dict.keys(): 
+        keyparts_set = set(key.split('_'))
+        overlap = keyparts_set & flavor_tags
+        if overlap: 
+            del mean_rms_dict[key]
+
+    profile.write_mean_rms_textfile(mean_rms_dict)

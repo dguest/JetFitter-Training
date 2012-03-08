@@ -35,6 +35,7 @@ void trainNN(std::string inputfile,
 	     FlavorWeights flavor_weights, 
 	     bool debug) {
 
+  printf("--- starting trainNN ----\n"); 
   double bweight = flavor_weights.bottom;
   double cweight = flavor_weights.charm;
   double lweight = flavor_weights.light;
@@ -99,8 +100,15 @@ void trainNN(std::string inputfile,
   simu->SetBranchAddress("charm",   &charm);
   simu->SetBranchAddress("light",&light);
 
-  
   int* nneurons;
+
+  if (nodesSecondLayer != 0){
+    nneurons=new int[4];
+  }
+  else {
+    nneurons=new int[3];
+  }
+
 
   int numberinputs = in_var.size();
   nneurons[0] = numberinputs;
@@ -110,12 +118,6 @@ void trainNN(std::string inputfile,
     nlayer=4;
   }
 
-  if (nodesSecondLayer != 0){
-    nneurons=new int[4];
-  }
-  else {
-    nneurons=new int[3];
-  }
   
 
   

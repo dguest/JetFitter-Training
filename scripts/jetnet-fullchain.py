@@ -31,9 +31,12 @@ training_variable_whitelist = [
     'discriminatorIP3D', 
     'cat_eta', 
     'cat_pT', 
-    'minTrackRapidity', 
-    'meanTrackRapidity', 
-    'maxTrackRapidity', 
+    ]
+
+rapidity_vars = [
+   'minTrackRapidity', 
+   'meanTrackRapidity', 
+   'maxTrackRapidity', 
     ]
 
 def run_full_chain(input_files, working_dir = None, output_path = None, 
@@ -42,7 +45,8 @@ def run_full_chain(input_files, working_dir = None, output_path = None,
                    do_test = False, 
                    randomize_reduced_dataset = False, 
                    double_variables = None, 
-                   int_variables = None): 
+                   int_variables = None, 
+                   training_variables = training_variable_whitelist): 
 
     if not double_variables: 
         double_variables = [
@@ -108,7 +112,7 @@ def run_full_chain(input_files, working_dir = None, output_path = None,
         profile.make_normalization_file(
             profile_file, 
             normalization_file = normalization_file, 
-            whitelist = training_variable_whitelist)
+            whitelist = training_variables)
                                         
     normalization_dict = {}
     if os.path.isfile(normalization_file): 
@@ -200,19 +204,26 @@ if __name__ == '__main__':
     parser = OptionParser(usage = usage, description = description)
     parser.set_defaults(
         test = False, 
-        randomize_reduced_dataset = False
+        randomize_reduced_dataset = False, 
+        do_rapidity = False, 
         )
 
     parser.add_option('--test', action = 'store_true')
     parser.add_option('--random', action = 'store_true', 
                       dest = 'randomize_reduced_dataset', 
                       help = 'randomize the reduced dataset' )
+    parser.add_option('--rapidity', action = 'store_true', 
+                      dest = 'do_rapidity', 
+                      help = 'use rapidity variables in training')
 
     (options, args) = parser.parse_args(sys.argv)
 
     do_test = options.test
     randomize_reduced_dataset = options.randomize_reduced_dataset
 
+    training_variables = training_variable_whitelist
+    if options.do_rapidity: 
+        training_variables += rapidity_vars
 
     if len(args) == 2: 
         input_files = []
@@ -222,4 +233,5 @@ if __name__ == '__main__':
 
         print 'running full chain' 
         run_full_chain(input_files, do_test = do_test, 
-                       randomize_reduced_dataset = randomize_reduced_dataset)
+                       randomize_reduced_dataset = randomize_reduced_dataset, 
+                       training_variables = training_variables)

@@ -496,7 +496,6 @@ void FlavorCountPtEta::compute()
 {
   if ( _is_computed) return; 
 
-  typedef std::vector< std::vector<double> > DMatrix; 
   typedef std::vector<double>::iterator DIter; 
   
   for (size_t pt_cat = 0; pt_cat < _n_pt; pt_cat++){ 
@@ -506,11 +505,14 @@ void FlavorCountPtEta::compute()
     double bin_total = std::accumulate(begin_eta, end_eta, 0.0); 
     _pt_count.at(pt_cat) = bin_total; 
 
-
-    // *************** work do here *****************
-    // for (){ 
-      
-    // }
+    for (size_t eta_cat = 0; eta_cat < _n_eta; eta_cat++){ 
+      double weight = bin_total / _pt_eta_count.at(pt_cat).at(eta_cat); 
+      _pt_eta_weight.at(pt_cat).at(eta_cat) = weight; 
+    }
+    
+    std::vector<double>& weights = _pt_eta_weight.at(pt_cat); 
+    double max_weight = *std::max_element(weights.begin(), weights.end()); 
+    _pt_max_weights.at(pt_cat) = max_weight; 
   }
 
   _is_computed = true; 

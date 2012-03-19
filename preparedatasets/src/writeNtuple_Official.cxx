@@ -15,17 +15,6 @@
 
 //using namespace std;
 
-struct number_pair
-{
-  int first;
-  double second;
-  number_pair(int p1, double p2)
-    : first (p1), second (p2) {}
-  bool operator< (const number_pair& other) const
-  { return second > other.second; }
-};
-
-
 
 int writeNtuple_Official(SVector input_files, 
 			 Observers observers, 
@@ -308,31 +297,20 @@ int writeNtuple_Official(SVector input_files,
       if (fabs(JetEta) > 2.5 || JetPt <= magic::min_jet_pt_gev)  
 	continue;
 
-      pair<int,double> ptInfo;
-      pair<int,double> etaInfo;
-
-      ptInfo.first = pt_categories.get_category(JetPt); 
-      ptInfo.second = 1; 	// MAGIC!
-      
-      etaInfo.first = abs_eta_categories.get_category(fabs(JetEta));
-      etaInfo.second = 1; 	// MAGIC!
-
-      int actualpT=ptInfo.first;
-      int actualeta=etaInfo.first;
+      int actualpT = pt_categories.get_category(JetPt); 
+      int actualeta = abs_eta_categories.get_category(fabs(JetEta));
       
       int flavour=abs(Flavour);
-
-      //      std::cout << " actualpT " << actualpT << " actualeta " << actualeta << endl;
       
       switch (flavour){
       case 5:
-	countb[actualpT+numPtBins*actualeta]+=1./(ptInfo.second*etaInfo.second);
+	countb[actualpT+numPtBins*actualeta] += 1; 
 	break;
       case 4:
-	countc[actualpT+numPtBins*actualeta]+=1./(ptInfo.second*etaInfo.second);
+	countc[actualpT+numPtBins*actualeta] += 1; 
 	break;
       case 1:
-	countl[actualpT+numPtBins*actualeta]+=1./(ptInfo.second*etaInfo.second);
+	countl[actualpT+numPtBins*actualeta] += 1;
 	break;
       }
 
@@ -353,9 +331,8 @@ int writeNtuple_Official(SVector input_files,
   }
   
 
-  std::cout << " maxweightb: " << maxweightb << " maxweightc: " << maxweightc << 
-    " maxweightl: " << maxweightl << endl;
-
+  std::cout << " maxweightb: " << maxweightb << " maxweightc: " << maxweightc 
+	    << " maxweightl: " << maxweightl << endl;
 
   std::cout << "Total entries are: " << num_entries << endl;
 
@@ -377,7 +354,7 @@ int writeNtuple_Official(SVector input_files,
 		<< std::endl;
     }
     
-    counter+=1;
+    counter += 1;
      
     
     treeJF->GetEntry(i);

@@ -36,6 +36,11 @@ int writeNtuple_Official(SVector input_files,
 			 bool randomize) 
 {
 
+  if (randomize) { 
+    std::cerr << "ERROR: randomize is not implemented\n"; 
+  }
+  assert(!randomize); 
+
   // --- setup pt / eta categories
   std::vector<double> pt_cat_vec; 
   pt_cat_vec.push_back(25);
@@ -351,34 +356,11 @@ int writeNtuple_Official(SVector input_files,
   std::cout << " maxweightb: " << maxweightb << " maxweightc: " << maxweightc << 
     " maxweightl: " << maxweightl << endl;
 
-  
-
-
-
-  std::vector<number_pair> outputvalues;
-  
-  for (Int_t i=0;i<num_entries;i++) {
-    outputvalues.push_back(number_pair(i,random.Uniform()));
-  }
-  
-  if (randomize){
-    
-    std::cout << " Doing sorting... " << endl;
-    std::sort (outputvalues.begin(), outputvalues.end());
-    std::cout << " End sorting ... " << endl;
-  }
-  
 
   std::cout << "Total entries are: " << num_entries << endl;
-  Int_t i=0;
-
-  
-  vector<number_pair>::const_iterator begin=outputvalues.begin();
-  vector<number_pair>::const_iterator end=outputvalues.end();
 
   Int_t counter=0;
-  for (vector<number_pair>::const_iterator iter=begin;iter!=end;++iter){
-    i=(*iter).first;
+  for (Int_t i = 0; i < num_entries; i++) {
 
     //take only every fifth data point
     if (!forNN){
@@ -387,8 +369,6 @@ int writeNtuple_Official(SVector input_files,
 	continue;
       }
     }
-    
-
     
 
     if (counter % 500000 == 0 ) {

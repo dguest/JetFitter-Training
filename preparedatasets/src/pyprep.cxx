@@ -5,6 +5,7 @@
 #include <vector>
 #include <iostream>
 #include "writeNtuple_Official.hh"
+#include "writeNtuple_common.hh"
 #include "pyprep.hh"
 #include "pyparse.hh"
 

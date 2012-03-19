@@ -3,6 +3,7 @@
 
 namespace magic { 
   const float min_jet_pt_gev = 15.0; 
+  const float max_jet_eta = 2.5; 
 }
 
 namespace defopt { 

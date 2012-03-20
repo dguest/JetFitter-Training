@@ -10,6 +10,7 @@ namespace defopt {
   const std::string JCN = "AntiKt4TopoEMJets"; 
   const std::string OFN = "../reduceddatasets/"
     "reduceddataset_" + JCN + "_forNN.root"; 
+  const double PT_CATEGORIES[] = {15.0, 30.0, 50.0, 80.0, 120.0}; 
 }
 
 

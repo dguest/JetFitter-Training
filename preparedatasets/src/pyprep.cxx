@@ -6,6 +6,7 @@
 #include <iostream>
 #include "writeNtuple_Official.hh"
 #include "writeNtuple_common.hh"
+#include "writeNtuple_byPt.hh"
 #include "pyprep.hh"
 #include "pyparse.hh"
 
@@ -91,7 +92,8 @@ PyObject* prep_ntuple(PyObject *self,
 
   else{ 
 
-    writeNtuple_Official(files, observers, 
+    writeNtuple_Official(files, 
+			 observers, 
 			 jet_collection_name, 
 			 output_file_name, 
 			 suffix, 
@@ -106,11 +108,104 @@ PyObject* prep_ntuple(PyObject *self,
 }
 
 
+PyObject* make_ntuples_ptcat(PyObject *self, 
+			     PyObject *args, 
+			     PyObject *keywds)
+{
+  PyObject* input_file_list; 
+  PyObject* int_variables = 0; 
+  PyObject* double_variables = 0; 
+  PyObject* observer_discriminators = 0; 
+  const char* jet_collection_name = "AntiKt4TopoEMJets"; 
+  const char* output_dir = "reduced"; 
+  const char* suffix = "AOD"; 
+  bool debug = false; 
+
+  const char *kwlist[] = {
+    "input_files",
+    "int_variables", 
+    "double_variables", 
+    "observer_discriminators", 
+    "jet_collection", 
+    "output_dir", 
+    "suffix", 
+    "debug", 
+    NULL};
+    
+  bool ok = PyArg_ParseTupleAndKeywords
+    (args, keywds, "O|OOOsssb", 
+     // this function should take a const, and 
+     // may be changed. until then we'll cast
+     const_cast<char**>(kwlist),
+     &input_file_list,
+     &int_variables, 
+     &double_variables, 
+     &observer_discriminators, 
+     &jet_collection_name, 
+     &output_dir, 
+     &suffix, 
+     &debug); 
+
+  if (!ok) return NULL;
+
+  std::vector<std::string> files; 
+  Observers observers; 
+  try { 
+    files = parse_string_list(input_file_list); 
+    observers.discriminators = parse_string_list(observer_discriminators); 
+    observers.int_variables = parse_string_list(int_variables); 
+    observers.double_variables = parse_string_list(double_variables); 
+  }
+  catch(ParseException e) { 
+    PyErr_SetString(PyExc_TypeError,
+		    "expected a list of strings, found something else"); 
+    return NULL; 
+  }
+
+  if (debug){ 
+    std::cout << "files: " << std::endl;
+    for (std::vector<std::string>::const_iterator itr = files.begin(); 
+	 itr != files.end(); 
+	 itr++){ 
+      std::cout << *itr << std::endl;
+    }
+
+    std::cout << "observers: " << std::endl;
+    std::cout << observers << std::endl; 
+
+    printf("jet collection: %s\n" , jet_collection_name);
+    printf("output dir: %s\n", output_dir); 
+
+  }
+
+  else{ 
+
+    // TODO: this guy should be read in from python eventually 
+    std::vector<double> pt_cat_vec; 
+
+    writeNtuple_byPt(files, 
+		     observers, 
+		     pt_cat_vec, 
+		     jet_collection_name, 
+		     output_dir, 
+		     suffix); 
+
+  }
+
+  Py_INCREF(Py_None);
+
+  return Py_None;
+}
+
+
 static PyMethodDef keywdarg_methods[] = {
   // The cast of the function is necessary since PyCFunction values
   // only take two PyObject* parameters, and keywdarg() takes
   // three.
   {"prep_ntuple", (PyCFunction)prep_ntuple, 
+   METH_VARARGS | METH_KEYWORDS,
+   doc_string},
+  {"make_ntuples_ptcat", (PyCFunction)make_ntuples_ptcat, 
    METH_VARARGS | METH_KEYWORDS,
    doc_string},
   {NULL, NULL, 0, NULL}   /* sentinel */

@@ -4,8 +4,9 @@
 #include <iostream>
 #include "writeNtuple_byPt.hh"
 #include "PtEtaCategoryTool.hh"
-#include "TRandom.h"
 #include <cmath>
+#include <cstdlib> // for rand, srand
+#include <ctime> 
 #include <vector>
 #include <string>
 #include <algorithm>
@@ -20,22 +21,21 @@
 
 int writeNtuple_byPt(SVector input_files, 
 		     Observers observers, 
+		     std::vector<double> pt_cat_vec, 
 		     std::string jetCollectionName,
-		     std::string output_file, 
+		     std::string output_dir, 
 		     std::string suffix) 
 {
   using namespace std;
+  srand(time(0)); 
 
   typedef std::vector<double>::const_iterator DItr; 
 
   // --- setup pt / eta categories
-  std::vector<double> pt_cat_vec; 
-  pt_cat_vec.push_back(25);
-  pt_cat_vec.push_back(35);
-  pt_cat_vec.push_back(50);
-  pt_cat_vec.push_back(80);
-  pt_cat_vec.push_back(120);
-  pt_cat_vec.push_back(200);
+  if (pt_cat_vec.size() == 0) { 
+    using defopt::PT_CATEGORIES; 
+    pt_cat_vec.assign(PT_CATEGORIES, PT_CATEGORIES + 5); 
+  }
   CategoryMap pt_categories(pt_cat_vec); 
 
   std::vector<double> eta_cat_vec; 
@@ -71,14 +71,13 @@ int writeNtuple_byPt(SVector input_files,
   boost::ptr_vector<TTree> output_trees;
   typedef boost::ptr_vector<TTree>::iterator TreeItr; 
  
-  double min_value = -INFINITY; 
   std::string min_val_name = "under"; 
-  for (DItr max_itr = pt_categories.begin(); 
-       max_itr != pt_categories.end(); 
+  for (DItr max_itr = pt_cat_vec.begin(); 
+       max_itr != pt_cat_vec.end(); 
        max_itr++){ 
     int int_max = int(*max_itr); 
     std::string max_val_name = boost::lexical_cast<std::string>(int_max); 
-    std::string file_name = "reduced_" + 
+    std::string file_name = output_dir + "/reduced_" + 
       min_val_name + "_" + max_val_name + ".root"; 
     output_files.push_back(new TFile(file_name.c_str(),"recreate")); 
     output_trees.push_back(new TTree("SVTree","SVTree")); 
@@ -243,61 +242,18 @@ int writeNtuple_byPt(SVector input_files,
   //for the NN you need to get the number of b,c or light jets
 
   std::cout << "counting entries, will take a while\n"; 
-  Int_t num_entries=treeJF->GetEntries();
+  Int_t num_entries = treeJF->GetEntries();
 
-  int numberb=0;
-  int numberc=0;
-  int numberl=0;
-
-  for (Long64_t i=0;i<num_entries;i++) {
-
-    treeJF->GetEntry(i);
-      
-    if (mass > -100){
-      if (abs(Flavour)==5){
-	numberb+=1;
-      }
-      if (abs(Flavour)==4){
-	numberc+=1;
-      }
-      if (abs(Flavour==1)){
-	numberl+=1;
-      }
-    }
-  }
-
-  
-  //now you have to calculate the weights...
-  //(store them in a matrix for b,c or light jets...
-
-  std::cout << " number of b found : " << numberb 
-       << " c: " << numberc 
-       << " l: " << numberl << endl;
-
+  std::cout << "Total entries are: " << num_entries << endl;
   
   int numPtBins = pt_categories.size(); 
   int numEtaBins = abs_eta_categories.size(); 
 
-  typedef std::vector< std::vector<double> > PtEtaDouble; 
-  PtEtaDouble weightsb(numPtBins, std::vector<double>(numEtaBins, 0));
-  PtEtaDouble weightsl(numPtBins, std::vector<double>(numEtaBins, 0));
-  PtEtaDouble weightsc(numPtBins, std::vector<double>(numEtaBins, 0));
-
-  PtEtaDouble countb(numPtBins, std::vector<double>(numEtaBins, 0));
-  PtEtaDouble countl(numPtBins, std::vector<double>(numEtaBins, 0));
-  PtEtaDouble countc(numPtBins, std::vector<double>(numEtaBins, 0));
-
-  Double_t toleranceb=4;
-  Double_t tolerancec=4;
-  Double_t tolerancel=1;
-  TRandom random;
-
-  std::vector<double> maxweightb(numPtBins);
-  std::vector<double> maxweightl(numPtBins);
-  std::vector<double> maxweightc(numPtBins);
-  
+  FlavorCountPtEta count_b(numPtBins, numEtaBins, 4); 
+  FlavorCountPtEta count_c(numPtBins, numEtaBins, 4); 
+  FlavorCountPtEta count_l(numPtBins, numEtaBins, 1); 
     
-  for (Long64_t i=0;i<num_entries;i++) {
+  for (Long64_t i = 0; i < num_entries; i++) {
       
     treeJF->GetEntry(i);
       
@@ -307,64 +263,32 @@ int writeNtuple_byPt(SVector input_files,
 	JetPt <= magic::min_jet_pt_gev)  
       continue;
 
-    int actualpT = pt_categories.get_category(JetPt); 
-    int actualeta = abs_eta_categories.get_category(fabs(JetEta));
+    int cat_pT = pt_categories.get_category(JetPt); 
+    int cat_eta = abs_eta_categories.get_category(fabs(JetEta));
       
     int flavour = abs(Flavour);
       
     switch (flavour){
     case 5:
-      countb.at(actualpT).at(actualeta) += 1; 
+      count_b.increment(cat_pT, cat_eta); 
       break;
     case 4:
-      countc.at(actualpT).at(actualeta) += 1; 
+      count_c.increment(cat_pT, cat_eta); 
       break;
     case 1:
-      countl.at(actualpT).at(actualeta) += 1; 
+      count_l.increment(cat_pT, cat_eta); 
       break;
     }
 
   }
-  
-  
-      
-  for (int pt_cat = 0; pt_cat < numPtBins; pt_cat++){ 
-    std::vector<double>& eta_weights_b = weightsb.at(pt_cat); 
-    std::vector<double>& eta_weights_l = weightsl.at(pt_cat); 
-    std::vector<double>& eta_weights_c = weightsc.at(pt_cat); 
-    for (int eta_cat = 0; eta_cat < numEtaBins; eta_cat++){ 
-      eta_weights_b.at(eta_cat) = (Double_t)numberb / (Double_t)countb[i];
-      eta_weights_l.at(eta_cat) = (Double_t)numberl / (Double_t)countl[i] ;
-      eta_weights_c.at(eta_cat) = (Double_t)numberc / (Double_t)countc[i];
-    }
 
-    if (weightsb[i]>maxweightb) maxweightb=weightsb[i];
-    if (weightsl[i]>maxweightl) maxweightl=weightsl[i];
-    if (weightsc[i]>maxweightc) maxweightc=weightsc[i];
-
-  }
- 
- 
-  
-
-  std::cout << " maxweightb: " << maxweightb << " maxweightc: " << maxweightc 
-	    << " maxweightl: " << maxweightl << endl;
-
-  std::cout << "Total entries are: " << num_entries << endl;
-
-  Int_t counter=0;
   for (Int_t i = 0; i < num_entries; i++) {
 
-    if (counter % 500000 == 0 ) {
-      std::cout << " processing event number " << 
-	counter << " data event: " << i << " which was event n. " 
-		<< std::endl;
+    if (i % 500000 == 0 ) {
+      std::cout << " processing event number " << i << std::endl;
     }
     
-    counter += 1;
-     
     treeJF->GetEntry(i);
-
 
     if (fabs(JetEta) < magic::max_jet_eta && 
 	JetPt > magic::min_jet_pt_gev &&
@@ -383,48 +307,16 @@ int writeNtuple_byPt(SVector input_files,
 
       switch (cat_flavour){
       case 5:
-	bottom=1;
-	weight=weightsb[cat_pT+numPtBins*cat_eta];
-
-	if (weight < maxweightb/toleranceb){
-	  if (random.Uniform()>weight*toleranceb/maxweightb){
-	    throwevent=true;
-	  }
-	  weight=1.;//maxweightb/toleranceb;
-	}
-	else{
-	  weight/=(maxweightb/toleranceb);
-	}
-          
+	bottom = 1;
+	weight = count_b.get_weight(cat_pT, cat_eta); 
 	break;
       case 4:
 	charm=1;
-	weight=weightsc[cat_pT+numPtBins*cat_eta];
-
-	if (weight < maxweightc/tolerancec){
-	  if (random.Uniform()>weight*tolerancec/maxweightc){
-	    throwevent=true;
-	  }
-	  weight=1.;//maxweightc/tolerancec;
-	}
-	else{
-	  weight/=(maxweightc/tolerancec);
-	}
-
+	weight = count_c.get_weight(cat_pT, cat_eta); 
 	break;
       case 1:
 	light=1;
-	weight=weightsl[cat_pT+numPtBins*cat_eta];
-            
-	if (weight < maxweightl/tolerancel){
-	  if (random.Uniform()>weight*tolerancel/maxweightl){
-	    throwevent=true;
-	  }
-	  weight=1.;//maxweightl/tolerancel;
-	}
-	else {
-	  weight/=(maxweightl/tolerancel);
-	}
+	weight = count_l.get_weight(cat_pT, cat_eta); 
 	break;
 
       default:
@@ -433,6 +325,8 @@ int writeNtuple_byPt(SVector input_files,
           
       } // end flavor switch 
 
+      if (fabs(weight) < 0.0e-4) throwevent = true; 
+
       if (throwevent) continue;
 
       //read the others only on demand (faster)
@@ -440,14 +334,12 @@ int writeNtuple_byPt(SVector input_files,
 	observer_chains.at(j).GetEntry(i); 
       }
 
-      output_tree->Fill();
+      output_trees.at(cat_pT).Fill();
       
     }
     
   }
 
-
-  file->WriteTObject(output_tree.get()); 
 
   // --- save configuration in tree 
   typedef std::vector<double>::const_iterator DVecItr; 
@@ -458,7 +350,6 @@ int writeNtuple_byPt(SVector input_files,
     pt_val_buffer = *itr; 
     pt_cat_config.Fill(); 
   }
-  file->WriteTObject(&pt_cat_config); 
 
   TTree eta_cat_config("eta_cat","eta_cat"); 
   double eta_val_buffer; 
@@ -467,20 +358,30 @@ int writeNtuple_byPt(SVector input_files,
     eta_val_buffer = *itr; 
     eta_cat_config.Fill(); 
   }
-  file->WriteTObject(&eta_cat_config); 
 
   std::cout << "done!\n";
+
+  for (size_t i = 0; i < output_trees.size(); i++){ 
+    TFile& file = output_files.at(i); 
+    TTree& tree = output_trees.at(i); 
+
+    file.WriteTObject(&tree); 
+    file.WriteTObject(&pt_cat_config); 
+    file.WriteTObject(&eta_cat_config); 
+  }
 
   return 0; 
   
 }
   
-FlavorCountPtEta::FlavorCountPtEta(size_t n_pt, size_t n_eta): 
+FlavorCountPtEta::FlavorCountPtEta(size_t n_pt, size_t n_eta, 
+				   double tolerance ): 
   _n_pt(n_pt), 
   _n_eta(n_eta), 
+  _tolerance(tolerance), 
   _is_computed(false)
 {
-  _pt_eta_number.assign(n_pt, std::vector<double>(n_eta, 0));
+  _pt_eta_count.assign(n_pt, std::vector<double>(n_eta, 0));
   _pt_eta_weight.assign(n_pt, std::vector<double>(n_eta, 0));
   _pt_count.assign(n_pt, 0); 
   _pt_max_weights.assign(n_pt, 0); 
@@ -489,7 +390,7 @@ FlavorCountPtEta::FlavorCountPtEta(size_t n_pt, size_t n_eta):
 void FlavorCountPtEta::increment(size_t n_pt, size_t n_eta)
 {
   _is_computed = false; 
-  _pt_eta_number.at(n_pt).at(n_eta) += 1; 
+  _pt_eta_count.at(n_pt).at(n_eta) += 1; 
 }
 
 void FlavorCountPtEta::compute() 
@@ -502,7 +403,7 @@ void FlavorCountPtEta::compute()
     DIter begin_eta_count = _pt_eta_count.at(pt_cat).begin(); 
     DIter end_eta_count = _pt_eta_count.at(pt_cat).end(); 
 
-    double bin_total = std::accumulate(begin_eta, end_eta, 0.0); 
+    double bin_total = std::accumulate(begin_eta_count, end_eta_count, 0.0); 
     _pt_count.at(pt_cat) = bin_total; 
 
     for (size_t eta_cat = 0; eta_cat < _n_eta; eta_cat++){ 
@@ -516,4 +417,24 @@ void FlavorCountPtEta::compute()
   }
 
   _is_computed = true; 
+}
+
+double FlavorCountPtEta::get_weight(size_t cat_pt, size_t cat_eta) const
+{
+  assert(_is_computed); 
+
+  double weight = _pt_eta_weight.at(cat_pt).at(cat_eta); 
+  double max_weight = _pt_max_weights.at(cat_pt); 
+  double random = double(rand()) / double(RAND_MAX); 
+
+  if (weight < max_weight / _tolerance){
+    if (random >  _tolerance * weight / max_weight){
+      return 0; 
+    }
+    return 1; 
+  }
+  else{
+    return weight / ( max_weight / _tolerance );
+  }
+  
 }

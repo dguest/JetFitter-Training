@@ -445,7 +445,7 @@ OutputNtuples::OutputNtuples(std::vector<double> pt_cat_vec,
     min_val_name = max_val_name; 
   }
   std::string file_name = output_dir + "/reduced_" + 
-    min_val_name + "_" + max_val_name + ".root"; 
+    min_val_name + "_up.root"; 
 
   files.push_back(new TFile(file_name.c_str(), "recreate")); 
   trees.push_back(new TTree("SVTree","SVTree")); 

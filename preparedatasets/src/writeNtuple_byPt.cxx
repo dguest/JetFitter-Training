@@ -29,8 +29,6 @@ int writeNtuple_byPt(SVector input_files,
   using namespace std;
   srand(time(0)); 
 
-  typedef std::vector<double>::const_iterator DItr; 
-
   // --- setup pt / eta categories
   if (pt_cat_vec.size() == 0) { 
     using defopt::PT_CATEGORIES; 
@@ -67,26 +65,8 @@ int writeNtuple_byPt(SVector input_files,
   std::string baseBTag("BTag_");
 
   // --- io trees 
-  boost::ptr_vector<TFile> output_files;
-  boost::ptr_vector<TTree> output_trees;
   typedef boost::ptr_vector<TTree>::iterator TreeItr; 
- 
-  std::string min_val_name = "under"; 
-  for (DItr max_itr = pt_cat_vec.begin(); 
-       max_itr != pt_cat_vec.end(); 
-       max_itr++){ 
-    int int_max = int(*max_itr); 
-    std::string max_val_name = boost::lexical_cast<std::string>(int_max); 
-    std::string file_name = output_dir + "/reduced_" + 
-      min_val_name + "_" + max_val_name + ".root"; 
-    output_files.push_back(new TFile(file_name.c_str(),"recreate")); 
-    output_trees.push_back(new TTree("SVTree","SVTree")); 
-
-    min_val_name = max_val_name; 
-  }
-  std::string file_name = "reduced_" + min_val_name + "_up.root"; 
-  output_files.push_back(new TFile(file_name.c_str(), "recreate")); 
-  output_trees.push_back(new TTree("SVTree","SVTree")); 
+  OutputNtuples output(pt_cat_vec, output_dir); 
 
   // --- observer variables
   boost::ptr_vector<TChain> observer_chains; 
@@ -118,8 +98,8 @@ int writeNtuple_byPt(SVector input_files,
     double* the_buffer = new double; 
     observer_write_buffers.push_back(the_buffer); 
     std::string name = "discriminator" + *name_itr; 
-    for (TreeItr tree_itr = output_trees.begin(); 
-	 tree_itr != output_trees.end(); tree_itr++){ 
+    for (TreeItr tree_itr = output.trees.begin(); 
+	 tree_itr != output.trees.end(); tree_itr++){ 
       tree_itr->Branch(name.c_str(), the_buffer); 
     }
 
@@ -164,8 +144,8 @@ int writeNtuple_byPt(SVector input_files,
   treeJF->SetBranchAddress("mass"   ,&mass); 
 
   // mass, pt, and eta all pass through 
-  for (TreeItr tree_itr = output_trees.begin(); 
-       tree_itr != output_trees.end(); 
+  for (TreeItr tree_itr = output.trees.begin(); 
+       tree_itr != output.trees.end(); 
        tree_itr++){ 
     tree_itr->Branch("mass",&mass); 
     tree_itr->Branch("JetPt",&JetPt,"JetPt/D");
@@ -181,8 +161,8 @@ int writeNtuple_byPt(SVector input_files,
   Int_t cat_pT;
   Int_t cat_eta;
 
-  for (TreeItr tree_itr = output_trees.begin(); 
-       tree_itr != output_trees.end(); 
+  for (TreeItr tree_itr = output.trees.begin(); 
+       tree_itr != output.trees.end(); 
        tree_itr++){
     tree_itr->Branch("cat_eta",&cat_eta,"cat_eta/I");
     tree_itr->Branch("weight",&weight,"weight/D");
@@ -203,8 +183,8 @@ int writeNtuple_byPt(SVector input_files,
     double* the_buffer = new double; 
     observer_write_buffers.push_back(the_buffer); 
     std::string name = *name_itr; 
-    for (TreeItr tree_itr = output_trees.begin(); 
-	 tree_itr != output_trees.end(); 
+    for (TreeItr tree_itr = output.trees.begin(); 
+	 tree_itr != output.trees.end(); 
 	 tree_itr++){ 
       tree_itr->Branch(name.c_str(), the_buffer); 
     }
@@ -223,8 +203,8 @@ int writeNtuple_byPt(SVector input_files,
     int* the_buffer = new int; 
     int_observer_write_buffers.push_back(the_buffer); 
     std::string name = *name_itr; 
-    for (TreeItr tree_itr = output_trees.begin(); 
-	 tree_itr != output_trees.end(); 
+    for (TreeItr tree_itr = output.trees.begin(); 
+	 tree_itr != output.trees.end(); 
 	 tree_itr++){ 
       tree_itr->Branch(name.c_str(), the_buffer); 
     }
@@ -282,6 +262,11 @@ int writeNtuple_byPt(SVector input_files,
 
   }
 
+  // --- calculate the weights
+  count_b.compute(); 
+  count_c.compute(); 
+  count_l.compute(); 
+
   for (Int_t i = 0; i < num_entries; i++) {
 
     if (i % 500000 == 0 ) {
@@ -334,7 +319,7 @@ int writeNtuple_byPt(SVector input_files,
 	observer_chains.at(j).GetEntry(i); 
       }
 
-      output_trees.at(cat_pT).Fill();
+      output.trees.at(cat_pT).Fill();
       
     }
     
@@ -361,9 +346,9 @@ int writeNtuple_byPt(SVector input_files,
 
   std::cout << "done!\n";
 
-  for (size_t i = 0; i < output_trees.size(); i++){ 
-    TFile& file = output_files.at(i); 
-    TTree& tree = output_trees.at(i); 
+  for (size_t i = 0; i < output.trees.size(); i++){ 
+    TFile& file = output.files.at(i); 
+    TTree& tree = output.trees.at(i); 
 
     file.WriteTObject(&tree); 
     file.WriteTObject(&pt_cat_config); 
@@ -438,3 +423,31 @@ double FlavorCountPtEta::get_weight(size_t cat_pt, size_t cat_eta) const
   }
   
 }
+
+
+OutputNtuples::OutputNtuples(std::vector<double> pt_cat_vec, 
+			     std::string output_dir)
+{
+  typedef boost::ptr_vector<TTree>::iterator TreeItr; 
+ 
+  std::string min_val_name = "under"; 
+  std::string max_val_name = ""; 
+  for (std::vector<double>::const_iterator max_itr = pt_cat_vec.begin(); 
+       max_itr != pt_cat_vec.end(); 
+       max_itr++){ 
+    int int_max = int(*max_itr); 
+    max_val_name = boost::lexical_cast<std::string>(int_max); 
+    std::string file_name = output_dir + "/reduced_" + 
+      min_val_name + "_" + max_val_name + ".root"; 
+    files.push_back(new TFile(file_name.c_str(),"recreate")); 
+    trees.push_back(new TTree("SVTree","SVTree")); 
+
+    min_val_name = max_val_name; 
+  }
+  std::string file_name = output_dir + "/reduced_" + 
+    min_val_name + "_" + max_val_name + ".root"; 
+
+  files.push_back(new TFile(file_name.c_str(), "recreate")); 
+  trees.push_back(new TTree("SVTree","SVTree")); 
+}
+ 

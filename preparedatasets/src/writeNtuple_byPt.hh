@@ -5,6 +5,10 @@
 #include <vector> 
 #include "ntuple_defaults.hh"
 #include "writeNtuple_common.hh"
+#include <boost/ptr_container/ptr_vector.hpp>
+#include "TTree.h"
+#include "TFile.h"
+
 
 int writeNtuple_byPt(SVector input_files, 
 		     Observers observers, 
@@ -30,5 +34,15 @@ private:
   std::vector<double> _pt_count; 
   std::vector<double> _pt_max_weights; 
 }; 
+
+// TODO: Vector should contain the structure, not the other way around 
+struct OutputNtuples
+{ 
+  OutputNtuples(std::vector<double> pt_cat_vec, 
+		std::string output_dir); 
+  boost::ptr_vector<TFile> files;
+  boost::ptr_vector<TTree> trees;
+}; 
+
   
 #endif // WRITE_NTUPLE_BYPT_H

@@ -224,7 +224,10 @@ if __name__ == '__main__':
     if options.do_rapidity: 
         training_variables += rapidity_vars
 
-    if len(args) == 2: 
+    if not len(args) == 2: 
+        print parser.get_usage()
+
+    else: 
         input_files = []
         with open(args[1]) as file_list: 
             for line in file_list: 

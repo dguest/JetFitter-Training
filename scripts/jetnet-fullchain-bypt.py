@@ -100,8 +100,8 @@ def run_full_chain_by_pt(
     subprocesses = []
     for rds in reduced_datasets: 
         rds_basename = os.path.basename(rds).rstrip('.root')
-        category = rds_basename.rstrip('reduced_')
-        working_subdir = os.path.join(working_dir,category)
+        category = rds_basename.lstrip('reduced_')
+        working_subdir = os.path.join(working_dir,'pt_' + category)
         if not os.path.isdir(working_subdir): 
             os.mkdir(working_subdir)
 
@@ -128,7 +128,7 @@ class RDSProcess(multiprocessing.Process):
         self._training_variables = training_variables
         self._do_test = do_test
 
-    def run(): 
+    def run(self): 
 
         reduced_dataset = self._reduced_dataset
         working_dir = self._working_dir

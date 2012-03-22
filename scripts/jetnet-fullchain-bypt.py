@@ -106,9 +106,10 @@ def run_full_chain_by_pt(
             os.mkdir(working_subdir)
 
         proc = RDSProcess(
-            reduced_datasets = rds, 
+            reduced_dataset = rds, 
             working_dir = working_subdir, 
-            training_variables = training_variables)
+            training_variables = training_variables, 
+            do_test = do_test)
         proc.start()
         subprocesses.append(proc)
 
@@ -118,13 +119,14 @@ def run_full_chain_by_pt(
     return 0
 
 class RDSProcess(multiprocessing.Process): 
-    def __init__(self, reduced_dataset, working_dir, training_variables): 
+    def __init__(self, reduced_dataset, working_dir, training_variables, 
+                 do_test = False): 
         super(RDSProcess,self).__init__()
 
         self._reduced_dataset = reduced_dataset
         self._working_dir = working_dir
         self._training_variables = training_variables
-
+        self._do_test = do_test
 
     def run(): 
 

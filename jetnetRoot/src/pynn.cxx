@@ -35,6 +35,7 @@ extern "C" PyObject* train_py(PyObject *self,
   PyObject* nodes = 0; 
   int restart_training_from = 0; 
   PyObject* flavor_weights = 0; 
+  int n_training_events_target = -1; 
   bool debug = false; 
 
   const char *kwlist[] = {
@@ -46,11 +47,12 @@ extern "C" PyObject* train_py(PyObject *self,
     "nodes", 
     "restart_training_from",
     "flavor_weights", 
+    "n_training_events_target", 
     "debug", 
     NULL};
  
   if (!PyArg_ParseTupleAndKeywords
-      (args, keywds, "s|siiOOiOb", 
+      (args, keywds, "s|siiOOiOib", 
        // this function should take a const, and 
        // may be changed, until then we'll cast
        const_cast<char**>(kwlist),
@@ -62,6 +64,7 @@ extern "C" PyObject* train_py(PyObject *self,
        &nodes, 
        &restart_training_from, 
        &flavor_weights, 
+       &n_training_events_target, 
        &debug)
       ) return NULL;
 
@@ -167,7 +170,8 @@ extern "C" PyObject* train_py(PyObject *self,
 	      restart_training_from, 
 	      node_vec, 
 	      input_variable_info, 
-	      flavor_weights_struct);
+	      flavor_weights_struct, 
+	      n_training_events_target); 
     }
     catch (LoadReducedDSException e){ 
       PyErr_SetString(PyExc_IOError,"could not load dataset"); 

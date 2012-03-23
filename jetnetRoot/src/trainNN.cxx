@@ -4,6 +4,9 @@
 
 #include <string.h>
 #include <cmath>
+#include <sstream>
+#include <cstdlib> // rand
+#include <ctime> // to seed srand
 #include "TJetNet.h"
 #include "doNormalization.hh"
 #include "TNetworkToHistoTool.h"
@@ -29,12 +32,14 @@ void trainNN(std::string inputfile,
 	     std::string out_dir, 
              int nIterations,
              int dilutionFactor,
-             int restartTrainingFrom, 
+	     int restartTrainingFrom, 
 	     std::vector<int> n_hidden_layer_nodes, 
 	     std::vector<InputVariableInfo> input_variables, 
 	     FlavorWeights flavor_weights, 
+	     int n_training_events_target, 
 	     bool debug) {
 
+  srand(time(0)); 
   printf("--- starting trainNN ----\n"); 
   double bweight = flavor_weights.bottom;
   double cweight = flavor_weights.charm;
@@ -145,21 +150,29 @@ void trainNN(std::string inputfile,
   int n_entries = simu->GetEntries(); 
   std::cout << n_entries << " entries in chain\n"; 
 
-  for (Int_t i = 0; i < n_entries; i++) {
+  if (n_training_events_target > 0) { 
+    int target_entries = min(n_training_events_target, 
+			     n_entries / dilutionFactor); 
+    numberTrainingEvents = target_entries; 
+    numberTestingEvents = target_entries; 
+  }
+  else { 
+    for (Int_t i = 0; i < n_entries; i++) {
 
-    if (i % 100000 == 0 ) {
-      std::cout << " Counting training / testing events in sample."
-	" Looping over event " << i << std::endl;
-    }
+      if (i % 100000 == 0 ) {
+	std::cout << " Counting training / testing events in sample."
+	  " Looping over event " << i << std::endl;
+      }
     
-    if (i%dilutionFactor==0) numberTrainingEvents+=1;
-    //    if (i%dilutionFactor==1||i%dilutionFactor==2) numberTestingEvents+=1;
-    if (i%dilutionFactor==1) numberTestingEvents+=1;
+      if (i%dilutionFactor==0) numberTrainingEvents+=1;
+      if (i%dilutionFactor==1) numberTestingEvents+=1;
 
+    }
   }
   
   cout << " N. training events: " << numberTrainingEvents << 
     " N. testing events: " << numberTestingEvents << endl;
+
 
   cout << "now start to setup the network..." << endl;
   
@@ -196,7 +209,7 @@ void trainNN(std::string inputfile,
   
   cout << " copying over training events " << endl;
   
-  int counter=0;
+  int training_counter=0;
   for (Int_t i = 0; i < n_entries; i++) {
     
     if (i % 100000 == 0 ) {
@@ -205,41 +218,52 @@ void trainNN(std::string inputfile,
     }
 
     if (i%dilutionFactor!=0) continue;
+    if (n_training_events_target > 0) { 
+
+      float number_events_remaining = 
+	float(n_entries - i) / float(dilutionFactor); 
+      float number_events_needed = numberTrainingEvents - training_counter; 
+      float keep_event_probibility = 
+	number_events_needed / number_events_remaining; 
+
+      float f_rand = float(rand()) / float(RAND_MAX); 
+      if (f_rand > keep_event_probibility) continue; 
+    }
 
     simu->GetEntry(i);
 
     if (bottom==0 && charm==0 && light==0) continue;
 
     for (int var_num = 0; var_num < in_var.size(); var_num++){ 
-      jn->SetInputTrainSet( counter, 
+      jn->SetInputTrainSet( training_counter, 
 			    var_num, 
 			    in_var.at(var_num).get_normed() );
     }
 
-    jn->SetOutputTrainSet( counter, 0, bottom );
-    jn->SetOutputTrainSet( counter, 1, charm );
-    jn->SetOutputTrainSet( counter, 2, light );
+    jn->SetOutputTrainSet( training_counter, 0, bottom );
+    jn->SetOutputTrainSet( training_counter, 1, charm );
+    jn->SetOutputTrainSet( training_counter, 2, light );
 
     if (fabs(bottom-1) < 1e-4) {
-      jn->SetEventWeightTrainSet(  counter, weight*bweight );
+      jn->SetEventWeightTrainSet(  training_counter, weight*bweight );
     }
     else if (fabs(charm-1) < 1e-4){
-      jn->SetEventWeightTrainSet(  counter, weight*cweight);
+      jn->SetEventWeightTrainSet(  training_counter, weight*cweight);
     }
     else if (fabs(light-1) < 1e-4) {
-      jn->SetEventWeightTrainSet(  counter, weight*lweight );
+      jn->SetEventWeightTrainSet(  training_counter, weight*lweight );
     }
      
 
-    counter+=1;
+    training_counter+=1;
 
     //not used!
     //    eventWeight=weight;
 
   }
 
-  if (counter!=numberTrainingEvents){
-    cout << " counter up to: " << counter << 
+  if (training_counter != numberTrainingEvents){
+    cout << " counter up to: " << training_counter << 
       " while events in training sample are " << 
       numberTrainingEvents << endl;
     return;
@@ -249,9 +273,8 @@ void trainNN(std::string inputfile,
 
   
   cout << " copying over testing events " << endl;
-  counter=0;
-  
-  
+
+  int testing_counter=0;
   for (Int_t i = 0; i < n_entries; i++) {
     
     if (i % 100000 == 0 ) {
@@ -260,6 +283,18 @@ void trainNN(std::string inputfile,
     }
     
     if (i%dilutionFactor!=1) continue;
+
+    if (n_training_events_target > 0) { 
+
+      float number_events_remaining = 
+	float(n_entries - i) / float(dilutionFactor); 
+      float number_events_needed = numberTestingEvents - testing_counter; 
+      float keep_event_probibility = 
+	number_events_needed / number_events_remaining; 
+
+      float f_rand = float(rand()) / float(RAND_MAX); 
+      if (f_rand > keep_event_probibility) continue; 
+    }
     
     simu->GetEntry(i);
 
@@ -267,32 +302,32 @@ void trainNN(std::string inputfile,
     if (bottom==0 && charm==0 && light==0) continue;
 
     for (int var_num = 0; var_num < in_var.size(); var_num++){ 
-      jn->SetInputTestSet( counter, 
+      jn->SetInputTestSet( testing_counter, 
 			   var_num, 
 			   in_var.at(var_num).get_normed() );
     }
 
-    jn->SetOutputTestSet( counter, 0, bottom );
-    jn->SetOutputTestSet( counter, 1, charm );
-    jn->SetOutputTestSet( counter, 2, light );
+    jn->SetOutputTestSet( testing_counter, 0, bottom );
+    jn->SetOutputTestSet( testing_counter, 1, charm );
+    jn->SetOutputTestSet( testing_counter, 2, light );
 
     if (fabs(bottom-1) < 1e-4) {
-	jn->SetEventWeightTestSet(  counter, weight*bweight );
+	jn->SetEventWeightTestSet( testing_counter, weight*bweight );
       }
     else if (fabs(charm-1) < 1e-4) {
-      jn->SetEventWeightTestSet(  counter, weight*cweight );
+      jn->SetEventWeightTestSet(  testing_counter, weight*cweight );
     }
     else if (fabs(light-1) < 1e-4){
-      jn->SetEventWeightTestSet(  counter, weight*lweight );
+      jn->SetEventWeightTestSet(  testing_counter, weight*lweight );
     }
-    counter+=1;
+    testing_counter+=1;
 
     //not used!
     //    eventWeight=weight;
   }
     
-  if (counter!=numberTestingEvents){
-    cout << " counter up to: " << counter << 
+  if (testing_counter != numberTestingEvents){
+    cout << " counter up to: " << testing_counter << 
       " while events in testing sample are " << numberTestingEvents << 
       ". Normal due to cuts..." << endl;
     return;  
@@ -303,16 +338,14 @@ void trainNN(std::string inputfile,
 
   jn->Shuffle(true,false);
   
-  if (restartTrainingFrom==0) {
+  if (restartTrainingFrom == 0) {
     jn->Init();
-    //    jn->DumpToFile("WeightsInitial.w");
   }
   else {
-    TString name("Weights");
-    name+=restartTrainingFrom;
-    name+=".w";
-
-    jn->ReadFromFile(name);
+    std::stringstream weight_name; 
+    weight_name << out_dir; 
+    weight_name << "/Weights" << restartTrainingFrom << ".root"; 
+    jn->ReadFromFile(weight_name.str().c_str());
   }
   
   float minimumError = 1e10;
@@ -357,6 +390,7 @@ void trainNN(std::string inputfile,
   }
   cronology << endl;
   cronology << "--------------HISTORY-----------------" << endl;
+  cronology << "Number of training events: " << 
   cronology << "History of iterations: " << endl;
   cronology.close();
 
@@ -649,6 +683,7 @@ void trainNN(std::string inputfile,
 
 
 }
+
 
 // ===================================================================
 // ========== draw routine (this should be a new function) ===========

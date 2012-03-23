@@ -92,7 +92,9 @@ def run_full_chain_by_pt(
     reduced_datasets = glob.glob('%s/reduced_*' % reduced_dir)
 
     n_processors = multiprocessing.cpu_count()
-    if n_processors < len(reduced_datasets): 
+    # -- allow one less cpu than process, 
+    #    the low bin doesn't run anyway 
+    if n_processors < len(reduced_datasets) - 1: 
         sys.exit(
             'not enough processors for these subjobs'
             'want %i, found %i' % (len(reduced_datasets), n_processors))

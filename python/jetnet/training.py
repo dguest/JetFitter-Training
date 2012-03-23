@@ -60,6 +60,7 @@ def run_training(reduced_dataset,
                  normalization = normalization, 
                  nodes = nodes, 
                  flavor_weights = flavor_weights, 
+                 n_training_events_target = 1000000, 
                  debug = debug)
 
 

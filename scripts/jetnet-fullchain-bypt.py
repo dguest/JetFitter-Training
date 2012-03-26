@@ -49,7 +49,9 @@ def run_full_chain_by_pt(
     do_test = False, 
     double_variables = None, 
     int_variables = None, 
-    training_variables = training_variable_whitelist): 
+    training_variables = training_variable_whitelist, 
+    cram = False, 
+    sequential = False): 
 
     if not double_variables: 
         double_variables = [
@@ -95,9 +97,11 @@ def run_full_chain_by_pt(
     # -- allow one less cpu than process, 
     #    the low bin doesn't run anyway 
     if n_processors < len(reduced_datasets) - 1: 
-        sys.exit(
-            'not enough processors for these subjobs'
-            'want %i, found %i' % (len(reduced_datasets), n_processors))
+        print 'WARNING: not enough processors for these subjobs '
+        'want %i, found %i' % (len(reduced_datasets), n_processors)
+        if not cram and not sequential: 
+            sys.exit('quitting...')
+            
         
     subprocesses = []
     for rds in reduced_datasets: 
@@ -114,6 +118,8 @@ def run_full_chain_by_pt(
             do_test = do_test)
         proc.start()
         subprocesses.append(proc)
+        if sequential: 
+            proc.join()
 
     for proc in subprocesses: 
         proc.join()
@@ -262,6 +268,10 @@ if __name__ == '__main__':
     parser.add_option('--rapidity', action = 'store_true', 
                       dest = 'do_rapidity', 
                       help = 'use rapidity variables in training')
+    parser.add_option('--cram', action = 'store_true', 
+                      help = 'allow more procs than we have')
+    parser.add_option('--sequential', action = 'store_true', 
+                      help = 'force sequential processing')
 
     (options, args) = parser.parse_args(sys.argv)
 
@@ -284,4 +294,6 @@ if __name__ == '__main__':
         run_full_chain_by_pt(
             input_files, 
             do_test = do_test, 
-            training_variables = training_variables)
+            training_variables = training_variables, 
+            cram = options.cram, 
+            sequential = options.sequential)

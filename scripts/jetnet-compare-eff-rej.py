@@ -23,7 +23,10 @@ def build_plot(file_name, variable, signal, backgrounds):
 def build_comparison(files, signal, background):  
     d_string = 'al'
     t = TROOT
-    colors = [t.kOrange, t.kBlue, t.kRed, t.kGreen + 2]
+    colors = [
+        t.kOrange, t.kBlue, t.kRed, t.kGreen + 2, 
+        t.kMagenta + 1, t.kBlack
+        ]
     min_vals = []
     max_vals = []
     all_graphs = []

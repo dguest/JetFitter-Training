@@ -390,7 +390,6 @@ void trainNN(std::string inputfile,
   }
   cronology << endl;
   cronology << "--------------HISTORY-----------------" << endl;
-  cronology << "Number of training events: " << 
   cronology << "History of iterations: " << endl;
   cronology.close();
 

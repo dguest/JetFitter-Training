@@ -40,6 +40,11 @@ rapidity_vars = [
    'maxTrackRapidity', 
     ]
 
+kinematic_vars = [ 
+    'JetEta', 
+    'JetPt', 
+    ]
+
 def run_full_chain_by_pt(
     input_files, 
     working_dir = None, 
@@ -262,12 +267,20 @@ if __name__ == '__main__':
     parser.set_defaults(
         test = False, 
         do_rapidity = False, 
+        kinematic = False, 
+        sv1 = False, 
+        cram = False, 
+        sequential = False, 
         )
 
     parser.add_option('--test', action = 'store_true')
     parser.add_option('--rapidity', action = 'store_true', 
                       dest = 'do_rapidity', 
                       help = 'use rapidity variables in training')
+    parser.add_option('--kinematic', action = 'store_true', 
+                      help = 'use pt and eta variables in training')
+    parser.add_option('--sv1', action = 'store_true', 
+                      help = 'use SV1')
     parser.add_option('--cram', action = 'store_true', 
                       help = 'allow more procs than we have')
     parser.add_option('--sequential', action = 'store_true', 
@@ -280,6 +293,12 @@ if __name__ == '__main__':
     training_variables = training_variable_whitelist
     if options.do_rapidity: 
         training_variables += rapidity_vars
+
+    if options.kinematic: 
+        training_variables += kinematic_vars
+
+    if options.sv1: 
+        training_variables += ['discriminatorSV1']
 
     if not len(args) == 2: 
         print parser.get_usage()

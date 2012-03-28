@@ -10,7 +10,7 @@ import ROOT
 ROOT.PyConfig.IgnoreCommandLineOptions = True
 
 
-from jetnet import training, pyprep, profile
+from jetnet import training, pyprep, profile, process, utils
 from jetnet.perf import rejection, performance
 import os, sys, glob
 from warnings import warn
@@ -51,24 +51,6 @@ kinematic_vars = [
     'JetPt', 
     ]
 
-def get_leaves_in_tree(tree): 
-    """
-    returns a type-keyed dict of variable lists
-    """
-
-    from ROOT import  TIter
-
-    leaves_dict = {}
-    leaf_list = tree.GetListOfLeaves()
-    for leaf in TIter(leaf_list): 
-        name = leaf.GetName()
-        type_name = leaf.GetTypeName()
-        if not type_name in leaves_dict.keys(): 
-            leaves_dict[type_name] = [name]
-        else: 
-            leaves_dict[type_name].append(name)
-
-    return leaves_dict
 
 def run_full_chain_by_pt(
     input_files, 
@@ -92,7 +74,7 @@ def run_full_chain_by_pt(
 
     print input_tree_name
     sample_tree = sample_root_file.Get(input_tree_name)
-    leaves_dict = get_leaves_in_tree(sample_tree)
+    leaves_dict = utils.get_leaves_in_tree(sample_tree)
 
     if not double_variables: 
         double_variables = [
@@ -161,7 +143,7 @@ def run_full_chain_by_pt(
         if not os.path.isdir(working_subdir): 
             os.mkdir(working_subdir)
 
-        proc = RDSProcess(
+        proc = process.RDSProcess(
             reduced_dataset = rds, 
             working_dir = working_subdir, 
             training_variables = training_variables, 
@@ -176,131 +158,6 @@ def run_full_chain_by_pt(
 
     return 0
 
-class RDSProcess(multiprocessing.Process): 
-    def __init__(self, reduced_dataset, working_dir, training_variables, 
-                 do_test = False): 
-        super(RDSProcess,self).__init__()
-
-        self._reduced_dataset = reduced_dataset
-        self._working_dir = working_dir
-        self._training_variables = training_variables
-        self._do_test = do_test
-
-    def run(self): 
-
-        reduced_dataset = self._reduced_dataset
-        working_dir = self._working_dir
-        training_variables = self._training_variables
-
-        # --- profiling 
-        profile_dir = os.path.join(working_dir,'profile')
-        if not os.path.isdir(profile_dir): 
-            os.mkdir(profile_dir)
-
-        profile_file = os.path.join(profile_dir, 'profiled.root')
-        mean_rms_file = os.path.join(profile_dir, 'mean_rms.txt')
-        if not do_test: 
-            if not os.path.isfile(mean_rms_file): 
-                if not os.path.isfile(profile_file): 
-                    profile.make_profile_file(reduced_dataset, profile_file)
-            
-                profile.build_mean_rms_from_profile(
-                    profile_file = profile_file, 
-                    text_file_name = mean_rms_file)
-
-        # --- training part 
-        training_dir = os.path.join(working_dir,'training')
-        if not os.path.isdir(training_dir): 
-            os.mkdir(training_dir)
-    
-        normalization_file = os.path.join(training_dir, 'normalization.txt')
-        if not os.path.isfile(normalization_file) and not do_test: 
-            if not os.path.isfile(profile_file): 
-                profile.make_profile_file(reduced_dataset, profile_file)
-    
-            profile.make_normalization_file(
-                profile_file, 
-                normalization_file = normalization_file, 
-                whitelist = training_variables)
-                                            
-        normalization_dict = {}
-        if os.path.isfile(normalization_file): 
-            with open(normalization_file) as norm_file: 
-                for line in norm_file: 
-                    line = line.strip()
-                    if not line: continue
-                    name = line.split()[0]
-                    offset, scale = (float(n) for n in line.split()[1:])
-                    normalization_dict[name] = (offset, scale)
-    
-        print 'normalization:'
-        text_size = max(len(x) for x in normalization_dict.keys()) + 1
-        for value, (offset, scale) in normalization_dict.iteritems(): 
-            print '%-*s offset: % -10.4g scale: % -10.4g' % (
-                text_size, value, offset, scale)
-    
-        weights_path = os.path.join(training_dir, 'weightMinimum.root')
-        if not os.path.isfile(weights_path): 
-            training.run_training(reduced_dataset = reduced_dataset, 
-                                  output_directory = training_dir, 
-                                  normalization = normalization_dict, 
-                                  debug = do_test)
-    
-        # --- diagnostics part 
-        testing_dir = os.path.join(working_dir, 'testing')
-        if not os.path.isdir(testing_dir): 
-            os.mkdir(testing_dir)
-    
-        ovrtrn_hist_path = os.path.join(testing_dir,'overtraining_hists.root')
-        if not os.path.isfile(ovrtrn_hist_path): 
-            training.run_performance(reduced_dataset = reduced_dataset, 
-                                     weights_file = weights_path, 
-                                     output_file = ovrtrn_hist_path, 
-                                     with_ip3d = True, 
-                                     print_and_exit = do_test) 
-    
-        test_ntuple_path = os.path.join(testing_dir,'perf_ntuple.root')
-        if not os.path.isfile(test_ntuple_path): 
-            training.run_test_ntuple(reduced_dataset = reduced_dataset, 
-                                     weights_file = weights_path, 
-                                     output_file = test_ntuple_path, 
-                                     print_and_exit = do_test)
-        
-        rej_hist_path = os.path.join(testing_dir, 'performance_hists') 
-        if not os.path.isdir(rej_hist_path): 
-            os.mkdir(rej_hist_path)
-    
-        # --- other diagnostics 
-    
-        if not do_test: 
-            try: 
-                import AtlasStyle
-            except ImportError: 
-                warn('could not import AtlasStyle', UglyWarning)
-    
-            all_canvas = rejection.make_plots_from(test_ntuple_path)
-    
-            formats = ['.pdf','.png']
-    
-            for ext in formats: 
-                for plot in all_canvas: 
-                    fullname = plot.GetName() + ext
-                    fullpath = os.path.join(rej_hist_path,fullname)
-                    print 'printing to %s' % fullpath
-                    plot.Print(fullpath)
-    
-            for signal in ['charm','bottom']: 
-    
-                perf_canvases = performance.b_tag_plots(
-                    ovrtrn_hist_path, 
-                    normalize = False, 
-                    signal = signal)
-    
-                output_name = '%s_perf_result' % (signal)
-                output_path = os.path.join(rej_hist_path, output_name)
-                for output_format in formats: 
-                    full_name = output_path + output_format
-                    perf_canvases[0].Print(full_name)
     
     
 if __name__ == '__main__': 

@@ -316,19 +316,29 @@ if __name__ == '__main__':
         sv1 = False, 
         cram = False, 
         sequential = False, 
-        dis = False
+        dis = False, 
+        ptrel = False, 
         )
 
     parser.add_option('--test', action = 'store_true')
-    parser.add_option('--rapidity', action = 'store_true', 
-                      dest = 'do_rapidity', 
-                      help = 'use rapidity variables in training')
-    parser.add_option('--kinematic', action = 'store_true', 
-                      help = 'use pt and eta variables in training')
-    parser.add_option('--sv1', action = 'store_true', 
-                      help = 'use SV1')
-    parser.add_option('--dis', action = 'store_true', 
-                      help = 'use distance to secondary vertex')
+
+    var_opt = OptionGroup(parser, title = 'variable flags', 
+                          description = 'flags to control training '
+                          'variables')
+    var_opt.add_option('--rapidity', action = 'store_true', 
+                       dest = 'do_rapidity', 
+                       help = 'use rapidity variables in training')
+    var_opt.add_option('--kinematic', action = 'store_true', 
+                       help = 'use pt and eta variables in training')
+    var_opt.add_option('--ptrel', action = 'store_true', 
+                       dest = 'ptrel', 
+                       help = 'use ptrel')
+    var_opt.add_option('--sv1', action = 'store_true', 
+                       help = 'use SV1')
+    var_opt.add_option('--dis', action = 'store_true', 
+                       help = 'use distance to secondary vertex')
+    parser.add_option_group(var_opt)
+
     parser.add_option('--cram', action = 'store_true', 
                       help = 'allow more procs than we have')
     parser.add_option('--sequential', action = 'store_true', 
@@ -344,6 +354,9 @@ if __name__ == '__main__':
 
     if options.kinematic: 
         training_variables += kinematic_vars
+        
+    if options.ptrel: 
+        training_variables += pt_rel_vars
 
     if options.sv1: 
         training_variables += ['discriminatorSV1']

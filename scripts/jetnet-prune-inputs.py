@@ -11,7 +11,7 @@ import multiprocessing
 from optparse import OptionParser, OptionGroup
 
 from jetnet.dirs import OverwriteError
-from jetnet import pynn, profile, utils
+from jetnet import pynn, profile, utils, pyprep
 
     
 observer_discriminators = ['IP2D','IP3D','SV1','COMB']

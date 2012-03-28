@@ -48,6 +48,7 @@ int writeNtuple_byPt(SVector input_files,
     std::cout << observers << std::endl;
   }
 
+  // TODO: move this concatenation outside this routine  
   std::string jetCollection = jetCollectionName + suffix;
 
   // run output 
@@ -91,8 +92,10 @@ int writeNtuple_byPt(SVector input_files,
       the_chain->Add(in_file_itr->c_str()); 
     }
 
-    if (the_chain->GetEntries() == 0)
+    if (the_chain->GetEntries() == 0) { 
+      std::cerr << "ERROR: " << chain_name << " is empty\n"; 
       throw LoadOfficialDSException();
+    }
 
     // define buffers in which to store the vars
     double* the_buffer = new double; 
@@ -144,10 +147,13 @@ int writeNtuple_byPt(SVector input_files,
   treeJF->SetBranchStatus("JetEta",1); 
   treeJF->SetBranchStatus("mass",1); 
 
-  treeJF->SetBranchAddress("Flavour",&Flavour); 
-  treeJF->SetBranchAddress("JetPt"  ,&JetPt); 
-  treeJF->SetBranchAddress("JetEta" ,&JetEta); 
-  treeJF->SetBranchAddress("mass"   ,&mass); 
+  if (treeJF->SetBranchAddress("Flavour",&Flavour) ||
+      treeJF->SetBranchAddress("JetPt"  ,&JetPt) ||
+      treeJF->SetBranchAddress("JetEta" ,&JetEta) ||
+      treeJF->SetBranchAddress("mass"   ,&mass) ) { 
+    std::cerr << "ERROR: missing essential leaf\n"; 
+    throw MissingInputVariableException(); 
+  }
 
   // mass, pt, and eta all pass through 
   for (TreeItr tree_itr = output.trees.begin(); 
@@ -200,7 +206,7 @@ int writeNtuple_byPt(SVector input_files,
     treeJF->SetBranchStatus(name.c_str(),1); 
     error_code = treeJF->SetBranchAddress(name.c_str(), the_buffer); 
     if (error_code) { 
-      std::cerr << "ERROR: could not find double leaf" << name << " in " << 
+      std::cerr << "ERROR: could not find double leaf: " << name << " in " << 
 	*input_files.begin() << std::endl; 
       throw MissingInputVariableException(); 
     }
@@ -226,7 +232,7 @@ int writeNtuple_byPt(SVector input_files,
     int error_code = 0; 
     error_code = treeJF->SetBranchAddress(name.c_str(), the_buffer); 
     if (error_code) { 
-      std::cerr << "ERROR: could not find int leaf" << name << " in " << 
+      std::cerr << "ERROR: could not find int leaf: " << name << " in " << 
 	*input_files.begin() << std::endl; 
       throw MissingInputVariableException(); 
     }

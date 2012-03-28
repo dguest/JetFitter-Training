@@ -183,13 +183,19 @@ PyObject* make_ntuples_ptcat(PyObject *self,
     // TODO: this guy should be read in from python eventually 
     std::vector<double> pt_cat_vec; 
 
-    writeNtuple_byPt(files, 
-		     observers, 
-		     pt_cat_vec, 
-		     jet_collection_name, 
-		     output_dir, 
-		     suffix); 
-
+    try { 
+      writeNtuple_byPt(files, 
+		       observers, 
+		       pt_cat_vec, 
+		       jet_collection_name, 
+		       output_dir, 
+		       suffix); 
+    }
+    catch (LoadOfficialDSException e) { 
+      PyErr_SetString(PyExc_IOError, "something went horribly wrong "
+		      "while trying to load datasets"); 
+      return NULL; 
+    }
   }
 
   Py_INCREF(Py_None);

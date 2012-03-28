@@ -9,77 +9,152 @@ directories are created with the current directory as the base
 import sys, os
 import multiprocessing
 from optparse import OptionParser, OptionGroup
-from copy import deepcopy
 
 from jetnet.dirs import OverwriteError
-from jetnet import pynn
-
-class NNTrainingProcess(multiprocessing.Process): 
-    def __init__(self, reduced_dataset, output_directory, 
-                 normalization = {}, 
-                 nodes = None, 
-                 flavor_weights = {}, 
-                 debug = True, 
-                 ): 
-        super(NNTrainingProcess,self).__init__()
-
-        self.reduced_dataset = reduced_dataset
-        self.output_directory = output_directory
-        self.normalization = normalization
-        if nodes is None:
-            self.nodes = (20, 10)
-        else: 
-            self.nodes = nodes
-        self.flavor_weights = flavor_weights
-
-        self.debug = debug
-    
-    def run(self): 
-
-        if not os.path.isdir(self.output_directory): 
-            if not self.debug: 
-                os.mkdir(self.output_directory)
-        elif glob.glob(self.output_directory + '/*.root*'): 
-            raise OverwriteError('root files found in %s' % 
-                                 self.output_directory)
-
-        
-        pynn.trainNN(reduced_dataset = self.reduced_dataset, 
-                     output_directory = self.output_directory, 
-                     n_iterations = 10000, 
-                     dilution_factor = 2, 
-                     normalization = self.normalization, 
-                     nodes = self.nodes, 
-                     flavor_weights = self.flavor_weights, 
-                     debug = self.debug)
-
+from jetnet import pynn, profile
 
     
-def build_trainer_with_missing_vars(reduced_dataset, 
-                                    missing_vars): 
+observer_discriminators = ['IP2D','IP3D','SV1','COMB']
+training_variable_whitelist = [
+    'nVTX', 
+    'nTracksAtVtx', 
+    'nSingleTracks', 
+    'energyFraction', 
+    'mass',  
+    'significance3d', 
+    'discriminatorIP3D', 
+    'discriminatorSV1',
+    'cat_eta', 
+    'cat_pT', 
+    'minTrackRapidity', 
+    'meanTrackRapidity', 
+    'maxTrackRapidity', 
+    'minTrackPtRel', 
+    'meanTrackPtRel', 
+    'maxTrackPtRel', 
+    'leadingVertexPosition', 
+    'JetEta', 
+    'JetPt', 
+    ]
 
-    vars_dict = {
-        "nVTX"                : ( -0.30, 1.0 / 0.50) , 
-        "nTracksAtVtx"        : ( -1.00, 1.0 / 1.60) , 
-        "nSingleTracks"       : ( -0.20, 1.0 / 0.50) , 
-        "energyFraction"      : ( -0.23, 1.0 / 0.33) , 
-        "mass"                : ( - 974, 1.0 / 1600) , 
-        "significance3d"      : ( -   7, 1.0 / 14.0) , 
-        "discriminatorIP3D"   : ( - 6.3, 1.0 /  6.0) , 
-        "cat_pT"              : ( - 3.0, 1.0 /  3.0) , 
-        "cat_eta"             : ( - 1.0,        1.0) , 
-        }
+def get_all_vars_in_rds(rds_name): 
+    from ROOT import TFile
+    the_rds = TFile(rds_name)
+    tree = the_rds.Get('SVTree')
+    leaf_dict = utils.get_leaves_in_tree(tree)
+    all_leaf_names = []
+    for name_list in leaf_dict.values(): 
+        all_leaf_names += name_list
 
-    for var in missing_vars: 
-        new_dict.pop(var)
+    return all_leaf_names
 
-    print 'work do here' 
+def run_pruned_chains(
+    input_files, 
+    working_dir = None, 
+    output_path = None, 
+    rds_name = 'reduced_dataset.root', 
+    rds_dir = 'reduced', 
+    jet_collection = 'AntiKt4TopoEMJets', 
+    do_test = False, 
+    double_variables = None, 
+    int_variables = None, 
+    training_variables = training_variable_whitelist): 
+
+    from ROOT import TFile
+
+    sample_root_file = TFile(input_files[0])
+    input_tree_name = ( 
+        'BTag_%s_JetFitterTagNN/PerfTreeAll' % (jet_collection + 'AOD') )
+
+    sample_tree = sample_root_file.Get(input_tree_name)
+    leaves_dict = utils.get_leaves_in_tree(sample_tree)
+
+    if not double_variables: 
+        double_variables = [
+            'energyFraction', 
+            'significance3d',         
+            'meanTrackRapidity', 
+            'maxTrackRapidity', 
+            'minTrackRapidity', 
+            'minTrackPtRel', 
+            'meanTrackPtRel', 
+            'maxTrackPtRel', 
+            'leadingVertexPosition', 
+            ]
+        double_variables = [
+            x for x in double_variables if x in leaves_dict['Double_t'] ]
+
+    if not int_variables: 
+        int_variables = [ 
+            'nVTX', 
+            'nTracksAtVtx', 
+            'nSingleTracks', 
+            ]
+        int_variables = [
+            x for x in int_variables if x in leaves_dict['Int_t'] ]
+
+    
+    if working_dir is None: 
+        working_dir = jet_collection
+
+    if not os.path.isdir(working_dir): 
+        os.mkdir(working_dir)
+
+    # --- rds part
+    reduced_dir = os.path.join(working_dir, rds_dir)
+    if not os.path.isdir(reduced_dir): 
+        os.mkdir(reduced_dir)
+
+    reduced_dataset = os.path.join(reduced_dir, rds_name)
+
+    if not os.path.isfile(reduced_dataset): 
+        pyprep.prep_ntuple(input_files = input_files, 
+                           double_variables = double_variables, 
+                           int_variables = int_variables, 
+                           observer_discriminators = observer_discriminators, 
+                           jet_collection = jet_collection, 
+                           output_file = reduced_dataset, 
+                           debug = do_test)
         
+    profile_file = os.path.join(reduced_dir, 'profiled.root')
+    if not os.path.isfile(profile_file): 
+        profile.make_profile_file(reduced_dataset, profile_file)
 
+    rds_variables = get_all_vars_in_rds(reduced_dataset)
+    both_vars = [v for v in training_variables if v in rds_variables]
 
+    n_processors = multiprocessing.cpu_count()
+
+    if n_processors != len(both_vars): 
+        sys.exit('ERROR: wrong number of procs: need %i, have %i' %
+                 (len(both_vars), n_processors))
+            
+        
+    subprocesses = []
+    for exclude in both_vars: 
+        working_subdir = os.path.join(working_dir,'no_' + exclude)
+        if not os.path.isdir(working_subdir): 
+            os.mkdir(working_subdir)
+
+        training_subset = [v for v in both_vars if v != exclude ] 
+        proc = process.RDSProcess(
+            reduced_dataset = rds, 
+            working_dir = working_subdir, 
+            training_variables = training_subset, 
+            do_test = do_test)
+        proc.start()
+        subprocesses.append(proc)
+
+    for proc in subprocesses: 
+        proc.join()
+
+    return 0
+
+    
+    
 if __name__ == '__main__': 
 
-    usage = 'usage: %prog <reduced dataset> [options]'
+    usage = 'usage: %prog <file list> [options]'
     description = __doc__
 
     parser = OptionParser(usage = usage, description = description)
@@ -90,15 +165,20 @@ if __name__ == '__main__':
     parser.add_option('--test', action = 'store_true')
 
     (options, args) = parser.parse_args(sys.argv)
-    
-    n_processors = multiprocessing.cpu_count()
 
-    print 'found %i processors' % n_processors
+    do_test = options.test
 
-    nn_training = NNTrainingProcess(
-        reduced_dataset = 'tredu', 
-        output_directory = 'nnrell', 
-        )
-    nn_training.start()
-    nn_training.join()
+    if not len(args) == 2: 
+        print parser.get_usage()
 
+    else: 
+        input_files = []
+        with open(args[1]) as file_list: 
+            for line in file_list: 
+                input_files.append(line.strip())
+
+        print 'running pruning' 
+        run_pruned_chains(
+            input_files, 
+            do_test = do_test, 
+            training_variables = training_variable_whitelist)

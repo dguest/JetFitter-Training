@@ -11,7 +11,7 @@ import multiprocessing
 from optparse import OptionParser, OptionGroup
 
 from jetnet.dirs import OverwriteError
-from jetnet import pynn, profile
+from jetnet import pynn, profile, utils
 
     
 observer_discriminators = ['IP2D','IP3D','SV1','COMB']
@@ -60,38 +60,6 @@ def run_pruned_chains(
     int_variables = None, 
     training_variables = training_variable_whitelist): 
 
-    from ROOT import TFile
-
-    sample_root_file = TFile(input_files[0])
-    input_tree_name = ( 
-        'BTag_%s_JetFitterTagNN/PerfTreeAll' % (jet_collection + 'AOD') )
-
-    sample_tree = sample_root_file.Get(input_tree_name)
-    leaves_dict = utils.get_leaves_in_tree(sample_tree)
-
-    if not double_variables: 
-        double_variables = [
-            'energyFraction', 
-            'significance3d',         
-            'meanTrackRapidity', 
-            'maxTrackRapidity', 
-            'minTrackRapidity', 
-            'minTrackPtRel', 
-            'meanTrackPtRel', 
-            'maxTrackPtRel', 
-            'leadingVertexPosition', 
-            ]
-        double_variables = [
-            x for x in double_variables if x in leaves_dict['Double_t'] ]
-
-    if not int_variables: 
-        int_variables = [ 
-            'nVTX', 
-            'nTracksAtVtx', 
-            'nSingleTracks', 
-            ]
-        int_variables = [
-            x for x in int_variables if x in leaves_dict['Int_t'] ]
 
     
     if working_dir is None: 
@@ -108,6 +76,9 @@ def run_pruned_chains(
     reduced_dataset = os.path.join(reduced_dir, rds_name)
 
     if not os.path.isfile(reduced_dataset): 
+        double_variables, int_variables = utils.get_allowed_rds_variables(
+            input_files = input_files, jet_collection = jet_collection)
+
         pyprep.prep_ntuple(input_files = input_files, 
                            double_variables = double_variables, 
                            int_variables = int_variables, 

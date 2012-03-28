@@ -65,39 +65,6 @@ def run_full_chain_by_pt(
     cram = False, 
     sequential = False): 
 
-    from ROOT import TFile
-
-    sample_root_file = TFile(input_files[0])
-    input_tree_name = ( 
-        'BTag_%s_JetFitterTagNN/PerfTreeAll' % (jet_collection + 'AOD') )
-
-    sample_tree = sample_root_file.Get(input_tree_name)
-    leaves_dict = utils.get_leaves_in_tree(sample_tree)
-
-    if not double_variables: 
-        double_variables = [
-            'energyFraction', 
-            'significance3d',         
-            'meanTrackRapidity', 
-            'maxTrackRapidity', 
-            'minTrackRapidity', 
-            'minTrackPtRel', 
-            'meanTrackPtRel', 
-            'maxTrackPtRel', 
-            'leadingVertexPosition', 
-            ]
-        double_variables = [
-            x for x in double_variables if x in leaves_dict['Double_t'] ]
-
-    if not int_variables: 
-        int_variables = [ 
-            'nVTX', 
-            'nTracksAtVtx', 
-            'nSingleTracks', 
-            ]
-        int_variables = [
-            x for x in int_variables if x in leaves_dict['Int_t'] ]
-
     
     if working_dir is None: 
         working_dir = jet_collection
@@ -112,6 +79,9 @@ def run_full_chain_by_pt(
 
     reduced_datasets = glob.glob('%s/reduced_*' % reduced_dir)
     if len(reduced_datasets) == 0: 
+        double_variables, int_variables = utils.get_allowed_rds_variables(
+            input_files = input_files, jet_collection = jet_collection)
+
         pyprep.make_ntuples_ptcat(
             input_files = input_files, 
             double_variables = double_variables, 

@@ -146,7 +146,9 @@ if __name__ == '__main__':
         whitelist = []
         with open(options.whitelist) as white_file: 
             for line in white_file: 
-                whitelist.append(line.strip())
+                stripped_line = line.strip()
+                if stripped_line: 
+                    whitelist.append(stripped_line)
 
     if not len(args) == 2: 
         print parser.get_usage()
@@ -155,7 +157,9 @@ if __name__ == '__main__':
         input_files = []
         with open(args[1]) as file_list: 
             for line in file_list: 
-                input_files.append(line.strip())
+                stripped_line = line.strip()
+                if stripped_line: 
+                    input_files.append(stripped_line)
 
         print 'running pruning' 
         run_pruned_chains(

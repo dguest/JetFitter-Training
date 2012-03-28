@@ -68,11 +68,9 @@ def run_full_chain_by_pt(
     from ROOT import TFile
 
     sample_root_file = TFile(input_files[0])
-    print sample_root_file.GetName()
     input_tree_name = ( 
         'BTag_%s_JetFitterTagNN/PerfTreeAll' % (jet_collection + 'AOD') )
 
-    print input_tree_name
     sample_tree = sample_root_file.Get(input_tree_name)
     leaves_dict = utils.get_leaves_in_tree(sample_tree)
 

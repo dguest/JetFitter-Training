@@ -96,8 +96,8 @@ def run_pruned_chains(
 
     n_processors = multiprocessing.cpu_count()
 
-    if n_processors != len(both_vars): 
-        sys.exit('ERROR: wrong number of procs: need %i, have %i' %
+    if n_processors < len(both_vars): 
+        sys.exit('ERROR: too few procs: need %i, have %i' %
                  (len(both_vars), n_processors))
             
         

@@ -106,8 +106,14 @@ int writeNtuple_byPt(SVector input_files,
     // set the chain to write to this branch 
     the_chain->SetBranchStatus("*",0); 
     the_chain->SetBranchStatus("Discriminator",1); 
-    the_chain->SetBranchAddress("Discriminator", the_buffer); 
-
+    int error_code = 0; 
+    error_code = the_chain->SetBranchAddress("Discriminator", the_buffer); 
+    if (error_code) { 
+      std::cerr << "ERROR: could not find Discriminator in chain: " << 
+	the_chain->GetName() << " file: " << 
+	*input_files.begin() << std::endl;
+      throw MissingInputVariableException(); 
+    }
   }
 
 
@@ -190,8 +196,14 @@ int writeNtuple_byPt(SVector input_files,
     }
 
     // set the chain to write to this branch 
+    int error_code = 0; 
     treeJF->SetBranchStatus(name.c_str(),1); 
-    treeJF->SetBranchAddress(name.c_str(), the_buffer); 
+    error_code = treeJF->SetBranchAddress(name.c_str(), the_buffer); 
+    if (error_code) { 
+      std::cerr << "ERROR: could not find double leaf" << name << " in " << 
+	*input_files.begin() << std::endl; 
+      throw MissingInputVariableException(); 
+    }
   }
 
   // --- descrete observer variables 
@@ -211,7 +223,13 @@ int writeNtuple_byPt(SVector input_files,
 
     // set the chain to write to this branch 
     treeJF->SetBranchStatus(name.c_str(),1); 
-    treeJF->SetBranchAddress(name.c_str(), the_buffer); 
+    int error_code = 0; 
+    error_code = treeJF->SetBranchAddress(name.c_str(), the_buffer); 
+    if (error_code) { 
+      std::cerr << "ERROR: could not find int leaf" << name << " in " << 
+	*input_files.begin() << std::endl; 
+      throw MissingInputVariableException(); 
+    }
   }
 
   //=======================================================

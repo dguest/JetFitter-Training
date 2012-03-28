@@ -7,6 +7,8 @@
 typedef std::vector<std::string> SVector; 
 
 class LoadOfficialDSException {};
+class MissingInputVariableException: public LoadOfficialDSException {}; 
+
 
 struct Observers { 
   SVector discriminators; 

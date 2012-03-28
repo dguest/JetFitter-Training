@@ -35,7 +35,7 @@ def get_allowed_rds_variables(input_files, jet_collection,
         'BTag_%s_JetFitterTagNN/PerfTreeAll' % (jet_collection + 'AOD') )
 
     sample_tree = sample_root_file.Get(input_tree_name)
-    leaves_dict = utils.get_leaves_in_tree(sample_tree)
+    leaves_dict = get_leaves_in_tree(sample_tree)
 
     if not double_variables: 
         double_variables = [

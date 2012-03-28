@@ -134,10 +134,19 @@ if __name__ == '__main__':
         )
 
     parser.add_option('--test', action = 'store_true')
+    parser.add_option('--whitelist', help = 'whitelist textfile', 
+                      default = None)
 
     (options, args) = parser.parse_args(sys.argv)
 
     do_test = options.test
+
+    whitelist = training_variable_whitelist
+    if options.whitelist: 
+        whitelist = []
+        with open(options.whitelist) as white_file: 
+            for line in white_file: 
+                whitelist.append(line.strip())
 
     if not len(args) == 2: 
         print parser.get_usage()
@@ -152,4 +161,4 @@ if __name__ == '__main__':
         run_pruned_chains(
             input_files, 
             do_test = do_test, 
-            training_variables = training_variable_whitelist)
+            training_variables = whitelist)

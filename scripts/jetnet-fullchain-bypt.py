@@ -316,6 +316,7 @@ if __name__ == '__main__':
         sv1 = False, 
         cram = False, 
         sequential = False, 
+        dis = False
         )
 
     parser.add_option('--test', action = 'store_true')
@@ -326,6 +327,8 @@ if __name__ == '__main__':
                       help = 'use pt and eta variables in training')
     parser.add_option('--sv1', action = 'store_true', 
                       help = 'use SV1')
+    parser.add_option('--dis', action = 'store_true', 
+                      help = 'use distance to secondary vertex')
     parser.add_option('--cram', action = 'store_true', 
                       help = 'allow more procs than we have')
     parser.add_option('--sequential', action = 'store_true', 
@@ -344,6 +347,11 @@ if __name__ == '__main__':
 
     if options.sv1: 
         training_variables += ['discriminatorSV1']
+
+    if options.dis: 
+        training_variables += ['leadingVertexPosition']
+
+    
 
     if not len(args) == 2: 
         print parser.get_usage()

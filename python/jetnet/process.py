@@ -3,6 +3,7 @@
 # hide this godawful abomination of a framework
 import ROOT
 ROOT.PyConfig.IgnoreCommandLineOptions = True
+ROOT.gROOT.SetBatch()           # don't draw (crashes subprocess)
 
 from jetnet import training, pyprep, profile
 from jetnet.perf import rejection, performance

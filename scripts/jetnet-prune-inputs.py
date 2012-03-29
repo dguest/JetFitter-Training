@@ -6,7 +6,7 @@ runs n-1 variable nn training.
 directories are created with the current directory as the base
 """
 
-import sys, os
+import sys, os, time
 import multiprocessing
 from optparse import OptionParser, OptionGroup
 
@@ -48,33 +48,15 @@ def get_all_vars_in_rds(rds_name):
 
     return all_leaf_names
 
-def run_pruned_chains(
-    input_files, 
-    working_dir = None, 
-    output_path = None, 
-    rds_name = 'reduced_dataset.root', 
-    rds_dir = 'reduced', 
-    jet_collection = 'AntiKt4TopoEMJets', 
-    do_test = False, 
-    cram = False, 
-    double_variables = None, 
-    int_variables = None, 
-    training_variables = training_variable_whitelist): 
-
-
-    
-    if working_dir is None: 
-        working_dir = jet_collection
-
+def build_rds(working_dir, reduced_dir, reduced_dataset, input_files, 
+              jet_collection, check_file, do_test): 
     if not os.path.isdir(working_dir): 
         os.mkdir(working_dir)
 
     # --- rds part
-    reduced_dir = os.path.join(working_dir, rds_dir)
     if not os.path.isdir(reduced_dir): 
         os.mkdir(reduced_dir)
 
-    reduced_dataset = os.path.join(reduced_dir, rds_name)
 
     if not os.path.isfile(reduced_dataset): 
         double_variables, int_variables = utils.get_allowed_rds_variables(
@@ -91,11 +73,58 @@ def run_pruned_chains(
     profile_file = os.path.join(reduced_dir, 'profiled.root')
     if not os.path.isfile(profile_file): 
         profile.make_profile_file(reduced_dataset, profile_file)
+    
+    # mark as done
+    open(check_file,'w').close()
+
+
+def run_pruned_chains(
+    input_files, 
+    working_dir = None, 
+    output_path = None, 
+    rds_name = 'reduced_dataset.root', 
+    rds_dir = 'reduced', 
+    jet_collection = 'AntiKt4TopoEMJets', 
+    do_test = False, 
+    cram = False, 
+    double_variables = None, 
+    int_variables = None, 
+    training_variables = training_variable_whitelist): 
+
+    array_id = None
+    if 'PBS_ARRAYID' in os.environ.keys(): 
+        array_id = int(os.environ['PBS_ARRAYID'])
+
+    if working_dir is None: 
+        working_dir = jet_collection
+
+    check_file = os.path.join(working_dir,'RDS_IS_DONE')
+    if os.path.isfile(check_file) and array_id == 0: 
+        os.remove(check_file)
+
+    reduced_dir = os.path.join(working_dir, rds_dir)
+    reduced_dataset = os.path.join(reduced_dir, rds_name)
+
+    # --- the first job in the array builds the rds
+    # TODO: make this safer.... maybe use some kind of 'with' statement
+    if array_id == 0: 
+        build_rds(working_dir, reduced_dir = reduced_dir,
+                  reduced_dataset = reduced_dataset, 
+                  input_files = input_files, 
+                  jet_collection = jet_collection, 
+                  check_file = check_file, 
+                  do_test = do_test)
+    else:
+        while (not os.path.isfile(check_file)): 
+            time.sleep(100)
+
 
     rds_variables = get_all_vars_in_rds(reduced_dataset)
     both_vars = [v for v in training_variables if v in rds_variables]
 
     n_processors = multiprocessing.cpu_count()
+    if array_id is not None: 
+        both_vars = both_vars[array_id:array_id + n_processors]
 
     if n_processors < len(both_vars) and not cram: 
         sys.exit('ERROR: too few procs: need %i, have %i' %

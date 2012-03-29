@@ -56,6 +56,7 @@ def run_pruned_chains(
     rds_dir = 'reduced', 
     jet_collection = 'AntiKt4TopoEMJets', 
     do_test = False, 
+    cram = False, 
     double_variables = None, 
     int_variables = None, 
     training_variables = training_variable_whitelist): 
@@ -96,7 +97,7 @@ def run_pruned_chains(
 
     n_processors = multiprocessing.cpu_count()
 
-    if n_processors < len(both_vars): 
+    if n_processors < len(both_vars) and not cram: 
         sys.exit('ERROR: too few procs: need %i, have %i' %
                  (len(both_vars), n_processors))
             
@@ -131,11 +132,14 @@ if __name__ == '__main__':
     parser = OptionParser(usage = usage, description = description)
     parser.set_defaults(
         test = False, 
+        cram = False, 
         )
 
     parser.add_option('--test', action = 'store_true')
     parser.add_option('--whitelist', help = 'whitelist textfile', 
                       default = None)
+    parser.add_option('--cram', action = 'store_true', 
+                      help = 'allow more subprocesses than cpu count')
 
     (options, args) = parser.parse_args(sys.argv)
 
@@ -165,4 +169,5 @@ if __name__ == '__main__':
         run_pruned_chains(
             input_files, 
             do_test = do_test, 
-            training_variables = whitelist)
+            training_variables = whitelist, 
+            cram = options.cram)

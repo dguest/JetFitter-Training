@@ -26,6 +26,7 @@ class RDSProcess(multiprocessing.Process):
         reduced_dataset = self._reduced_dataset
         working_dir = self._working_dir
         training_variables = self._training_variables
+        do_test = self._do_test
 
         # --- profiling 
         profile_dir = os.path.join(working_dir,'profile')

@@ -158,7 +158,6 @@ def fill_plots(plots_by_function, root_file, cut_list = [],
     def fails_cut(entry): 
         for cut in cut_list: 
             if cut(entry): 
-                n_cuts += 1
                 return True
         return False
 
@@ -170,6 +169,7 @@ def fill_plots(plots_by_function, root_file, cut_list = [],
                 break 
 
         if fails_cut(entry): 
+            n_cuts += 1
             continue
 
         for plot_list in plots_by_function: 

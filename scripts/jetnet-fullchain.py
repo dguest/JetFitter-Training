@@ -169,7 +169,8 @@ def run_full_chain(input_files, working_dir = None, output_path = None,
         except ImportError: 
             warn('could not import AtlasStyle', UglyWarning)
 
-        all_canvas = rejection.make_plots_from(test_ntuple_path)
+        all_canvas = rejection.make_plots_from(test_ntuple_path, 
+                                               max_events = 100000)
 
         formats = ['.pdf','.png']
 

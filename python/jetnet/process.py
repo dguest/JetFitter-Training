@@ -120,7 +120,7 @@ class RDSProcess(multiprocessing.Process):
                 import AtlasStyle
             except ImportError: 
                 warn('could not import AtlasStyle', UglyWarning)
-    
+
             all_canvas = rejection.make_plots_from(test_ntuple_path)
     
             formats = ['.pdf','.png']

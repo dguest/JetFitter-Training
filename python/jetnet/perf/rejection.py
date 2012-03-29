@@ -154,16 +154,23 @@ def fill_plots(plots_by_function, root_file, cut_list = [],
     print '%i entries in tree' % n_entries_total
 
     n_cuts = 0
+    
+    def fails_cut(entry): 
+        for cut in cut_list: 
+            if cut(entry): 
+                n_cuts += 1
+                return True
+        return False
+
+
     for entry_n, entry in enumerate(root_tree): 
 
         if max_events is not None: 
             if entry_n > max_events: 
                 break 
 
-        for cut in cut_list: 
-            if cut(entry): 
-                n_cuts += 1
-                continue
+        if fails_cut(entry): 
+            continue
 
         for plot_list in plots_by_function: 
             for plot in plot_list: 
@@ -409,7 +416,8 @@ def jet_eta_cut(entry):
 
 # --- run function 
 
-def make_plots_from(ntuple_file_name, cut_list = [jet_pt_cut, jet_eta_cut]):
+def make_plots_from(ntuple_file_name, cut_list = [jet_eta_cut], 
+                    max_events = None):
     
 
     cache_file_name = '%s_cache%s' % os.path.splitext(ntuple_file_name)
@@ -417,18 +425,11 @@ def make_plots_from(ntuple_file_name, cut_list = [jet_pt_cut, jet_eta_cut]):
     ntuple_file = TFile(ntuple_file_name)
     cache_file = None
 
-    if cut_list is None: 
-        cut_list = [ 
-            jet_pt_cut, 
-            jet_eta_cut, 
-            ]
-
-
     if not os.path.isfile(cache_file_name): 
 
         plots_by_function = define_plots()
         fill_plots(plots_by_function, ntuple_file, cut_list = cut_list, 
-                   max_events = 10000)
+                   max_events = max_events)
         save_plots(plots_by_function,cache_file_name)
 
     else: 

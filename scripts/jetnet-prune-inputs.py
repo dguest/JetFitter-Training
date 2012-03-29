@@ -110,7 +110,7 @@ def run_pruned_chains(
 
         training_subset = [v for v in both_vars if v != exclude ] 
         proc = process.RDSProcess(
-            reduced_dataset = rds, 
+            reduced_dataset = reduced_dataset, 
             working_dir = working_subdir, 
             training_variables = training_subset, 
             do_test = do_test)

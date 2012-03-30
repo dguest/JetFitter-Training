@@ -128,9 +128,9 @@ def run_pruned_chains(
     else: 
         proc_var_list = both_vars
 
-    if n_processors < len(both_vars) and not cram: 
+    if n_processors < len(proc_var_list) and not cram: 
         sys.exit('ERROR: too few procs: need %i, have %i' %
-                 (len(both_vars), n_processors))
+                 (len(proc_var_list), n_processors))
             
         
     subprocesses = []

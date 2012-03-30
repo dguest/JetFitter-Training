@@ -124,7 +124,9 @@ def run_pruned_chains(
 
     n_processors = multiprocessing.cpu_count()
     if array_id is not None: 
-        both_vars = both_vars[array_id:array_id + n_processors]
+        proc_var_list = both_vars[array_id:array_id + n_processors]
+    else: 
+        proc_var_list = both_vars
 
     if n_processors < len(both_vars) and not cram: 
         sys.exit('ERROR: too few procs: need %i, have %i' %
@@ -132,7 +134,7 @@ def run_pruned_chains(
             
         
     subprocesses = []
-    for exclude in both_vars: 
+    for exclude in proc_var_list: 
         working_subdir = os.path.join(working_dir,'no_' + exclude)
         if not os.path.isdir(working_subdir): 
             os.mkdir(working_subdir)

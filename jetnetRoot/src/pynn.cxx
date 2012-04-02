@@ -334,7 +334,7 @@ extern "C" PyObject* make_test_ntuple(PyObject *self,
       return NULL; 
     }
     catch (LoadReducedDSException e) { 
-      std::string error = e.info(); 
+      std::string error = "could not load --- " + e.info(); 
       PyErr_SetString(PyExc_IOError,error.c_str()); 
       return NULL; 
     }

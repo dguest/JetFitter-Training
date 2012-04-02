@@ -264,7 +264,7 @@ extern "C" PyObject* test_py(PyObject *self,
       return NULL; 
     }
     catch (NNException e) { 
-      PyErr_SetString(PyExc_StandardError,"generic nn exception"); 
+      PyErr_SetString(PyExc_StandardError,"generic nn exception in testNN"); 
       return NULL; 
     }
 

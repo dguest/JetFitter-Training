@@ -263,6 +263,12 @@ extern "C" PyObject* test_py(PyObject *self,
       PyErr_SetString(PyExc_IOError,"could not write output"); 
       return NULL; 
     }
+    catch (MissingLeafException e) { 
+      std::string error = "could not find leaf " + e.leaf_name() + 
+	" in chain" + e.chain_name() + " file " + input_file; 
+      PyErr_SetString(PyExc_IOError, error.c_str()); 
+      return NULL; 
+    }
     catch (NNException e) { 
       PyErr_SetString(PyExc_StandardError,"generic nn exception in testNN"); 
       return NULL; 

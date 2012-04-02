@@ -124,7 +124,9 @@ def run_pruned_chains(
 
     n_processors = multiprocessing.cpu_count()
     if array_id is not None: 
-        proc_var_list = both_vars[array_id:array_id + n_processors]
+        start_index = array_id * n_processors
+        end_index = start_index + n_processors
+        proc_var_list = both_vars[start_index:end_index]
     else: 
         proc_var_list = both_vars
 

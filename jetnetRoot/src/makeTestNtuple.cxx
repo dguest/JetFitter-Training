@@ -111,7 +111,7 @@ void makeTestNtuple(IONames io_names, bool debug)
 
   TTree* simu = dynamic_cast<TTree*>(file.Get("SVTree"));
   if (! simu){ 
-    throw LoadReducedDSException(); 
+    throw LoadReducedDSException(input_dataset_name.c_str(), "SVTree"); 
   }
 
 

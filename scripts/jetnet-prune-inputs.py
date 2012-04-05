@@ -11,7 +11,7 @@ import multiprocessing
 from optparse import OptionParser, OptionGroup
 
 from jetnet.dirs import OverwriteError
-from jetnet import pynn, profile, utils, pyprep, process
+from jetnet import pynn, profile, utils, pyprep, process, rds
 
     
 observer_discriminators = ['IP2D','IP3D','SV1','COMB']
@@ -57,10 +57,11 @@ def build_rds(working_dir, reduced_dir, reduced_dataset, input_files,
     if not os.path.isdir(reduced_dir): 
         os.mkdir(reduced_dir)
 
-
     if not os.path.isfile(reduced_dataset): 
-        double_variables, int_variables = utils.get_allowed_rds_variables(
-            input_files = input_files, jet_collection = jet_collection)
+        double_variables, int_variables = rds.get_allowed_rds_variables(
+            input_files = input_files, 
+            jet_collection = jet_collection)
+
 
         pyprep.prep_ntuple(input_files = input_files, 
                            double_variables = double_variables, 
@@ -87,8 +88,7 @@ def run_pruned_chains(
     jet_collection = 'AntiKt4TopoEMJets', 
     do_test = False, 
     cram = False, 
-    double_variables = None, 
-    int_variables = None, 
+    rds_whitelist = None
     training_variables = training_variable_whitelist): 
 
     array_id = None
@@ -172,7 +172,7 @@ if __name__ == '__main__':
         )
 
     parser.add_option('--test', action = 'store_true')
-    parser.add_option('--whitelist', help = 'whitelist textfile', 
+    parser.add_option('--whitelist', help = 'whitelist textfile for training', 
                       default = None)
     parser.add_option('--cram', action = 'store_true', 
                       help = 'allow more subprocesses than cpu count')
@@ -206,4 +206,5 @@ if __name__ == '__main__':
             input_files, 
             do_test = do_test, 
             training_variables = whitelist, 
+            rds_whitelist = rds_whitelist, 
             cram = options.cram)

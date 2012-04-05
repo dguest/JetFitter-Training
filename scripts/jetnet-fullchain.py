@@ -10,7 +10,7 @@ import ROOT
 ROOT.PyConfig.IgnoreCommandLineOptions = True
 
 
-from jetnet import training, pyprep, profile
+from jetnet import training, pyprep, profile, rds
 from jetnet.perf import rejection, performance
 import os, sys
 from warnings import warn
@@ -48,21 +48,9 @@ def run_full_chain(input_files, working_dir = None, output_path = None,
                    int_variables = None, 
                    training_variables = training_variable_whitelist): 
 
-    if not double_variables: 
-        double_variables = [
-            'energyFraction', 
-            'significance3d',         
-            'meanTrackRapidity', 
-            'maxTrackRapidity', 
-            'minTrackRapidity', 
-            ]
-
-    if not int_variables: 
-        int_variables = [ 
-            'nVTX', 
-            'nTracksAtVtx', 
-            'nSingleTracks', 
-            ]
+    double_variables, int_variables = rds.get_allowed_rds_variables(
+        input_files = input_files, 
+        jet_collection = jet_collection)
     
     if working_dir is None: 
         working_dir = jet_collection
@@ -111,21 +99,31 @@ if __name__ == '__main__':
         )
 
     parser.add_option('--test', action = 'store_true')
-    parser.add_option('--random', action = 'store_true', 
-                      dest = 'randomize_reduced_dataset', 
-                      help = 'randomize the reduced dataset' )
     parser.add_option('--rapidity', action = 'store_true', 
                       dest = 'do_rapidity', 
                       help = 'use rapidity variables in training')
+    parser.add_option('--whitelist', 
+                      help = 'whitelist textfile for training', 
+                      default = None)
 
     (options, args) = parser.parse_args(sys.argv)
 
     do_test = options.test
-    randomize_reduced_dataset = options.randomize_reduced_dataset
 
     training_variables = training_variable_whitelist
-    if options.do_rapidity: 
-        training_variables += rapidity_vars
+    if options.whitelist: 
+        training_variables = []
+        if options.do_rapidity: 
+            warn('--whitelist option overrides --rapidity option')
+        with open(options.whitelist) as white_file: 
+            for line in white_file: 
+                var = line.strip()
+                if var: 
+                    training_variables
+
+    else: 
+        if options.do_rapidity: 
+            training_variables += rapidity_vars
 
     if len(args) == 2: 
         input_files = []

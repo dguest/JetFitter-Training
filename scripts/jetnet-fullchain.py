@@ -122,7 +122,7 @@ if __name__ == '__main__':
             for line in white_file: 
                 var = line.strip()
                 if var: 
-                    training_variables
+                    training_variables.append(var)
 
     config_file_name = 'jetnet.cfg' 
     flavor_weights = {}

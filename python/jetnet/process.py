@@ -22,6 +22,7 @@ class RDSProcess(multiprocessing.Process):
         self._working_dir = working_dir
         self._training_variables = training_variables
         self._do_test = do_test
+        self._flavor_weights = flavor_weights
 
     def run(self): 
 
@@ -88,7 +89,7 @@ class RDSProcess(multiprocessing.Process):
             training.run_training(reduced_dataset = reduced_dataset, 
                                   output_directory = training_dir, 
                                   normalization = normalization_dict, 
-                                  flavor_weights = flavor_weights, 
+                                  flavor_weights = self._flavor_weights, 
                                   debug = do_test)
     
         # --- diagnostics part 

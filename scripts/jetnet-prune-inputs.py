@@ -130,6 +130,9 @@ def run_pruned_chains(
     else: 
         proc_var_list = both_vars
 
+    # --- add dummy (to run on everything)
+    proc_var_list.append('nothing')
+
     if n_processors < len(proc_var_list) and not cram: 
         sys.exit('ERROR: too few procs: need %i, have %i' %
                  (len(proc_var_list), n_processors))

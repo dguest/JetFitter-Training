@@ -24,8 +24,15 @@ def build_comparison(files, signal, background):
     d_string = 'al'
     t = TROOT
     colors = [
-        t.kOrange, t.kBlue, t.kRed, t.kGreen + 2, 
-        t.kMagenta + 1, t.kBlack
+        t.kOrange, 
+        t.kBlue, 
+        t.kRed, 
+        t.kGreen + 2, 
+        t.kMagenta + 1, 
+        t.kBlack, 
+        t.kGray, 
+        t.kCyan, 
+        t.kYellow + 2, 
         ]
     min_vals = []
     max_vals = []
@@ -38,7 +45,20 @@ def build_comparison(files, signal, background):
     legend.SetFillStyle(0)
     variables = '%s_over_%s' % (signal[0], background[0])
 
-    for color, file_name in zip(colors, files): 
+    # --- pull off identical path ends
+    f_name_array = [f.split('/') for f in files]
+    for segment in reversed(zip(*f_name_array)): 
+        if len(set(segment)) == 1: 
+            for i in xrange(len(f_name_array)): 
+                rev_name = list(reversed(list(f_name_array[i])))
+                rev_name.remove(segment[0])
+                new_name = reversed(rev_name)
+                f_name_array[i] = new_name
+
+    short_file_names = [os.path.join(*f) for f in f_name_array]
+    
+
+    for color, file_name, short_name in zip(colors, files, short_file_names): 
         rej_plot = build_plot(file_name = file_name, variable = variables, 
                               signal = signal, backgrounds = [background])
 
@@ -60,7 +80,7 @@ def build_comparison(files, signal, background):
         all_graphs.append(rej_plot)
 
         # add legend
-        leg_name = file_name.split(os.sep)[0]
+        leg_name = short_name
         legend.AddEntry(rej_plot,leg_name,'l')
 
     # ---- titles

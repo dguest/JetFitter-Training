@@ -4,11 +4,14 @@
 runs n-1 variable nn training. 
 
 directories are created with the current directory as the base
+
+options set in 'jetnet.cfg'
 """
 
 import sys, os, time
 import multiprocessing
 from optparse import OptionParser, OptionGroup
+from ConfigParser import SafeConfigParser
 
 from jetnet.dirs import OverwriteError
 from jetnet import pynn, profile, utils, pyprep, process, rds
@@ -89,7 +92,8 @@ def run_pruned_chains(
     do_test = False, 
     cram = False, 
     rds_whitelist = None
-    training_variables = training_variable_whitelist): 
+    training_variables = training_variable_whitelist, 
+    flavor_weights = {}): 
 
     array_id = None
     if 'PBS_ARRAYID' in os.environ.keys(): 
@@ -149,6 +153,7 @@ def run_pruned_chains(
             reduced_dataset = reduced_dataset, 
             working_dir = working_subdir, 
             training_variables = training_subset, 
+            flavor_weights = flavor_weights, 
             do_test = do_test)
         proc.start()
         subprocesses.append(proc)
@@ -190,6 +195,14 @@ if __name__ == '__main__':
                 if stripped_line: 
                     whitelist.append(stripped_line)
 
+    config_file_name = 'jetnet.cfg' 
+    if os.path.isfile(config_file_name): 
+        config = SafeConfigParser()
+        config.read(config_file_name)
+        flavor_weights = dict( 
+            (f, float(w)) for f,w in config.items('weights') )
+
+
     if not len(args) == 2: 
         print parser.get_usage()
 
@@ -207,4 +220,5 @@ if __name__ == '__main__':
             do_test = do_test, 
             training_variables = whitelist, 
             rds_whitelist = rds_whitelist, 
+            flavor_weights = flavor_weights, 
             cram = options.cram)

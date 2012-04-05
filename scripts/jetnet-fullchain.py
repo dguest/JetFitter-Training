@@ -3,6 +3,8 @@
 
 """
 runs full chain on <file list>
+
+options set in 'jetnet.cfg'
 """
 
 # hide this godawful abomination of a framework
@@ -16,7 +18,7 @@ import os, sys
 from warnings import warn
 
 from optparse import OptionParser, OptionGroup
-
+from ConfigParser import SafeConfigParser
 
 class UglyWarning(UserWarning): pass
 
@@ -46,6 +48,7 @@ def run_full_chain(input_files, working_dir = None, output_path = None,
                    randomize_reduced_dataset = False, 
                    double_variables = None, 
                    int_variables = None, 
+                   flavor_weights = {}
                    training_variables = training_variable_whitelist): 
 
     double_variables, int_variables = rds.get_allowed_rds_variables(
@@ -80,6 +83,7 @@ def run_full_chain(input_files, working_dir = None, output_path = None,
         reduced_dataset = rds_path, 
         working_dir = working_dir, 
         training_variables = training_variables, 
+        flavor_weights = flavor_weights, 
         do_test = do_test)
     proc.start()
     proc.join()
@@ -121,6 +125,13 @@ if __name__ == '__main__':
                 if var: 
                     training_variables
 
+    config_file_name = 'jetnet.cfg' 
+    if os.path.isfile(config_file_name): 
+        config = SafeConfigParser()
+        config.read(config_file_name)
+        flavor_weights = dict( 
+            (f, float(w)) for f,w in config.items('weights') )
+
     else: 
         if options.do_rapidity: 
             training_variables += rapidity_vars
@@ -134,4 +145,5 @@ if __name__ == '__main__':
         print 'running full chain' 
         run_full_chain(input_files, do_test = do_test, 
                        randomize_reduced_dataset = randomize_reduced_dataset, 
-                       training_variables = training_variables)
+                       training_variables = training_variables, 
+                       flavor_weights = flavor_weights)

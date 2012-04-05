@@ -14,6 +14,7 @@ import multiprocessing
 
 class RDSProcess(multiprocessing.Process): 
     def __init__(self, reduced_dataset, working_dir, training_variables, 
+                 flavor_weights = {}, 
                  do_test = False): 
         super(RDSProcess,self).__init__()
 
@@ -87,6 +88,7 @@ class RDSProcess(multiprocessing.Process):
             training.run_training(reduced_dataset = reduced_dataset, 
                                   output_directory = training_dir, 
                                   normalization = normalization_dict, 
+                                  flavor_weights = flavor_weights, 
                                   debug = do_test)
     
         # --- diagnostics part 

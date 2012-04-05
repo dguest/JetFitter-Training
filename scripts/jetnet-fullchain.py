@@ -54,7 +54,7 @@ def run_full_chain(input_files, working_dir = None, output_path = None,
     double_variables, int_variables = rds.get_allowed_rds_variables(
         input_files = input_files, 
         jet_collection = jet_collection)
-    
+
     if working_dir is None: 
         working_dir = jet_collection
 

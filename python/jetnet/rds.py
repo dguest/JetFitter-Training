@@ -34,5 +34,7 @@ def get_allowed_rds_variables(input_files, jet_collection,
         double_variables.remove('Discriminator')
         for flav in 'buc': 
             double_variables.remove('Likelihood_' + flav)
+        for slimvar in ['JetPt','JetEta','mass']: 
+            double_variables.remove(slimvar)
 
     return double_variables, int_variables

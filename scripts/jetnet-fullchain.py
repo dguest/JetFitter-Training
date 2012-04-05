@@ -12,7 +12,7 @@ import ROOT
 ROOT.PyConfig.IgnoreCommandLineOptions = True
 
 
-from jetnet import training, pyprep, profile, rds
+from jetnet import training, pyprep, profile, rds, process
 from jetnet.perf import rejection, performance
 import os, sys
 from warnings import warn
@@ -48,7 +48,7 @@ def run_full_chain(input_files, working_dir = None, output_path = None,
                    randomize_reduced_dataset = False, 
                    double_variables = None, 
                    int_variables = None, 
-                   flavor_weights = {}
+                   flavor_weights = {}, 
                    training_variables = training_variable_whitelist): 
 
     double_variables, int_variables = rds.get_allowed_rds_variables(
@@ -75,8 +75,7 @@ def run_full_chain(input_files, working_dir = None, output_path = None,
                            observer_discriminators = observer_discriminators, 
                            jet_collection = jet_collection, 
                            output_file = rds_path, 
-                           debug = do_test, 
-                           randomize = randomize_reduced_dataset)
+                           debug = do_test)
 
 
     proc = process.RDSProcess(
@@ -126,6 +125,7 @@ if __name__ == '__main__':
                     training_variables
 
     config_file_name = 'jetnet.cfg' 
+    flavor_weights = {}
     if os.path.isfile(config_file_name): 
         config = SafeConfigParser()
         config.read(config_file_name)
@@ -144,6 +144,5 @@ if __name__ == '__main__':
 
         print 'running full chain' 
         run_full_chain(input_files, do_test = do_test, 
-                       randomize_reduced_dataset = randomize_reduced_dataset, 
                        training_variables = training_variables, 
                        flavor_weights = flavor_weights)

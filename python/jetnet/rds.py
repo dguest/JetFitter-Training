@@ -1,4 +1,4 @@
-import jetnet.utils
+from jetnet import utils
 def get_allowed_rds_variables(input_files, jet_collection, 
                               whitelist = None): 
     """

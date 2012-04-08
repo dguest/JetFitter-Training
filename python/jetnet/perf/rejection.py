@@ -151,6 +151,9 @@ def fill_plots(plots_by_function, root_file, cut_list = [],
     
     n_entries_total = root_tree.GetEntriesFast()
 
+    if not n_entries_total: 
+        raise IOError('found no entries in %s performance tree' % root_file)
+
     print '%i entries in tree' % n_entries_total
 
     n_cuts = 0

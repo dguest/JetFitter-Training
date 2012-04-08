@@ -8,6 +8,6 @@ from ROOT import TFile
 import sys
 
 if __name__ == '__main__': 
-    values = [15,30,100]
+    values = [15,30,50,80,120]
     
     splittree.split_tree(sys.argv[1], values = values)

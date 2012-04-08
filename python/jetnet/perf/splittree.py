@@ -1,10 +1,14 @@
 from ROOT import TIter, TFile, TTree
 from array import array
+import os
 
 def split_tree(in_file, values, variable = 'JetPt', 
-               out_file_name = '%s_%s-%s.root'): 
+               out_file_name = '%s_%s-%s.root', 
+               out_file_dir = ''): 
     """
     splits tree into subtrees, divided at values
+
+    returns the relative paths of the output trees
     """
     padded_values = sorted(values)
     padded_values.append(None)
@@ -15,7 +19,8 @@ def split_tree(in_file, values, variable = 'JetPt',
         lower_name = str(lower_limit) if lower_limit else 'under'
         upper_name = str(upper_limit) if upper_limit else 'up'
         file_name = out_file_name % (variable, lower_name, upper_name)
-        the_file = TFile(file_name,'recreate')
+        full_file_name = os.path.join(out_file_dir, file_name)
+        the_file = TFile(full_file_name,'recreate')
         the_tree = TTree('performance','performance')
         out_files.append(the_file)
         the_tree.range = (lower_limit, upper_limit)
@@ -59,6 +64,7 @@ def split_tree(in_file, values, variable = 'JetPt',
             print n, 'entries processed' 
 
         if n == 100000: break 
+
         cat_var = getattr(entry,variable)
         leaves_copied = False
         for output in out_trees: 
@@ -75,3 +81,4 @@ def split_tree(in_file, values, variable = 'JetPt',
     for out_file, out_tree in zip(out_files, out_trees): 
         out_file.WriteTObject(out_tree)
             
+    return [f.GetName() for f in out_files]

@@ -22,6 +22,8 @@ from optparse import OptionParser, OptionGroup
 
 class UglyWarning(UserWarning): pass
 
+pt_divisions = [15 ,30 ,50 ,80 ,120]
+
 observer_discriminators = ['IP2D','IP3D','SV1','COMB']
 training_variable_whitelist = [
     'nVTX', 
@@ -88,6 +90,7 @@ def run_full_chain_by_pt(
             double_variables = double_variables, 
             int_variables = int_variables, 
             observer_discriminators = observer_discriminators, 
+            pt_divisions = [float(pt) for pt in pt_divisions], 
             jet_collection = jet_collection, 
             output_dir = reduced_dir, 
             debug = do_test )

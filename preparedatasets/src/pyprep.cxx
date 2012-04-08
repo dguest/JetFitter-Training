@@ -116,6 +116,7 @@ PyObject* make_ntuples_ptcat(PyObject *self,
   PyObject* int_variables = 0; 
   PyObject* double_variables = 0; 
   PyObject* observer_discriminators = 0; 
+  PyObject* pt_divisions = 0; 
   const char* jet_collection_name = "AntiKt4TopoEMJets"; 
   const char* output_dir = "reduced"; 
   const char* suffix = "AOD"; 
@@ -125,7 +126,8 @@ PyObject* make_ntuples_ptcat(PyObject *self,
     "input_files",
     "int_variables", 
     "double_variables", 
-    "observer_discriminators", 
+    "observer_discriminators",
+    "pt_divisions", 
     "jet_collection", 
     "output_dir", 
     "suffix", 
@@ -133,7 +135,7 @@ PyObject* make_ntuples_ptcat(PyObject *self,
     NULL};
     
   bool ok = PyArg_ParseTupleAndKeywords
-    (args, keywds, "O|OOOsssb", 
+    (args, keywds, "O|OOOOsssb", 
      // this function should take a const, and 
      // may be changed. until then we'll cast
      const_cast<char**>(kwlist),
@@ -141,6 +143,7 @@ PyObject* make_ntuples_ptcat(PyObject *self,
      &int_variables, 
      &double_variables, 
      &observer_discriminators, 
+     &pt_divisions, 
      &jet_collection_name, 
      &output_dir, 
      &suffix, 
@@ -162,6 +165,15 @@ PyObject* make_ntuples_ptcat(PyObject *self,
     return NULL; 
   }
 
+  std::vector<double> pt_cat_vec; 
+  try { 
+    pt_cat_vec = parse_double_list(pt_divisions); 
+  }
+  catch (ParseException e) { 
+    PyErr_SetString(PyExc_TypeError, "expected list of doubles"); 
+    return NULL; 
+  }
+
   if (debug){ 
     std::cout << "files: " << std::endl;
     for (std::vector<std::string>::const_iterator itr = files.begin(); 
@@ -179,10 +191,7 @@ PyObject* make_ntuples_ptcat(PyObject *self,
   }
 
   else{ 
-
-    // TODO: this guy should be read in from python eventually 
-    std::vector<double> pt_cat_vec; 
-
+  
     try { 
       writeNtuple_byPt(files, 
 		       observers, 

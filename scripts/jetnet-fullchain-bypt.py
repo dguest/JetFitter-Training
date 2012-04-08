@@ -154,6 +154,10 @@ if __name__ == '__main__':
     var_opt = OptionGroup(parser, title = 'variable flags', 
                           description = 'flags to control training '
                           'variables')
+    opt_var.add_option('--whitelist', 
+                      help = 'whitelist textfile for training', 
+                      default = None)
+
     var_opt.add_option('--rapidity', action = 'store_true', 
                        dest = 'do_rapidity', 
                        help = 'use rapidity variables in training')
@@ -192,6 +196,21 @@ if __name__ == '__main__':
 
     if options.dis: 
         training_variables += ['leadingVertexPosition']
+
+    if options.whitelist: 
+        new_var_set = set(training_variables) 
+        new_var_set -= set(training_variable_whitelist) 
+        if new_var_set: 
+            warn_str = '--whitelist option overrides: '
+            for var in new_var_set: 
+                warn_str.append(var + ' ')
+            warn( warn_str )
+        training_variables = []
+        with open(options.whitelist) as white_file: 
+            for line in white_file: 
+                var = line.strip()
+                if var: 
+                    training_variables.append(var)
 
     
 

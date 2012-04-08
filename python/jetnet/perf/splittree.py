@@ -63,8 +63,6 @@ def split_tree(in_file, values, variable = 'JetPt',
         if n % 10000 == 0: 
             print n, 'entries processed' 
 
-        if n == 100000: break 
-
         cat_var = getattr(entry,variable)
         leaves_copied = False
         for output in out_trees: 

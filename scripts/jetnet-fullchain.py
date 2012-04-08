@@ -1,10 +1,11 @@
 #!/usr/bin/env python2.6
-# Author: Daniel Guest (dguest@cern.ch)
 
 """
 runs full chain on <file list>
 
 options set in 'jetnet.cfg'
+
+Author: Daniel Guest (dguest@cern.ch)
 """
 
 # hide this godawful abomination of a framework

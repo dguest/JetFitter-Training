@@ -11,8 +11,7 @@ import ROOT
 ROOT.PyConfig.IgnoreCommandLineOptions = True
 
 
-from jetnet import training, pyprep, profile, process, utils
-from jetnet.perf import rejection, performance
+from jetnet import pyprep, process, rds
 import os, sys, glob
 from warnings import warn
 import multiprocessing
@@ -82,7 +81,7 @@ def run_full_chain_by_pt(
 
     reduced_datasets = glob.glob('%s/reduced_*' % reduced_dir)
     if len(reduced_datasets) == 0: 
-        double_variables, int_variables = utils.get_allowed_rds_variables(
+        double_variables, int_variables = rds.get_allowed_rds_variables(
             input_files = input_files, jet_collection = jet_collection)
 
         pyprep.make_ntuples_ptcat(
@@ -108,15 +107,15 @@ def run_full_chain_by_pt(
             
         
     subprocesses = []
-    for rds in reduced_datasets: 
-        rds_basename = os.path.basename(rds).rstrip('.root')
+    for ds in reduced_datasets: 
+        rds_basename = os.path.basename(ds).rstrip('.root')
         category = rds_basename.lstrip('reduced_')
         working_subdir = os.path.join(working_dir,'pt_' + category)
         if not os.path.isdir(working_subdir): 
             os.mkdir(working_subdir)
 
         proc = process.RDSProcess(
-            reduced_dataset = rds, 
+            reduced_dataset = ds, 
             working_dir = working_subdir, 
             training_variables = training_variables, 
             do_test = do_test)
@@ -154,7 +153,7 @@ if __name__ == '__main__':
     var_opt = OptionGroup(parser, title = 'variable flags', 
                           description = 'flags to control training '
                           'variables')
-    opt_var.add_option('--whitelist', 
+    var_opt.add_option('--whitelist', 
                       help = 'whitelist textfile for training', 
                       default = None)
 

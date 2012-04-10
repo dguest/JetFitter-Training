@@ -1,6 +1,12 @@
 #!/usr/bin/env python2.6
+"""
+compares effeciency vs rejection curves
+Author: Daniel Guest (dguest@cern.ch)
+"""
+
 import sys, os
 from jetnet.perf import rejection 
+from optparse import OptionParser, OptionGroup
 
 def build_plot(file_name, variable, signal, backgrounds): 
     
@@ -20,7 +26,7 @@ def build_plot(file_name, variable, signal, backgrounds):
 
 
 
-def build_comparison(files, signal, background):  
+def build_comparison(files, signal, background, do_bw = False):  
     d_string = 'al'
     t = TROOT
     colors = [
@@ -34,6 +40,10 @@ def build_comparison(files, signal, background):
         t.kCyan, 
         t.kYellow + 2, 
         ]
+    line_styles = range(1,10)
+    if do_bw: 
+        colors = line_styles
+
     min_vals = []
     max_vals = []
     all_graphs = []
@@ -68,9 +78,13 @@ def build_comparison(files, signal, background):
         rej_plot.Draw(d_string)
         d_string = 'l'
 
-        rej_plot.SetMarkerColor(color)
-        rej_plot.SetLineColor(color)
-        rej_plot.SetLineWidth(2)
+        if not do_bw: 
+            rej_plot.SetMarkerColor(color)
+            rej_plot.SetLineColor(color)
+            rej_plot.SetLineWidth(2)
+        else: 
+            rej_plot.SetLineStyle(color)
+            
 
         the_max = TMath.MaxElement(rej_plot.GetN(),rej_plot.GetY())
         the_min = TMath.MinElement(rej_plot.GetN(),rej_plot.GetY())
@@ -108,10 +122,18 @@ def build_comparison(files, signal, background):
 
 
 if __name__ == '__main__': 
+
+    usage = 'usage: %prog <file list> [options]'
+    description = __doc__
+
+    parser = OptionParser(usage = usage, description = description)
+    parser.set_defaults(bw = False)
     
-    if len(sys.argv) == 1: 
-        sys.exit( 'usage: %s <file paths>...' % 
-                  os.path.basename(sys.argv[0]))
+    parser.add_option('--bw', action = 'store_true', 
+                      help = 'print in black and white')
+
+    options, args = parser.parse_args(sys.argv)
+    
 
     from ROOT import TFile, TMath, TROOT, TCanvas, TLegend, gPad
     import AtlasStyle
@@ -121,9 +143,10 @@ if __name__ == '__main__':
         for background in ['light','bottom','charm']: 
             if background == signal: continue 
 
-            canvas = build_comparison(files = sys.argv[1:], 
+            canvas = build_comparison(files = args[1:], 
                                       signal = signal, 
-                                      background = background)
+                                      background = background, 
+                                      do_bw = options.bw)
             all_plots.append(canvas)
                                           
 

@@ -17,12 +17,11 @@ from warnings import warn
 import multiprocessing
 
 from optparse import OptionParser, OptionGroup
-
+from ConfigParser import SafeConfigParser
 
 class UglyWarning(UserWarning): pass
 
-pt_divisions = [15 ,30 ,50 ,80 ,120]
-
+default_pt_divisions = [25.0, 35.0, 50.0, 80.0, 120.0, 200.0]
 observer_discriminators = ['IP2D','IP3D','SV1','COMB']
 training_variable_whitelist = [
     'nVTX', 
@@ -61,9 +60,9 @@ def run_full_chain_by_pt(
     rds_dir = 'reduced_pt', 
     jet_collection = 'AntiKt4TopoEMJets', 
     do_test = False, 
-    double_variables = None, 
-    int_variables = None, 
     training_variables = training_variable_whitelist, 
+    pt_divisions = default_pt_divisions, 
+    flavor_weights = {}, 
     cram = False, 
     sequential = False): 
 
@@ -118,6 +117,7 @@ def run_full_chain_by_pt(
             reduced_dataset = ds, 
             working_dir = working_subdir, 
             training_variables = training_variables, 
+            flavor_weights = flavor_weights, 
             do_test = do_test)
         proc.start()
         subprocesses.append(proc)
@@ -175,6 +175,10 @@ if __name__ == '__main__':
                       help = 'allow more procs than we have')
     parser.add_option('--sequential', action = 'store_true', 
                       help = 'force sequential processing')
+    
+    parser.add_option('--config', 
+                      help = 'use this configuration file', 
+                      default = 'jetnet.cfg')
 
     (options, args) = parser.parse_args(sys.argv)
 
@@ -211,7 +215,17 @@ if __name__ == '__main__':
                 if var: 
                     training_variables.append(var)
 
-    
+    config_file_name = options.config
+    flavor_weights = {}
+    if os.path.isfile(config_file_name): 
+        config = SafeConfigParser()
+        config.read(config_file_name)
+        flavor_weights = dict( 
+            (f, float(w)) for f,w in config.items('weights') )
+        pt_divisions = config.get('preprocessing','pt_divisions').split()
+    else: 
+        sys.exit('could not find config file %s' % config_file_name)
+
 
     if not len(args) == 2: 
         print parser.get_usage()
@@ -227,5 +241,7 @@ if __name__ == '__main__':
             input_files, 
             do_test = do_test, 
             training_variables = training_variables, 
+            flavor_weights = flavor_weights, 
+            pt_divisions = pt_divisions, 
             cram = options.cram, 
             sequential = options.sequential)

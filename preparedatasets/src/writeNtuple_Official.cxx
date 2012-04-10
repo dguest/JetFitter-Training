@@ -19,26 +19,15 @@
 
 int writeNtuple_Official(SVector input_files, 
 			 Observers observers, 
+			 std::vector<double> pt_cat_vec, 
 			 std::string jetCollectionName,
 			 std::string output_file, 
 			 std::string suffix,
-			 bool forNN,
-			 bool randomize) 
+			 bool forNN) 
 {
 
-  if (randomize) { 
-    std::cerr << "ERROR: randomize is not implemented\n"; 
-  }
-  assert(!randomize); 
 
   // --- setup pt / eta categories
-  std::vector<double> pt_cat_vec; 
-  pt_cat_vec.push_back(25);
-  pt_cat_vec.push_back(35);
-  pt_cat_vec.push_back(50);
-  pt_cat_vec.push_back(80);
-  pt_cat_vec.push_back(120);
-  pt_cat_vec.push_back(200);
   CategoryMap pt_categories(pt_cat_vec); 
 
   std::vector<double> eta_cat_vec; 

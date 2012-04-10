@@ -9,7 +9,7 @@
 #include "writeNtuple_byPt.hh"
 #include "pyprep.hh"
 #include "pyparse.hh"
-
+#include "ntuple_defaults.hh"
   
 static const char* doc_string = 
   "inputs: TBA\n"; 
@@ -22,6 +22,7 @@ PyObject* prep_ntuple(PyObject *self,
   PyObject* int_variables = 0; 
   PyObject* double_variables = 0; 
   PyObject* observer_discriminators = 0; 
+  PyObject* pt_divisions = 0; 
   const char* jet_collection_name = "AntiKt4TopoEMJets"; 
   const char* output_file_name = "reduced.root"; 
   const char* suffix = "AOD"; 
@@ -33,7 +34,8 @@ PyObject* prep_ntuple(PyObject *self,
     "input_files",
     "int_variables", 
     "double_variables", 
-    "observer_discriminators", 
+    "observer_discriminators",
+    "pt_divisions", 
     "jet_collection", 
     "output_file", 
     "suffix", 
@@ -43,7 +45,7 @@ PyObject* prep_ntuple(PyObject *self,
     NULL};
     
   bool ok = PyArg_ParseTupleAndKeywords
-    (args, keywds, "O|OOOsssbbb", 
+    (args, keywds, "O|OOOOsssbbb", 
      // this function should take a const, and 
      // may be changed. until then we'll cast
      const_cast<char**>(kwlist),
@@ -51,6 +53,7 @@ PyObject* prep_ntuple(PyObject *self,
      &int_variables, 
      &double_variables, 
      &observer_discriminators, 
+     &pt_divisions, 
      &jet_collection_name, 
      &output_file_name, 
      &suffix, 
@@ -74,6 +77,20 @@ PyObject* prep_ntuple(PyObject *self,
     return NULL; 
   }
 
+  std::vector<double> pt_cat_vec; 
+  try { 
+    if (pt_divisions == 0){ 
+      using defopt::PT_CATEGORIES2; 
+      pt_cat_vec.assign(PT_CATEGORIES2, PT_CATEGORIES2 + 6); 
+    }
+
+    pt_cat_vec = parse_double_list(pt_divisions); 
+  }
+  catch (ParseException e) { 
+    PyErr_SetString(PyExc_TypeError, "expected list of doubles"); 
+    return NULL; 
+  }
+
   if (debug){ 
     std::cout << "files: " << std::endl;
     for (std::vector<std::string>::const_iterator itr = files.begin(); 
@@ -94,11 +111,11 @@ PyObject* prep_ntuple(PyObject *self,
 
     writeNtuple_Official(files, 
 			 observers, 
+			 pt_cat_vec, 
 			 jet_collection_name, 
 			 output_file_name, 
 			 suffix, 
-			 for_nn, 
-			 randomize); 
+			 for_nn); 
 
   }
 
@@ -167,6 +184,11 @@ PyObject* make_ntuples_ptcat(PyObject *self,
 
   std::vector<double> pt_cat_vec; 
   try { 
+    if (pt_divisions == 0){ 
+      using defopt::PT_CATEGORIES2; 
+      pt_cat_vec.assign(PT_CATEGORIES2, PT_CATEGORIES2 + 6); 
+    }
+
     pt_cat_vec = parse_double_list(pt_divisions); 
   }
   catch (ParseException e) { 

@@ -23,6 +23,7 @@ from ConfigParser import SafeConfigParser
 
 class UglyWarning(UserWarning): pass
 
+default_pt_divisions = [25.0, 35.0, 50.0, 80.0, 120.0, 200.0]
 observer_discriminators = ['IP2D','IP3D','SV1','COMB']
 training_variable_whitelist = [
     'nVTX', 
@@ -46,9 +47,7 @@ def run_full_chain(input_files, working_dir = None, output_path = None,
                    rds_name = 'reduced_dataset.root', 
                    jet_collection = 'AntiKt4TopoEMJets', 
                    do_test = False, 
-                   randomize_reduced_dataset = False, 
-                   double_variables = None, 
-                   int_variables = None, 
+                   pt_divisions = default_pt_divisions, 
                    flavor_weights = {}, 
                    training_variables = training_variable_whitelist): 
 
@@ -74,6 +73,7 @@ def run_full_chain(input_files, working_dir = None, output_path = None,
                            double_variables = double_variables, 
                            int_variables = int_variables, 
                            observer_discriminators = observer_discriminators, 
+                           pt_divisions = pt_divisions, 
                            jet_collection = jet_collection, 
                            output_file = rds_path, 
                            debug = do_test)
@@ -109,6 +109,9 @@ if __name__ == '__main__':
     parser.add_option('--whitelist', 
                       help = 'whitelist textfile for training', 
                       default = None)
+    parser.add_option('--config', 
+                      help = 'use this configuration file', 
+                      default = 'jetnet.cfg')
 
     (options, args) = parser.parse_args(sys.argv)
 
@@ -125,13 +128,16 @@ if __name__ == '__main__':
                 if var: 
                     training_variables.append(var)
 
-    config_file_name = 'jetnet.cfg' 
+    config_file_name = options.config
     flavor_weights = {}
     if os.path.isfile(config_file_name): 
         config = SafeConfigParser()
         config.read(config_file_name)
         flavor_weights = dict( 
             (f, float(w)) for f,w in config.items('weights') )
+        pt_divisions = config.get('preprocessing','pt_divisions').split()
+    else: 
+        sys.exit('could not find config file %s' % config_file_name)
 
     else: 
         if options.do_rapidity: 
@@ -146,4 +152,5 @@ if __name__ == '__main__':
         print 'running full chain' 
         run_full_chain(input_files, do_test = do_test, 
                        training_variables = training_variables, 
-                       flavor_weights = flavor_weights)
+                       flavor_weights = flavor_weights, 
+                       pt_divisions = pt_divisions)

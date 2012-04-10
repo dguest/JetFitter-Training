@@ -30,10 +30,6 @@ int writeNtuple_byPt(SVector input_files,
   srand(time(0)); 
 
   // --- setup pt / eta categories
-  if (pt_cat_vec.size() == 0) { 
-    using defopt::PT_CATEGORIES; 
-    pt_cat_vec.assign(PT_CATEGORIES, PT_CATEGORIES + 5); 
-  }
   CategoryMap pt_categories(pt_cat_vec); 
 
   std::vector<double> eta_cat_vec; 

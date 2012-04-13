@@ -70,26 +70,14 @@ extern "C" PyObject* train_py(PyObject *self,
 
   // --- parse input variables
   std::vector<InputVariableInfo> input_variable_info; 
-  try {
-    input_variable_info = parse_input_variable_info(normalization); 
-  }
-  catch (const ParseException& e) { 
-    PyErr_SetString(PyExc_TypeError, 
-		    "expected a dict, "
-		    "key = varname, value = (offset, scale)"); 
-    return 0; 
-  }
+
+  input_variable_info = parse_input_variable_info(normalization); 
+  if (PyErr_Occurred()) return 0; 
+
 
   // --- parse node configuration 
-  std::vector<int> node_vec; 
-  try {
-    node_vec = parse_int_tuple(nodes); 
-  }
-  catch(const ParseException& e) { 
-    PyErr_SetString(PyExc_TypeError,
-		    "expected a tuple of int, found something else"); 
-    return 0;
-  }
+  std::vector<int> node_vec = parse_int_tuple(nodes); 
+  if (PyErr_Occurred()) return 0; 
 
   // --- parse flavor weights 
   typedef std::map<std::string, double>::const_iterator SDMapItr; 
@@ -97,22 +85,21 @@ extern "C" PyObject* train_py(PyObject *self,
   flavor_weights_map["bottom"] = 1; 
   flavor_weights_map["charm"] = 1; 
   flavor_weights_map["light"] = 5; 
-  try {
-    std::map<std::string, double> new_flavor_weights;
-    new_flavor_weights = parse_double_dict(flavor_weights); 
-    
-    for ( SDMapItr itr = new_flavor_weights.begin(); 
-	  itr != new_flavor_weights.end(); itr++){ 
-      flavor_weights_map[itr->first] = itr->second; 
-    }
-  }
-  catch (const ParseException& e){ 
-    PyErr_SetString
-      (PyExc_TypeError,
-       "flavor_weights should be a dict of the form: "
-       "{'bottom':x, 'charm':y, 'light':z}"); 
+
+  std::map<std::string, double> new_flavor_weights 
+    = parse_double_dict(flavor_weights); 
+  if (PyErr_Occurred()){
+    PyErr_SetString(PyExc_TypeError,
+		    "flavor_weights should be a dict of the form: "
+		    "{'bottom':x, 'charm':y, 'light':z}"); 
     return 0;
   }
+    
+  for ( SDMapItr itr = new_flavor_weights.begin(); 
+	itr != new_flavor_weights.end(); itr++){ 
+    flavor_weights_map[itr->first] = itr->second; 
+  }
+
   if (flavor_weights_map.size() != 3) { 
     flavor_weights_map.erase("bottom"); 
     flavor_weights_map.erase("charm"); 

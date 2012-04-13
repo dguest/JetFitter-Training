@@ -63,32 +63,23 @@ PyObject* prep_ntuple(PyObject *self,
 
   if (!ok) return NULL;
 
-  std::vector<std::string> files; 
+
+  std::vector<std::string> files = parse_string_list(input_file_list); 
+  if (PyErr_Occurred()) return 0; 
   Observers observers; 
-  try { 
-    files = parse_string_list(input_file_list); 
-    observers.discriminators = parse_string_list(observer_discriminators); 
-    observers.int_variables = parse_string_list(int_variables); 
-    observers.double_variables = parse_string_list(double_variables); 
-  }
-  catch(const ParseException& e) { 
-    PyErr_SetString(PyExc_TypeError,
-		    "expected a list of strings, found something else"); 
-    return NULL; 
-  }
+  observers.discriminators = parse_string_list(observer_discriminators); 
+  observers.int_variables = parse_string_list(int_variables); 
+  observers.double_variables = parse_string_list(double_variables); 
+  if (PyErr_Occurred()) return 0; 
 
   std::vector<double> pt_cat_vec; 
-  try { 
-    if (pt_divisions == 0){ 
-      using defopt::PT_CATEGORIES2; 
-      pt_cat_vec.assign(PT_CATEGORIES2, PT_CATEGORIES2 + 6); 
-    }
-
-    pt_cat_vec = parse_double_list(pt_divisions); 
+  if (pt_divisions == 0){ 
+    using defopt::PT_CATEGORIES2; 
+    pt_cat_vec.assign(PT_CATEGORIES2, PT_CATEGORIES2 + 6); 
   }
-  catch (const ParseException& e) { 
-    PyErr_SetString(PyExc_TypeError, "expected list of doubles"); 
-    return NULL; 
+  else { 
+    pt_cat_vec = parse_double_list(pt_divisions); 
+    if (PyErr_Occurred()) return 0; 
   }
 
   if (debug){ 
@@ -168,32 +159,23 @@ PyObject* make_ntuples_ptcat(PyObject *self,
 
   if (!ok) return NULL;
 
-  std::vector<std::string> files; 
+  std::vector<std::string> files = parse_string_list(input_file_list); 
+  if (PyErr_Occurred()) return 0; 
+
   Observers observers; 
-  try { 
-    files = parse_string_list(input_file_list); 
-    observers.discriminators = parse_string_list(observer_discriminators); 
-    observers.int_variables = parse_string_list(int_variables); 
-    observers.double_variables = parse_string_list(double_variables); 
-  }
-  catch(const ParseException& e) { 
-    PyErr_SetString(PyExc_TypeError,
-		    "expected a list of strings, found something else"); 
-    return NULL; 
-  }
+  observers.discriminators = parse_string_list(observer_discriminators); 
+  observers.int_variables = parse_string_list(int_variables); 
+  observers.double_variables = parse_string_list(double_variables); 
+  if (PyErr_Occurred()) return 0; 
 
   std::vector<double> pt_cat_vec; 
-  try { 
-    if (pt_divisions == 0){ 
-      using defopt::PT_CATEGORIES2; 
-      pt_cat_vec.assign(PT_CATEGORIES2, PT_CATEGORIES2 + 6); 
-    }
-
-    pt_cat_vec = parse_double_list(pt_divisions); 
+  if (pt_divisions == 0){ 
+    using defopt::PT_CATEGORIES2; 
+    pt_cat_vec.assign(PT_CATEGORIES2, PT_CATEGORIES2 + 6); 
   }
-  catch (const ParseException& e) { 
-    PyErr_SetString(PyExc_TypeError, "expected list of doubles"); 
-    return NULL; 
+  else { 
+    pt_cat_vec = parse_double_list(pt_divisions); 
+    if (PyErr_Occurred()) return 0; 
   }
 
   if (debug){ 
@@ -255,30 +237,5 @@ extern "C" {
   {
     Py_InitModule("pyprep", keywdarg_methods);
   }
-
-}
-
-std::vector<std::string> parse_string_list(PyObject* string_list){ 
-  std::vector<std::string> strings; 
-  if (string_list == 0) { 
-    return strings; 
-  }
-
-  bool ok = PyList_Check(string_list); 
-  if (!ok) {
-    throw ListParseException(); 
-  }
-
-  int n_strings = PyList_Size(string_list); 
-  for (int i = 0; i < n_strings; i++){ 
-    PyObject* the_ob = PyList_GetItem(string_list, i); 
-    if (!PyString_Check(the_ob)){ 
-      throw StringParseException(); 
-    }
-
-    std::string the_string = PyString_AsString(the_ob); 
-    strings.push_back(the_string); 
-  }
-  return strings; 
 
 }

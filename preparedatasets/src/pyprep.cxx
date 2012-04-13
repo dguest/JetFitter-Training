@@ -71,7 +71,7 @@ PyObject* prep_ntuple(PyObject *self,
     observers.int_variables = parse_string_list(int_variables); 
     observers.double_variables = parse_string_list(double_variables); 
   }
-  catch(ParseException e) { 
+  catch(const ParseException& e) { 
     PyErr_SetString(PyExc_TypeError,
 		    "expected a list of strings, found something else"); 
     return NULL; 
@@ -86,7 +86,7 @@ PyObject* prep_ntuple(PyObject *self,
 
     pt_cat_vec = parse_double_list(pt_divisions); 
   }
-  catch (ParseException e) { 
+  catch (const ParseException& e) { 
     PyErr_SetString(PyExc_TypeError, "expected list of doubles"); 
     return NULL; 
   }
@@ -176,7 +176,7 @@ PyObject* make_ntuples_ptcat(PyObject *self,
     observers.int_variables = parse_string_list(int_variables); 
     observers.double_variables = parse_string_list(double_variables); 
   }
-  catch(ParseException e) { 
+  catch(const ParseException& e) { 
     PyErr_SetString(PyExc_TypeError,
 		    "expected a list of strings, found something else"); 
     return NULL; 
@@ -191,7 +191,7 @@ PyObject* make_ntuples_ptcat(PyObject *self,
 
     pt_cat_vec = parse_double_list(pt_divisions); 
   }
-  catch (ParseException e) { 
+  catch (const ParseException& e) { 
     PyErr_SetString(PyExc_TypeError, "expected list of doubles"); 
     return NULL; 
   }

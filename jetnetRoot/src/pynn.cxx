@@ -73,7 +73,7 @@ extern "C" PyObject* train_py(PyObject *self,
   try {
     input_variable_info = parse_input_variable_info(normalization); 
   }
-  catch (ParseException e) { 
+  catch (const ParseException& e) { 
     PyErr_SetString(PyExc_TypeError, 
 		    "expected a dict, "
 		    "key = varname, value = (offset, scale)"); 
@@ -85,7 +85,7 @@ extern "C" PyObject* train_py(PyObject *self,
   try {
     node_vec = parse_int_tuple(nodes); 
   }
-  catch(ParseException e) { 
+  catch(const ParseException& e) { 
     PyErr_SetString(PyExc_TypeError,
 		    "expected a tuple of int, found something else"); 
     return 0;
@@ -106,7 +106,7 @@ extern "C" PyObject* train_py(PyObject *self,
       flavor_weights_map[itr->first] = itr->second; 
     }
   }
-  catch (ParseException e){ 
+  catch (const ParseException& e){ 
     PyErr_SetString
       (PyExc_TypeError,
        "flavor_weights should be a dict of the form: "
@@ -173,15 +173,15 @@ extern "C" PyObject* train_py(PyObject *self,
 	      flavor_weights_struct, 
 	      n_training_events_target); 
     }
-    catch (LoadReducedDSException e){ 
+    catch (const LoadReducedDSException& e){ 
       PyErr_SetString(PyExc_IOError,"could not load dataset"); 
       return NULL; 
     }
-    catch (WriteFileException e){ 
+    catch (const WriteFileException& e){ 
       PyErr_SetString(PyExc_IOError,"could not write output"); 
       return NULL; 
     }
-    catch (NNException e) { 
+    catch (const NNException& e) { 
       PyErr_SetString(PyExc_StandardError,"generic nn exception"); 
       return NULL; 
     }
@@ -255,21 +255,21 @@ extern "C" PyObject* test_py(PyObject *self,
 	     with_ip3d, 
 	     out_file); 
     }
-    catch (LoadNetworkException e){ 
+    catch (const LoadNetworkException& e){ 
       PyErr_SetString(PyExc_IOError,"could not load network"); 
       return NULL; 
     }
-    catch (WriteFileException e){ 
+    catch (const WriteFileException& e){ 
       PyErr_SetString(PyExc_IOError,"could not write output"); 
       return NULL; 
     }
-    catch (MissingLeafException e) { 
+    catch (const MissingLeafException& e) { 
       std::string error = "could not find leaf " + e.leaf_name() + 
 	" in chain" + e.chain_name() + " file " + input_file; 
       PyErr_SetString(PyExc_IOError, error.c_str()); 
       return NULL; 
     }
-    catch (NNException e) { 
+    catch (const NNException& e) { 
       PyErr_SetString(PyExc_StandardError,"generic nn exception in testNN"); 
       return NULL; 
     }
@@ -331,20 +331,20 @@ extern "C" PyObject* make_test_ntuple(PyObject *self,
     try { 
       makeTestNtuple(io_names); 
     }
-    catch (LoadNetworkException e){ 
+    catch (const LoadNetworkException& e){ 
       PyErr_SetString(PyExc_IOError,"could not load network"); 
       return NULL; 
     }
-    catch (WriteFileException e){ 
+    catch (const WriteFileException& e){ 
       PyErr_SetString(PyExc_IOError,"could not write output"); 
       return NULL; 
     }
-    catch (LoadReducedDSException e) { 
+    catch (const LoadReducedDSException& e) { 
       std::string error = "could not load --- " + e.info(); 
       PyErr_SetString(PyExc_IOError,error.c_str()); 
       return NULL; 
     }
-    catch (NNException e) { 
+    catch (const NNException& e) { 
       PyErr_SetString(PyExc_StandardError,"generic nn exception"); 
       return NULL; 
     }

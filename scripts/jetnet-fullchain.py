@@ -103,9 +103,6 @@ if __name__ == '__main__':
         )
 
     parser.add_option('--test', action = 'store_true')
-    parser.add_option('--rapidity', action = 'store_true', 
-                      dest = 'do_rapidity', 
-                      help = 'use rapidity variables in training')
     parser.add_option('--whitelist', 
                       help = 'whitelist textfile for training', 
                       default = None)
@@ -139,9 +136,6 @@ if __name__ == '__main__':
     else: 
         sys.exit('could not find config file %s' % config_file_name)
 
-    else: 
-        if options.do_rapidity: 
-            training_variables += rapidity_vars
 
     if len(args) == 2: 
         input_files = []

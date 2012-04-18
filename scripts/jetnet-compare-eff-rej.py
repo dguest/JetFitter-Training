@@ -5,9 +5,7 @@ Author: Daniel Guest (dguest@cern.ch)
 """
 
 import sys, os, itertools
-from jetnet.perf import rejection 
 from optparse import OptionParser, OptionGroup
-from ROOT import TGraph
 import numpy as np 
 
 def build_plot(file_name, variable, signal, backgrounds): 
@@ -181,8 +179,12 @@ if __name__ == '__main__':
 
     options, args = parser.parse_args(sys.argv[1:])
     
+    if len(args) == 0: 
+        sys.exit(parser.get_usage())
+    
+    from jetnet.perf import rejection 
 
-    from ROOT import TFile, TMath, TROOT, TCanvas, TLegend, gPad
+    from ROOT import TFile, TMath, TROOT, TCanvas, TLegend, gPad, TGraph
     import AtlasStyle
 
     all_plots = []

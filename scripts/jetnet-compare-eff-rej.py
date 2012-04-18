@@ -4,9 +4,11 @@ compares effeciency vs rejection curves
 Author: Daniel Guest (dguest@cern.ch)
 """
 
-import sys, os
+import sys, os, itertools
 from jetnet.perf import rejection 
 from optparse import OptionParser, OptionGroup
+from ROOT import TGraph
+import numpy as np 
 
 def build_plot(file_name, variable, signal, backgrounds): 
     
@@ -24,9 +26,28 @@ def build_plot(file_name, variable, signal, backgrounds):
 
     return graph 
 
+def get_xy(file_name, variable, signal, backgrounds): 
+
+    the_file = TFile(file_name)
+    signal_hist_name = '_'.join([variable, 'matched', signal])
+    the_signal_hist = the_file.Get(signal_hist_name)
+
+    background_names = ['_'.join([variable,'matched',b]) for b in backgrounds]
+    background_hists = [the_file.Get(n) for n in background_names]
+
+    sig_array, bkg_array = rejection.plots_to_xy(
+        signal = the_signal_hist, 
+        background = background_hists, 
+        y_function = rejection.rejection)
+    return np.array(sig_array), np.array(bkg_array)
 
 
-def build_comparison(files, signal, background, do_bw = False):  
+def build_comparison(files, signal, background, do_bw = False, 
+                     baseline = None):  
+    """
+    signal and background are strings
+    """
+
     d_string = 'al'
     t = TROOT
     colors = [
@@ -65,13 +86,33 @@ def build_comparison(files, signal, background, do_bw = False):
                 new_name = reversed(rev_name)
                 f_name_array[i] = new_name
 
-    short_file_names = [os.path.join(*f) for f in f_name_array]
+    try: 
+        short_file_names = [os.path.join(*f) for f in f_name_array]
+    except TypeError: 
+        short_file_names = files
     
+    if baseline: 
+        baseline_x, baseline_y = get_xy(
+            file_name = baseline, 
+            variable = variables, 
+            signal = signal, 
+            backgrounds = [background] 
+            ) 
 
-    for color, file_name, short_name in zip(colors, files, short_file_names): 
-        rej_plot = build_plot(file_name = file_name, variable = variables, 
-                              signal = signal, backgrounds = [background])
+    ccycle = itertools.cycle(colors)
+    for color, file_name, short_name in zip(ccycle, files, short_file_names): 
+        vals_x, vals_y = get_xy(
+            file_name = file_name, 
+            variable = variables, 
+            signal = signal, 
+            backgrounds = [background]
+            )
 
+        if baseline: 
+            baseline_interp = np.interp(vals_x, baseline_x, baseline_y)
+            vals_y /= baseline_interp
+
+        rej_plot = TGraph(len(vals_x), vals_x, vals_y)
     
         rej_plot.GetXaxis().SetLimits(0,1)
         rej_plot.GetXaxis().SetRangeUser(0,1)
@@ -100,6 +141,7 @@ def build_comparison(files, signal, background, do_bw = False):
     # ---- titles
     efficiency_name = '%s efficiency' % signal
     rejection_name = '%s rejection' % background
+
     title = ';'.join(['',efficiency_name, rejection_name])
     all_graphs[0].SetTitle(title)
 
@@ -108,10 +150,14 @@ def build_comparison(files, signal, background, do_bw = False):
     the_max = max(max_vals)
     the_range = the_max - the_min
     y_mar = 0.1
-    from math import log, exp
-    all_graphs[0].SetMaximum(the_max*exp( y_mar*log(the_range)))
-    all_graphs[0].SetMinimum(the_min*exp(-y_mar*log(the_range)))
-    gPad.SetLogy()
+    if baseline: 
+        all_graphs[0].SetMaximum(the_max + the_range)
+        all_graphs[0].SetMinimum(the_min - the_range)
+    else: 
+        from math import log, exp
+        all_graphs[0].SetMaximum(the_max*exp( y_mar*log(the_range)))
+        all_graphs[0].SetMinimum(the_min*exp(-y_mar*log(the_range)))
+        gPad.SetLogy()
 
 
     legend.Draw()
@@ -131,8 +177,9 @@ if __name__ == '__main__':
     
     parser.add_option('--bw', action = 'store_true', 
                       help = 'print in black and white')
+    parser.add_option('--baseline', default = None)
 
-    options, args = parser.parse_args(sys.argv)
+    options, args = parser.parse_args(sys.argv[1:])
     
 
     from ROOT import TFile, TMath, TROOT, TCanvas, TLegend, gPad
@@ -143,10 +190,11 @@ if __name__ == '__main__':
         for background in ['light','bottom','charm']: 
             if background == signal: continue 
 
-            canvas = build_comparison(files = args[1:], 
+            canvas = build_comparison(files = args, 
                                       signal = signal, 
                                       background = background, 
-                                      do_bw = options.bw)
+                                      do_bw = options.bw, 
+                                      baseline = options.baseline)
             all_plots.append(canvas)
                                           
 

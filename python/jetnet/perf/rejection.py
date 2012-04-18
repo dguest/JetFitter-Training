@@ -211,8 +211,8 @@ def rejection(signal, background, total_background):
     return total_background / background
 rejection.string = 'rejection'
 
-def plots_to_rej_vs_eff(signal, background, y_function = sig_over_bg): 
-
+def plots_to_xy(signal, background, y_function = rejection): 
+    
     if isinstance(background, list): 
         total_background = background[0].Clone(str(random()))
         for other_background in background[1:]: 
@@ -227,7 +227,7 @@ def plots_to_rej_vs_eff(signal, background, y_function = sig_over_bg):
 
     sig_array = array.array('d')
     bkg_array = array.array('d')
-
+    
     bin_values = zip(bin_rev_iter(signal), bin_rev_iter(background))
     for sig_val, bkg_val in bin_values: 
         sum_signal += sig_val
@@ -240,8 +240,12 @@ def plots_to_rej_vs_eff(signal, background, y_function = sig_over_bg):
 
 
     assert len(sig_array) == len(bkg_array)
+    return sig_array, bkg_array
 
+def plots_to_rej_vs_eff(signal, background, y_function = sig_over_bg, 
+                        baseline = None): 
 
+    sig_array, bkg_array = plots_to_xy(signal, background, y_function)
     graph = TGraph(len(sig_array), sig_array, bkg_array)
     return graph
 

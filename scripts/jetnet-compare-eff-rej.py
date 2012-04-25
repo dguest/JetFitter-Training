@@ -1,6 +1,7 @@
 #!/usr/bin/env python2.6
 """
 compares effeciency vs rejection curves
+
 Author: Daniel Guest (dguest@cern.ch)
 """
 

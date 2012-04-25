@@ -35,7 +35,7 @@ CC := g++
 LIBS := -lgfortran $(ROOTLIBS) 
 
 COPT := -O2 -fPIC -g -I$(INC) -I$(COMMON_INC)
-FOPT := -ffixed-form -ffixed-line-length-none -g -m32
+FOPT := -ffixed-form -ffixed-line-length-none -g 
 
 # LINKER_OPTS := -L$(LIB) -Wl,-rpath,$(LIB) 
 

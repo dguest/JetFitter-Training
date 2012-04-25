@@ -20,9 +20,7 @@ vpath %Dict.h $(DICT)
 vpath %Dict.cxx $(DICT)
 
 # --- get build options
-ifndef PY_CONFIG
-PY_CONFIG := python-config
-endif 
+PY_CONFIG := python2.7-config
 
 PY_FLAGS := $(shell $(PY_CONFIG) --includes)
 PY_LIB   := -L$(shell $(PY_CONFIG) --prefix)/lib

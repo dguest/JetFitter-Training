@@ -21,9 +21,8 @@ ROOTLIBS      := $(shell root-config --libs)
 ROOTLDFLAGS   := $(shell root-config --ldflags)
 
 # and py config
-ifndef PY_CONFIG
-PY_CONFIG := python-config
-endif 
+PY_CONFIG := python2.7-config
+
 PY_FLAGS :=   $(shell $(PY_CONFIG) --includes)
 PY_LIB   := -L$(shell $(PY_CONFIG) --prefix)/lib
 PY_LIB   +=   $(shell $(PY_CONFIG) --libs)

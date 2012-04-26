@@ -1,4 +1,4 @@
-import sys, dl, os, glob
+import sys, os, glob
 from jetnet.dirs import OverwriteError
 import pynn
 
@@ -31,11 +31,6 @@ def _get_pt_eta_categories(file_name):
             
     return pt_categories, eta_categories
 
-
-def _set_linker_flags(): 
-    """without this root has trouble"""
-    binding_rules =  dl.RTLD_GLOBAL | dl.RTLD_NOW
-    sys.setdlopenflags(binding_rules)
 
 def run_training(reduced_dataset, 
                  output_directory,

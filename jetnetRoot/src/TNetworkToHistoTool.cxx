@@ -3,32 +3,31 @@
 #include "TTrainedNetwork.h"
 #include "TNetworkToHistoTool.h"
 #include <cmath>
+#include <stdexcept> 
+#include <cassert>
+#include <boost/format.hpp>
 
-ClassImp( TNetworkToHistoTool)
+// ClassImp( TNetworkToHistoTool)
 
 std::vector<TH1*> TNetworkToHistoTool::fromTrainedNetworkToHisto(TTrainedNetwork* trainedNetwork) const
 {
 
   std::vector<TH1*> outputHistos;
 
-  if (trainedNetwork->getActivationFunction()!=1)
-  {
-    cout << "ERROR: activation function is different from one. Only one is supported..." << endl;
-    return outputHistos;
-  }
-    
+
+  assert(trainedNetwork->getActivationFunction() == 1); 
 
   Int_t nInput=trainedNetwork->getnInput();
-  vector<Int_t> nHiddenLayerSize=trainedNetwork->getnHiddenLayerSize();
+  std::vector<Int_t> nHiddenLayerSize=trainedNetwork->getnHiddenLayerSize();
   Int_t nHidden=nHiddenLayerSize.size();
 
-  for (Int_t o=0;o<nHidden;++o)
-  {
-    cout << " Hidden lay: " << o << " size: " << nHiddenLayerSize[o];
-  }
+  // for (Int_t o=0;o<nHidden;++o)
+  // {
+  //   cout << " Hidden lay: " << o << " size: " << nHiddenLayerSize[o];
+  // }
   
   Int_t nOutput=trainedNetwork->getnOutput();
-  cout << " Output size: " << nOutput << endl;
+  // cout << " Output size: " << nOutput << endl;
   
   std::vector<TVectorD*> thresholdVectors=trainedNetwork->getThresholdVectors();
   std::vector<TMatrixD*> weightMatrices=trainedNetwork->weightMatrices();
@@ -56,32 +55,28 @@ std::vector<TH1*> TNetworkToHistoTool::fromTrainedNetworkToHisto(TTrainedNetwork
   //ThresholdInfo
   for (Int_t i=0;i<nHidden+1;++i)
   {
-    TString threName("Layer");
-    threName+=i;
-    threName+="_thresholds";
+    std::string threName = (boost::format("Layer%i_thresholds") % i).str();
    
     Int_t layerSize=(i<nHidden)?nHiddenLayerSize[i]:nOutput;
     Int_t previousLayerSize=(i==0)?nInput:nHiddenLayerSize[i-1];
     
-    TH1F* histoThreshLayer=new TH1F(threName,
-                                    threName,
+    TH1F* histoThreshLayer=new TH1F(threName.c_str(),
+                                    threName.c_str(),
                                     layerSize,
                                     0,
                                     layerSize);
     
     for (Int_t s=0;s<layerSize;s++)
     {
-      histoThreshLayer->SetBinContent(s+1,thresholdVectors[i]->operator()(s));
+      histoThreshLayer->SetBinContent(s+1,(*thresholdVectors[i])(s));
     }
 
-    TString weightsName("Layer");
-    weightsName+=i;
-    weightsName+="_weights";
+    std::string weightsName = (boost::format("Layer%i_weights") % i).str();
     
     outputHistos.push_back(histoThreshLayer);
 
-    TH2F* histoWeightsLayer=new TH2F(weightsName,
-                                     weightsName,
+    TH2F* histoWeightsLayer=new TH2F(weightsName.c_str(),
+                                     weightsName.c_str(),
                                      previousLayerSize,
                                      0,
                                      previousLayerSize,
@@ -93,7 +88,7 @@ std::vector<TH1*> TNetworkToHistoTool::fromTrainedNetworkToHisto(TTrainedNetwork
     {
       for (Int_t p=0;p<previousLayerSize;++p)
       {
-        histoWeightsLayer->SetBinContent(p+1,s+1,weightMatrices[i]->operator()(p,s));
+        histoWeightsLayer->SetBinContent(p+1,s+1,(*weightMatrices[i])(p,s));
       }
     }
     
@@ -106,55 +101,55 @@ std::vector<TH1*> TNetworkToHistoTool::fromTrainedNetworkToHisto(TTrainedNetwork
   
 }
 
-TH1* TNetworkToHistoTool::findHisto(TString nameOfHisto,
-                                     std::vector<TH1*> & inputHistos) const
+TH1* TNetworkToHistoTool::findHisto(std::string nameOfHisto,
+				    std::vector<TH1*> & inputHistos) const
 {
-
   std::vector<TH1*>::const_iterator inputBegin=inputHistos.begin();
   std::vector<TH1*>::const_iterator inputEnd=inputHistos.end();
   
-  for ( std::vector<TH1*>::const_iterator inputIter=inputBegin;inputIter!=inputEnd;++inputIter)
-  {
-    if ((*inputIter)->GetName()==nameOfHisto)
-    {
+  for ( std::vector<TH1*>::const_iterator 
+	  inputIter=inputBegin;
+	inputIter != inputEnd; 
+	inputIter++) { 
+    if ((*inputIter)->GetName() == nameOfHisto.c_str()) {
       return (*inputIter);
     }
   }
-  return 0;
+  throw std::runtime_error(" Could not find " + nameOfHisto + " histogram"); 
 }
 
 
 
-TTrainedNetwork* TNetworkToHistoTool::fromHistoToTrainedNetwork(std::vector<TH1*> & inputHistos) const
+TTrainedNetwork* 
+TNetworkToHistoTool::fromHistoToTrainedNetwork(std::vector<TH1*> & inputHistos) const
 {
 
   
 
-  TH1F* histoLayersInfo=dynamic_cast<TH1F*>(findHisto("LayersInfo",inputHistos));
+  TH1* histoLayersInfo = findHisto("LayersInfo",inputHistos);
 
   if (histoLayersInfo==0)
   {
-    cout << " Could not find LayersInfo histogram... Aborting " << endl;
-    return 0;
+    throw std::runtime_error(" Could not find LayersInfo histogram..."); 
   }
 
 
   Int_t nHidden=histoLayersInfo->GetNbinsX()-2;
   Int_t nInput=(Int_t)std::floor(histoLayersInfo->GetBinContent(1)+0.5);
 
-  vector<Int_t> nHiddenLayerSize;
+  std::vector<Int_t> nHiddenLayerSize;
   for (Int_t i=0;i<nHidden;++i)
   {
     nHiddenLayerSize.push_back( (Int_t)std::floor(histoLayersInfo->GetBinContent(2+i)+0.5));
   }
 
-  for (Int_t o=0;o<nHidden;++o)
-  {
-    cout << " Hidden lay: " << o << " size: " << nHiddenLayerSize[o];
-  }
+  // for (Int_t o=0;o<nHidden;++o)
+  // {
+  //   cout << " Hidden lay: " << o << " size: " << nHiddenLayerSize[o];
+  // }
 
   Int_t nOutput=(Int_t)std::floor(histoLayersInfo->GetBinContent(2+nHidden)+0.5);
-  cout << " Output size: " << nOutput << endl;
+  // cout << " Output size: " << nOutput << endl;
   
   std::vector<TVectorD*> thresholdVectors;
   std::vector<TMatrixD*> weightMatrices;
@@ -163,9 +158,7 @@ TTrainedNetwork* TNetworkToHistoTool::fromHistoToTrainedNetwork(std::vector<TH1*
   //Reconstruct thresholdInfo
   for (Int_t i=0;i<nHidden+1;++i)
   {
-    TString threName("Layer");
-    threName+=i;
-    threName+="_thresholds";
+    std::string threName = (boost::format("Layer%i_thresholds") % i).str();
 
     Int_t layerSize=(i<nHidden)?nHiddenLayerSize[i]:nOutput;
     Int_t previousLayerSize=(i==0)?nInput:nHiddenLayerSize[i-1];
@@ -173,35 +166,21 @@ TTrainedNetwork* TNetworkToHistoTool::fromHistoToTrainedNetwork(std::vector<TH1*
     TVectorD* thresholdVector=new TVectorD(layerSize);
     TMatrixD* weightMatrix=new TMatrixD(previousLayerSize,layerSize);
    
-    TH1F* histoThreshLayer=dynamic_cast<TH1F*>(findHisto(threName,inputHistos));
-    if (histoThreshLayer==0)
-    {
-      cout << " Could not find " << threName << "  histogram... Aborting (mem leak also...)" << endl;
-      return 0;
-    }
-
+    TH1* histoThreshLayer = findHisto(threName,inputHistos);
 
     for (Int_t s=0;s<layerSize;s++)
     {
-      thresholdVector->operator()(s)=histoThreshLayer->GetBinContent(s+1);
+      (*thresholdVector)(s) = histoThreshLayer->GetBinContent(s+1);
     }
 
-    TString weightsName("Layer");
-    weightsName+=i;
-    weightsName+="_weights";
+    std::string weightsName = (boost::format("Layer%i_weights") % i).str();
 
-    TH2F* histoWeightsLayer=dynamic_cast<TH2F*>(findHisto(weightsName,inputHistos));
-    if (histoWeightsLayer==0)
-    {
-      cout << " Could not find " << weightsName << "  histogram... Aborting (mem leak also...)" << endl;
-      return 0;
-    }
-    
+    TH1* histoWeightsLayer = findHisto(weightsName, inputHistos);
     for (Int_t s=0;s<layerSize;s++)
     {
       for (Int_t p=0;p<previousLayerSize;++p)
       {
-        weightMatrix->operator()(p,s)=histoWeightsLayer->GetBinContent(p+1,s+1);
+        (*weightMatrix)(p,s) = histoWeightsLayer->GetBinContent(p+1,s+1);
       }
     }
 
@@ -221,6 +200,3 @@ TTrainedNetwork* TNetworkToHistoTool::fromHistoToTrainedNetwork(std::vector<TH1*
   return trainedNetwork;
   
 }
-        
-  
-  

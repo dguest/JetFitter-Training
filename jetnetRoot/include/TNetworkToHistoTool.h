@@ -1,16 +1,16 @@
+//-*-c++-*-
 #ifndef __TNetworkToHistoTool_
 #define __TNetworkToHistoTool_
 
-#include <TString.h>
+#include <string>
 #include <vector>
-#include "TObject.h"
 
 class TH1;
 class TTrainedNetwork;
 
 //by Giacinto Piacquadio (19-2-2008)
 
-class TNetworkToHistoTool : public TObject
+class TNetworkToHistoTool // : public TObject 
 {
 public:
   
@@ -24,10 +24,10 @@ public:
 
 private:
 
-  TH1* findHisto(TString nameOfHisto,
-                  std::vector<TH1*> & inputHistos) const;
+  TH1* findHisto(std::string nameOfHisto,
+		 std::vector<TH1*> & inputHistos) const;
   
-  ClassDef( TNetworkToHistoTool, 1 );
+  //  ClassDef( TNetworkToHistoTool, 1 );
   
 };
 

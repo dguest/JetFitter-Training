@@ -5,16 +5,6 @@
 #include <cassert>
 #include <cstring>
 
-//Since we are single-threaded and never calls outself recursively, we
-//can use a global data area to do our work.
-//FIXME: We do it like this to avoid adding new member data (because I
-//am not 100% sure this class is not persistified somewhere). {Thomas Kittelmann}
-#define MAX_LAYER_LENGTH 1000
-namespace TTN_internal {
-  static double tmpdata[2*MAX_LAYER_LENGTH];
-  static double * tmp_array[2] = { &(tmpdata[0]), &(tmpdata[MAX_LAYER_LENGTH]) };
-}
-
 
 TTrainedNetwork::TTrainedNetwork()
 {
@@ -121,6 +111,17 @@ std::vector<Double_t>  TTrainedNetwork::calculateOutputValues(std::vector<Double
   // anything here since it is used heavily in reconstruction during
   // Pixel clusterization - Thomas Kittelmann, Oct 2011.
 
+  // I changed someting: these arrays (tmpdata, tmp_array) were global. 
+  // Compilers should be smart enough to optimize the array allocation.
+  // -- Dan Guest, May 2012
+
+  double tmpdata[2*MAX_LAYER_LENGTH];
+  double * tmp_array[2] = { 
+    &(tmpdata[0]), 
+    &(tmpdata[MAX_LAYER_LENGTH]) 
+  };
+
+
   if (static_cast<int>(input.size()) != mnInput)
   {
     std::cout << "TTrainedNetwork WARNING Input size: " << input.size()
@@ -139,8 +140,10 @@ std::vector<Double_t>  TTrainedNetwork::calculateOutputValues(std::vector<Double
 
   for (unsigned iLayer = 0; iLayer < nTargetLayers; ++iLayer) {
     //Find data area for target layer:
-    nTarget = ( iLayer == lastTargetLayer ? mnOutput : mnHiddenLayerSize[iLayer] );
-    target = TTN_internal::tmp_array[iLayer%2];
+    nTarget = ( iLayer == lastTargetLayer ? 
+		mnOutput : 
+		mnHiddenLayerSize[iLayer] );
+    target = tmp_array[iLayer%2];
 
     //Transfer the input nodes to the output nodes in this layer transition:
     weights = mWeightMatrices[iLayer]->GetMatrixArray();
@@ -152,7 +155,8 @@ std::vector<Double_t>  TTrainedNetwork::calculateOutputValues(std::vector<Double
 		    //version of the package gave.
       const double * weights_tmp = weights++;
       const double * source_end(&(source[nSource]));
-      for (const double* source_iter=source;source_iter!=source_end;++source_iter)
+      for (const double* source_iter = source; 
+	   source_iter != source_end; ++source_iter)
 	{
 	  nodeVal += (*weights_tmp) * (*source_iter);
 	  weights_tmp += nTarget;
@@ -170,7 +174,8 @@ std::vector<Double_t>  TTrainedNetwork::calculateOutputValues(std::vector<Double
   if (!mNormalizeOutput) {
     std::memcpy(&result[0], target, sizeof(*target)*nTarget);
   } else {
-    const double sumLastLayer = std::accumulate(&target[0], &target[nTarget], 0.0 );
+    const double sumLastLayer = 
+      std::accumulate(&target[0], &target[nTarget], 0.0 );
     const double normFact = sumLastLayer ? 1.0/sumLastLayer : 0.0;
     for (unsigned i = 0; i < nTarget; ++i)
       result[i] = normFact * target[i];

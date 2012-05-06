@@ -1,15 +1,17 @@
-// It's -*- c++ -*-
 #ifndef __TTrainedNetwork_
 #define __TTrainedNetwork_
 
 #include "TObject.h"
 #include "TMatrixD.h"
 #include "TVectorD.h"
-#include "TJetNet.h"
 #include <math.h>
 #include <vector>
 
-//by Giacinto Piacquadio (18-02-2008)
+/******************************************************
+  @class TTrainedNetwork
+  Created : 18-02-2008
+  @author Giacinto Piacquadio (giacinto.piacquadio AT physik.uni-freiburg.de)
+********************************************************/
 
 class TTrainedNetwork : public TObject
 {
@@ -24,7 +26,9 @@ class TTrainedNetwork : public TObject
 		  std::vector<Int_t> & nHiddenLayerSize,
 		  std::vector<TVectorD*> & thresholdVectors,
 		  std::vector<TMatrixD*> & weightMatrices,
-		  Int_t activationFunction);
+		  Int_t activationFunction,
+                  bool linearOutput=false,
+                  bool normalizeOutput=false);
 
   ~TTrainedNetwork();
 
@@ -47,6 +51,10 @@ class TTrainedNetwork : public TObject
 
   std::vector<Double_t> calculateOutputValues(std::vector<Double_t> & input) const;
 
+  bool getIfLinearOutput() const { return mLinearOutput; };
+
+  bool getIfNormalizeOutput() const { return mNormalizeOutput; };
+
  private:
 
   Int_t mnInput;
@@ -62,9 +70,22 @@ class TTrainedNetwork : public TObject
   //  TMatrixD** mWeightMatrices;
   Int_t mActivationFunction;
 
-  Double_t sigmoid(Double_t x) const { return 1./(1.+exp(-2*x)); };
+  bool mLinearOutput;
 
-  ClassDef( TTrainedNetwork, 1 )
+  bool mNormalizeOutput;
+
+  double maxExpValue;
+
+  Double_t sigmoid(Double_t x) const 
+  { 
+    if (-2*x >= maxExpValue)
+    {
+      return 0.;
+    }
+    return 1./(1.+exp(-2*x)); 
+  };
+
+  ClassDef( TTrainedNetwork, 2 )
 
 };
 

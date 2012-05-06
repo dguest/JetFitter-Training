@@ -1,6 +1,20 @@
 #include "TTrainedNetwork.h"
+#include <iostream>
+#include <limits>
+#include <numeric>
+#include <cassert>
+#include <cstring>
 
-ClassImp( TTrainedNetwork)
+//Since we are single-threaded and never calls outself recursively, we
+//can use a global data area to do our work.
+//FIXME: We do it like this to avoid adding new member data (because I
+//am not 100% sure this class is not persistified somewhere). {Thomas Kittelmann}
+#define MAX_LAYER_LENGTH 1000
+namespace TTN_internal {
+  static double tmpdata[2*MAX_LAYER_LENGTH];
+  static double * tmp_array[2] = { &(tmpdata[0]), &(tmpdata[MAX_LAYER_LENGTH]) };
+}
+
 
 TTrainedNetwork::TTrainedNetwork()
 {
@@ -8,17 +22,22 @@ TTrainedNetwork::TTrainedNetwork()
   mnHidden=0;
   mnOutput=0;
   mActivationFunction=1;
+  mLinearOutput=false;
+  mNormalizeOutput=false;
+  maxExpValue=log(std::numeric_limits<double>::max());
+  
 }
 
 TTrainedNetwork::TTrainedNetwork(Int_t nInput,
-		  Int_t nHidden,
-		  Int_t nOutput,
-		  std::vector<Int_t> & nHiddenLayerSize,
-		  std::vector<TVectorD*> & thresholdVectors,
-		  std::vector<TMatrixD*> & weightMatrices,
-		  Int_t activationFunction)
+                                 Int_t nHidden,
+                                 Int_t nOutput,
+                                 std::vector<Int_t> & nHiddenLayerSize,
+                                 std::vector<TVectorD*> & thresholdVectors,
+                                 std::vector<TMatrixD*> & weightMatrices,
+                                 Int_t activationFunction,
+                                 bool linearOutput,
+                                 bool normalizeOutput)
 {
-
   mnInput=nInput;
   mnHidden=nHidden;
   mnOutput=nOutput;
@@ -26,6 +45,17 @@ TTrainedNetwork::TTrainedNetwork(Int_t nInput,
   mThresholdVectors=thresholdVectors;
   mWeightMatrices=weightMatrices;
   mActivationFunction=activationFunction;
+  mLinearOutput=linearOutput;
+  mNormalizeOutput=normalizeOutput;
+  maxExpValue=log(std::numeric_limits<double>::max());
+
+  int nlayer_max(mnOutput);
+  for (unsigned i=0;i<nHiddenLayerSize.size();++i)
+    nlayer_max = std::max<int>(nlayer_max,nHiddenLayerSize[i]);
+  if (nlayer_max>=MAX_LAYER_LENGTH) {
+    std::cout<<"TTrainedNetwork ERROR Maximal layer size exceeded"<<std::endl;
+    assert(false);
+  }
 }
 
 TTrainedNetwork::~TTrainedNetwork()
@@ -86,64 +116,70 @@ void TTrainedNetwork::setNewWeights(std::vector<TVectorD*> & thresholdVectors,
 
 std::vector<Double_t>  TTrainedNetwork::calculateOutputValues(std::vector<Double_t> & input) const 
 {
+  // This method is now highly optimised (apart from the potential use
+  // of a cheaper sigmoid function). Please be very careful changing
+  // anything here since it is used heavily in reconstruction during
+  // Pixel clusterization - Thomas Kittelmann, Oct 2011.
 
-  std::vector<Double_t> result;
-
-  //now calculate the value using:
-  TVectorD** resultVector=new TVectorD*[mnHidden+1];
-  
-
-  if (input.size()!=mnInput)
+  if (static_cast<int>(input.size()) != mnInput)
   {
-    cout << " Input size: " << input.size() << " doesn't match with network: " << mnInput << endl;
-    return result;
+    std::cout << "TTrainedNetwork WARNING Input size: " << input.size()
+	      << " does not match with network: " << mnInput << std::endl;
+    return std::vector<double>();
   }
-  
-  for (Int_t o=0;o<mnHidden+1;++o)
-  {
 
-    int sizeActualLayer=(o<mnHidden)?mnHiddenLayerSize[o]:mnOutput;
-    int sizePreviousLayer=(o==0)?mnInput:mnHiddenLayerSize[o-1];
+  const unsigned nTargetLayers(mnHidden+1);
+  const unsigned lastTargetLayer(mnHidden);
+  unsigned nSource = mnInput, nTarget(0);
+  const double * source = &(input[0]);
+  double * target(0);
+  const double * weights(0);
+  const double * thresholds(0);
+  double nodeVal(0);
 
-    resultVector[o]=new TVectorD(sizeActualLayer);
-    
-    for (Int_t s=0;s<sizeActualLayer;++s)
-    {
-      Double_t nodeValue=0.;
-      if (o==0)
-      {
-        for (Int_t p=0;p<mnInput;++p)
-        {
-          nodeValue+=mWeightMatrices[o]->operator() (p,s)*input[p];
-        }
-      }
-      else
-      {
-        for (Int_t p=0;p<mnHiddenLayerSize[o-1];++p)
-        {
-          nodeValue+=mWeightMatrices[o]->operator() (p,s)*resultVector[o-1]->operator()(p);
-        }
-      }
-      nodeValue+=mThresholdVectors[o]->operator() (s);
-      resultVector[o]->operator()(s) = sigmoid(nodeValue);
+  for (unsigned iLayer = 0; iLayer < nTargetLayers; ++iLayer) {
+    //Find data area for target layer:
+    nTarget = ( iLayer == lastTargetLayer ? mnOutput : mnHiddenLayerSize[iLayer] );
+    target = TTN_internal::tmp_array[iLayer%2];
+
+    //Transfer the input nodes to the output nodes in this layer transition:
+    weights = mWeightMatrices[iLayer]->GetMatrixArray();
+    thresholds = mThresholdVectors[iLayer]->GetMatrixArray();
+    for (unsigned inodeTarget=0;inodeTarget<nTarget;++inodeTarget) {
+      nodeVal = 0.0;//Better would be "nodeVal = *thresholds++" and
+		    //remove the line further down, but this way we
+		    //get exactly the same results that an earlier
+		    //version of the package gave.
+      const double * weights_tmp = weights++;
+      const double * source_end(&(source[nSource]));
+      for (const double* source_iter=source;source_iter!=source_end;++source_iter)
+	{
+	  nodeVal += (*weights_tmp) * (*source_iter);
+	  weights_tmp += nTarget;
+	}
+      nodeVal += *thresholds++;//see remark above.
+      target[inodeTarget] = ( mLinearOutput && iLayer == lastTargetLayer )
+	                    ? nodeVal : sigmoid(nodeVal);
     }
-  }      
+    //Prepare for next layer transition:
+    source = target;
+    nSource = nTarget;
+  }
+
+  std::vector<double> result(nTarget);
+  if (!mNormalizeOutput) {
+    std::memcpy(&result[0], target, sizeof(*target)*nTarget);
+  } else {
+    const double sumLastLayer = std::accumulate(&target[0], &target[nTarget], 0.0 );
+    const double normFact = sumLastLayer ? 1.0/sumLastLayer : 0.0;
+    for (unsigned i = 0; i < nTarget; ++i)
+      result[i] = normFact * target[i];
+  }
   
-  for (Int_t i=0;i<mnOutput;i++)
-  {
-    result.push_back(resultVector[mnHidden]->operator()(i));
-  }
-
-  for (Int_t o=0;o<mnHidden+1;++o)
-  {
-    int sizeActualLayer=(o<mnHidden)?mnHiddenLayerSize[o]:mnOutput;
-    delete resultVector[o];
-  }
-  delete resultVector;
-
   return result;
-  
 }
+
+ClassImp( TTrainedNetwork)
 
 
 

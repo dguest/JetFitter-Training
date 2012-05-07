@@ -9,7 +9,7 @@
 #include <ctime> // to seed srand
 #include "TJetNet.h"
 #include "doNormalization.hh"
-#include "TNetworkToHistoTool.h"
+#include "NetworkToHistoTool.hh"
 
 #include "normedInput.hh"
 #include "nnExceptions.hh"
@@ -553,7 +553,7 @@ void trainNN(std::string inputfile,
   cout << " Now getting histograms from trainingResult" << endl;
   cronology << " Now getting histograms from trainingResult" << endl;
 
-  TNetworkToHistoTool myHistoTool;
+  NetworkToHistoTool myHistoTool;
 
   cout << " From network to histo..." << endl;
   OwnerVector<TH1*> myHistos = myHistoTool.
@@ -638,7 +638,7 @@ void trainNN(std::string inputfile,
     cout << " Writing OUTPUT histos " << endl;
     std::string histo_weights_name = out_dir + "/histoWeights.root"; 
     TFile* fileHistos=new TFile(histo_weights_name.c_str(),"recreate");
-    TNetworkToHistoTool histoTool;
+    NetworkToHistoTool histoTool;
     std::vector<TH1*> myHistos=histoTool.
       fromTrainedNetworkToHisto(trainedNetwork);
 

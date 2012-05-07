@@ -49,12 +49,13 @@ LIBS += -L$(COMMON_LIBS) -Wl,-rpath,$(COMMON_LIBS)
 JETNET_OBJ := jetnet.o
 JETNET_SRC := jetnet_35.f
 
-T_OBJ := TNeuralDataSet.o TJetNet.o TTrainedNetwork.o TNetworkToHistoTool.o
+T_OBJ := TNeuralDataSet.o TJetNet.o TTrainedNetwork.o 
 T_DICTS := $(T_OBJ:.o=Dict.o)
 
 JETNET_CXX_OBJECTS := trainNN.o testNN.o doNormalization.o 
 JETNET_CXX_OBJECTS += makeTestNtuple.o readReducedDataset.o 
 JETNET_CXX_OBJECTS += normedInput.o nnExceptions.o
+JETNET_CXX_OBJECTS += NetworkToHistoTool.o
 JETNET_CXX_OBJECTS += $(T_OBJ) $(T_DICTS)
 
 TJETNET_OBJECTS := $(JETNET_OBJ)

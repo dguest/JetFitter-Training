@@ -13,7 +13,6 @@
 #include <cassert>
 #include "TJetNet.h"
 #include "normedInput.hh"
-#include "TNetworkToHistoTool.h"
 
 #include "TTrainedNetwork.h"
 #include "testNN.hh"

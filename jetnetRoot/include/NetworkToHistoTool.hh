@@ -10,13 +10,13 @@ class TTrainedNetwork;
 
 //by Giacinto Piacquadio (19-2-2008)
 
-class TNetworkToHistoTool // : public TObject 
+class NetworkToHistoTool // : public TObject 
 {
 public:
   
-  TNetworkToHistoTool() {};
+  NetworkToHistoTool() {};
 
-  ~TNetworkToHistoTool() {};
+  ~NetworkToHistoTool() {};
 
   std::vector<TH1*> fromTrainedNetworkToHisto(TTrainedNetwork*) const;
   

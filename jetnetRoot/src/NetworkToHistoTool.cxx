@@ -1,7 +1,7 @@
 #include <TH1F.h>
 #include <TH2F.h>
 #include "TTrainedNetwork.h"
-#include "TNetworkToHistoTool.h"
+#include "NetworkToHistoTool.hh"
 #include <cmath>
 #include <stdexcept> 
 #include <cassert>
@@ -9,7 +9,7 @@
 
 // ClassImp( TNetworkToHistoTool)
 
-std::vector<TH1*> TNetworkToHistoTool::fromTrainedNetworkToHisto(TTrainedNetwork* trainedNetwork) const
+std::vector<TH1*> NetworkToHistoTool::fromTrainedNetworkToHisto(TTrainedNetwork* trainedNetwork) const
 {
 
   std::vector<TH1*> outputHistos;
@@ -101,8 +101,8 @@ std::vector<TH1*> TNetworkToHistoTool::fromTrainedNetworkToHisto(TTrainedNetwork
   
 }
 
-TH1* TNetworkToHistoTool::findHisto(std::string nameOfHisto,
-				    std::vector<TH1*> & inputHistos) const
+TH1* NetworkToHistoTool::findHisto(std::string nameOfHisto,
+				   std::vector<TH1*> & inputHistos) const
 {
   std::vector<TH1*>::const_iterator inputBegin=inputHistos.begin();
   std::vector<TH1*>::const_iterator inputEnd=inputHistos.end();
@@ -121,7 +121,7 @@ TH1* TNetworkToHistoTool::findHisto(std::string nameOfHisto,
 
 
 TTrainedNetwork* 
-TNetworkToHistoTool::fromHistoToTrainedNetwork(std::vector<TH1*> & inputHistos) const
+NetworkToHistoTool::fromHistoToTrainedNetwork(std::vector<TH1*> & inputHistos) const
 {
 
   

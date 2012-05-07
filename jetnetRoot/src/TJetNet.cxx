@@ -10,7 +10,7 @@
 
 #include "TH1F.h"
 
-ClassImp( TJetNet )
+// ClassImp( TJetNet )
  
 //Constructors
 //______________________________________________________________________________
@@ -123,66 +123,66 @@ TTrainedNetwork* TJetNet::createTrainedNetwork() const
      weightMatrices.push_back(new TMatrixD(sizePreviousLayer,sizeActualLayer));
   }
 
-  for (Int_t o=0;o<nHidden+1;++o)
-  {
-
-    if (mDebug)
-    if (o<nHidden)
-    {
-      cout << " Iterating on hidden layer n.: " << o << endl;
-    }
-    else
-    {
-      cout << " Considering output layer " << endl;
-    }
+  for (Int_t o=0;o<nHidden+1;++o){
     
+    if (mDebug) { 
+      if (o<nHidden) {
+	cout << " Iterating on hidden layer n.: " << o << endl;
+      }
+      else {
+	cout << " Considering output layer " << endl;
+      }
+    }    
+
     int sizeActualLayer=(o<nHidden)?nHiddenLayerSize[o]:nOutput;
 
-    for (Int_t s=0;s<sizeActualLayer;++s)
-    {
-      if (o<nHidden)
-      {
+    for (Int_t s=0;s<sizeActualLayer;++s){
+      if (o<nHidden){
 	if (mDebug)
-	cout << " To hidden node: " << s << endl;
+	  cout << " To hidden node: " << s << endl;
       }
-      else
-      {
+      else {
 	if (mDebug)
-	cout << " To output node: " << s << endl;
+	  cout << " To output node: " << s << endl;
       }
-      if (o==0)
-      {
-	for (Int_t p=0;p<nInput;++p)
-	{
+      if (o==0) {
+	for (Int_t p=0;p<nInput;++p) {
 	  if (mDebug)
-	  cout << " W from inp nod: " << p << "weight: " <<
-	    GetWeight(o+1,s+1,p+1) << endl;
+	    cout << " W from inp nod: " << p << "weight: " <<
+	      GetWeight(o+1,s+1,p+1) << endl;
 	  weightMatrices[o]->operator() (p,s) = GetWeight(o+1,s+1,p+1);
         }
       }
-      else
-      {
-	for (Int_t p=0;p<nHiddenLayerSize[o-1];++p)
-	{
+      else {
+	for (Int_t p=0;p<nHiddenLayerSize[o-1];++p) {
 	  if (mDebug)
-	  cout << " W from lay : " << o-1 << " nd: " << 
-	    p << " weight: " <<
-	    GetWeight(o+1,s+1,p+1) << endl;
+	    cout << " W from lay : " << o-1 << " nd: " << 
+	      p << " weight: " <<
+	      GetWeight(o+1,s+1,p+1) << endl;
 	  weightMatrices[o]->operator() (p,s)=GetWeight(o+1,s+1,p+1);
 	}
       }
       if (mDebug)
-      cout << " Threshold for node " << s << " : " << 
-	GetThreshold(o+1,s+1) << endl;
+	cout << " Threshold for node " << s << " : " << 
+	  GetThreshold(o+1,s+1) << endl;
       thresholdVectors[o]->operator() (s) = GetThreshold(o+1,s+1);
     }
   }
 
+  std::vector<TTrainedNetwork::Input> nn_inputs; 
+  for (std::vector<InputNode>::const_iterator itr = m_input_nodes.begin(); 
+       itr != m_input_nodes.end(); itr++) { 
+    TTrainedNetwork::Input the_node; 
+    the_node.name = itr->name; 
+    the_node.offset = itr->offset; 
+    the_node.scale = itr->scale; 
+    nn_inputs.push_back(the_node); 
+  }
+       
+
   TTrainedNetwork* trainedNetwork=
-    new TTrainedNetwork(nInput,
-			nHidden,
+    new TTrainedNetwork(nn_inputs, 
 			nOutput,
-			nHiddenLayerSize,
 			thresholdVectors,
 			weightMatrices,
 			menActFunction);
@@ -261,9 +261,31 @@ void TJetNet::readBackTrainedNetwork(const TTrainedNetwork* trainedNetwork)
       mSetThreshold(thresholdVectors[o]->operator() (s),o+1,s+1);
     }
   }      
+
+  m_input_nodes.clear(); 
+
+  typedef std::vector<TTrainedNetwork::Input> TrainedInputs; 
+  TrainedInputs inputs = trainedNetwork->getInputs(); 
+  for (TrainedInputs::const_iterator itr = inputs.begin(); 
+       itr != inputs.end(); itr++){ 
+    InputNode node; 
+    node.name = itr->name; 
+    node.offset = itr->offset; 
+    node.scale = itr->scale; 
+    m_input_nodes.push_back(node); 
+  }
+  
   cout << " Successfully read back Trained Network " << endl;
 }
 //______________________________________________________________________________
+
+void TJetNet::setInputNodes(std::vector<TJetNet::InputNode> v) { 
+  m_input_nodes = v; 
+}
+std::vector<TJetNet::InputNode> TJetNet::getInputNodes() const { 
+  return m_input_nodes; 
+}
+
   
 void TJetNet::mSetWeight( Double_t weight,Int_t aLayerInd, Int_t aNodeInd, Int_t aConnectedNodeInd )
 {

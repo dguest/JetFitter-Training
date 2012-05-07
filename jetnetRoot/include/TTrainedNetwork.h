@@ -19,6 +19,11 @@
 class TTrainedNetwork : public TObject
 {
 public:
+  struct Input { 
+    std::string name; 
+    double offset; 
+    double scale; 
+  }; 
 
   typedef std::vector<Double_t> DVec; 
   typedef std::map<std::string, double> DMap; 
@@ -26,17 +31,17 @@ public:
   TTrainedNetwork();
 
   //class takes ownership of all pointers...
-  TTrainedNetwork(Int_t nInput,
-		  Int_t nHidden,
+  TTrainedNetwork(std::vector<TTrainedNetwork::Input> inputs,
 		  Int_t nOutput,
-		  std::vector<Int_t> & nHiddenLayerSize,
 		  std::vector<TVectorD*> & thresholdVectors,
 		  std::vector<TMatrixD*> & weightMatrices,
-		  Int_t activationFunction,
+		  Int_t activationFunction = 1,
                   bool linearOutput=false,
                   bool normalizeOutput=false);
 
   ~TTrainedNetwork();
+
+  std::vector<Input> getInputs() const; 
 
   void setNewWeights(std::vector<TVectorD*> & thresholdVectors,
 		     std::vector<TMatrixD*> & weightMatrices);
@@ -63,7 +68,7 @@ public:
 
   DVec calculateOutputValues(DVec & input) const;
   // DVec calculateWithNormalization(DVec & input) const; 
-  // DVec calculateWithNormalization(DMap & input) const;
+  DVec calculateWithNormalization(DMap & input) const;
 
   bool getIfLinearOutput() const { return mLinearOutput; };
 
@@ -76,6 +81,14 @@ private:
   Int_t mnInput;
   Int_t mnHidden;
   Int_t mnOutput;
+
+  struct InputNode { 
+    int index; 
+    double offset; 
+    double scale; 
+  }; 
+
+  std::map<std::string,InputNode> inputStringToNode; 
 
   std::vector<Int_t> mnHiddenLayerSize;
 
@@ -90,12 +103,9 @@ private:
 
   double maxExpValue;
 
-  Double_t sigmoid(Double_t x) const { 
-    if (-2*x >= maxExpValue){
-      return 0.;
-    }
-    return 1./(1.+exp(-2*x)); 
-  };
+  Double_t sigmoid(Double_t x) const; 
+
+  bool is_consistent() const; 
 
   ClassDef( TTrainedNetwork, 2 )
 

@@ -29,14 +29,23 @@
 #include "TNeuralDataSet.h"
 #include "TF1.h"
 
+#include <vector>
+#include <string>
+
 class TTrainedNetwork;
 
 
 //typedef ActivationFunction  TActivationFunction;
 
-class TJetNet : public TObject
+class TJetNet //: public TObject
 {
 public:
+
+  struct InputNode { 
+    std::string name; 
+    double offset; 
+    double scale; 
+  }; 
   
   TJetNet( void );
 
@@ -140,6 +149,9 @@ public:
   TTrainedNetwork* createTrainedNetwork() const;
   void readBackTrainedNetwork(const TTrainedNetwork*);
 
+  void setInputNodes(std::vector<InputNode> ); 
+  std::vector<InputNode> getInputNodes() const; 
+
   enum TActivationFunction {
     afSigmoid = 1,
     afTanh    = 2,
@@ -177,7 +189,9 @@ private:
   Bool_t mIsInitialized;
   Bool_t mInitLocked;
 
-  ClassDef( TJetNet, 1 )
+  std::vector<InputNode> m_input_nodes; 
+
+  //  ClassDef( TJetNet, 1 )
 }; 
 
 inline void TJetNet::SetOutputTestSet( Int_t aPatternInd, Int_t aOutputInd, Double_t aValue )

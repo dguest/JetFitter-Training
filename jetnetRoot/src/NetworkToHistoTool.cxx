@@ -6,10 +6,12 @@
 #include <stdexcept> 
 #include <cassert>
 #include <boost/format.hpp>
+#include <boost/lexical_cast.hpp>
 
 // ClassImp( TNetworkToHistoTool)
 
-std::vector<TH1*> NetworkToHistoTool::fromTrainedNetworkToHisto(TTrainedNetwork* trainedNetwork) const
+std::vector<TH1*> 
+NetworkToHistoTool::fromTrainedNetworkToHisto(TTrainedNetwork* trainedNetwork) const
 {
 
   std::vector<TH1*> outputHistos;
@@ -188,15 +190,23 @@ NetworkToHistoTool::fromHistoToTrainedNetwork(std::vector<TH1*> & inputHistos) c
     weightMatrices.push_back(weightMatrix);
 
   }
+  
+  printf("WARNING: reading in histos with no normalization "
+	 "you need to fix this\n"); 
 
-
-  TTrainedNetwork* trainedNetwork=new TTrainedNetwork(nInput,
-                                                      nHidden,
-                                                      nOutput,
-                                                      nHiddenLayerSize,
-                                                      thresholdVectors,
-                                                      weightMatrices,
-                                                      1);
+  std::vector<TTrainedNetwork::Input> inputs; 
+  for (int i = 0 ; i < nInput; i++) { 
+    TTrainedNetwork::Input the_input; 
+    the_input.name = boost::lexical_cast<std::string>(i); 
+    the_input.offset = 0; 
+    the_input.scale = 0; 
+    inputs.push_back(the_input); 
+  }
+  TTrainedNetwork* trainedNetwork = 
+    new TTrainedNetwork(inputs,
+			nOutput,
+			thresholdVectors,
+			weightMatrices);
   return trainedNetwork;
   
 }

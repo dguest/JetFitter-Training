@@ -11,7 +11,7 @@
 #include <math.h>
 #include <stdexcept>
 #include <cassert>
-#include "TJetNet.h"
+#include "JetNet.hh"
 #include "normedInput.hh"
 
 #include "TTrainedNetwork.h"
@@ -146,7 +146,7 @@ void testNN(std::string inputfile,
   int numberTestingEvents = 0; 
   int numberTrainingEvents = 0; 
 
-  TJetNet* jn = new TJetNet( numberTestingEvents, 
+  JetNet* jn = new JetNet( numberTestingEvents, 
   			     numberTrainingEvents, 
   			     n_layers, 
   			     n_neurons );

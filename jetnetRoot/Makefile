@@ -55,7 +55,7 @@ T_DICTS := $(T_OBJ:.o=Dict.o)
 JETNET_CXX_OBJECTS := trainNN.o testNN.o doNormalization.o 
 JETNET_CXX_OBJECTS += makeTestNtuple.o readReducedDataset.o 
 JETNET_CXX_OBJECTS += normedInput.o nnExceptions.o
-JETNET_CXX_OBJECTS += NetworkToHistoTool.o TJetNet.o
+JETNET_CXX_OBJECTS += NetworkToHistoTool.o JetNet.o
 JETNET_CXX_OBJECTS += $(T_OBJ) $(T_DICTS)
 
 TJETNET_OBJECTS := $(JETNET_OBJ)

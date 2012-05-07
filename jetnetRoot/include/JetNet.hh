@@ -14,7 +14,7 @@
 
 //______________________________________________________________________________
 //
-// TJetNet
+// JetNet
 //
 // This class is a ROOT wrapper for jetnet library.
 //
@@ -37,7 +37,7 @@ class TTrainedNetwork;
 
 //typedef ActivationFunction  TActivationFunction;
 
-class TJetNet //: public TObject
+class JetNet //: public TObject
 {
 public:
 
@@ -47,11 +47,11 @@ public:
     double scale; 
   }; 
   
-  TJetNet( void );
+  JetNet( void );
 
-  TJetNet( Int_t aTestCount, Int_t aTrainCount, const Int_t aLayersCnt, const Int_t* aLayers );
+  JetNet( Int_t aTestCount, Int_t aTrainCount, const Int_t aLayersCnt, const Int_t* aLayers );
 
-  virtual ~TJetNet( void );
+  virtual ~JetNet( void );
   
   void Print( void );
   
@@ -191,27 +191,27 @@ private:
 
   std::vector<InputNode> m_input_nodes; 
 
-  //  ClassDef( TJetNet, 1 )
+  //  ClassDef( JetNet, 1 )
 }; 
 
-inline void TJetNet::SetOutputTestSet( Int_t aPatternInd, Int_t aOutputInd, Double_t aValue )
+inline void JetNet::SetOutputTestSet( Int_t aPatternInd, Int_t aOutputInd, Double_t aValue )
 {
   // Changes the value of the cell corresponding to unit aInputInd in pattern aPatternInd into OUTPUT TEST set
   mpOutputTestSet->SetData( aPatternInd, aOutputInd, aValue );
 }
 //______________________________________________________________________________
-inline Double_t TJetNet::GetInputTrainSet( Int_t aPatternInd, Int_t aInputInd )
+inline Double_t JetNet::GetInputTrainSet( Int_t aPatternInd, Int_t aInputInd )
 {
   // Returns the value of the cell corresponding to unit aInputInd in pattern aPatternInd into INPUT TRAIN set
   return mpInputTrainSet->GetData( aPatternInd, aInputInd );
 }
 //______________________________________________________________________________
-inline Double_t TJetNet::GetEventWeightTrainSet( Int_t aPatternInd )
+inline Double_t JetNet::GetEventWeightTrainSet( Int_t aPatternInd )
 {
   return mpInputTrainSet->GetEventWeight( aPatternInd);
 }
 //______________________________________________________________________________
-inline Double_t TJetNet::GetEventWeightTestSet( Int_t aPatternInd )
+inline Double_t JetNet::GetEventWeightTestSet( Int_t aPatternInd )
 {
   return mpInputTestSet->GetEventWeight( aPatternInd);
 }

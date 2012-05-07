@@ -10,7 +10,7 @@
 #include <algorithm>
 #include <TH1D.h>
 #include "TTrainedNetwork.h"
-#include "TJetNet.h"
+#include "JetNet.hh"
 #include <TVectorD.h>
 #include <TMatrixD.h>
 #include <string> 
@@ -85,7 +85,7 @@ void makeTestNtuple(IONames io_names, bool debug)
 
   //CROSS CHECK HERE
 
-  TJetNet* jn = new TJetNet( 3000, 7000, nLayers, nneurons );
+  JetNet* jn = new JetNet( 3000, 7000, nLayers, nneurons );
 
   jn->SetUpdatesPerEpoch( 10 );
   jn->SetUpdatingProcedure( 0 );

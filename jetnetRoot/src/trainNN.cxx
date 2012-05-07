@@ -7,7 +7,7 @@
 #include <sstream>
 #include <cstdlib> // rand
 #include <ctime> // to seed srand
-#include "TJetNet.h"
+#include "JetNet.hh"
 #include "doNormalization.hh"
 #include "NetworkToHistoTool.hh"
 
@@ -177,7 +177,7 @@ void trainNN(std::string inputfile,
   cout << "now start to setup the network..." << endl;
   
  
-  TJetNet* jn = new TJetNet( numberTestingEvents, 
+  JetNet* jn = new JetNet( numberTestingEvents, 
 			     numberTrainingEvents, 
 			     nlayer, 
 			     nneurons );

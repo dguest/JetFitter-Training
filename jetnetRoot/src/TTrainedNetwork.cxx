@@ -42,18 +42,20 @@ TTrainedNetwork::TTrainedNetwork(std::vector<TTrainedNetwork::Input> inputs,
     mnHiddenLayerSize.push_back((*tr_itr)->GetNrows()); 
   }
 
-  int current_node_index = 0; 
+  int node_n = 0; 
   for (std::vector<Input>::const_iterator itr = inputs.begin(); 
        itr != inputs.end(); 
        itr++) { 
-    InputNode input_node; 
-    input_node.index = current_node_index; 
-    input_node.offset = itr->offset; 
-    input_node.scale = itr->scale; 
-    inputStringToNode[itr->name] = input_node; 
-    current_node_index++; 
+    m_input_node_offset.push_back(itr->offset); 
+    m_input_node_scale.push_back(itr->scale); 
+    inputStringToNode[itr->name] = node_n; 
+    node_n++; 
   }
-  assert(current_node_index == inputStringToNode.size()); 
+
+  int n_node = node_n; 
+  assert(n_node == inputStringToNode.size()); 
+  assert(n_node == m_input_node_offset.size()); 
+  assert(n_node == m_input_node_scale.size()); 
 
   int nlayer_max(mnOutput);
   for (unsigned i = 0; i < mnHiddenLayerSize.size(); ++i)
@@ -92,15 +94,15 @@ TTrainedNetwork::~TTrainedNetwork()
 
 std::vector<TTrainedNetwork::Input> TTrainedNetwork::getInputs() const { 
   std::map<int,Input> inputs; 
-  for (std::map<std::string,InputNode>::const_iterator itr = 
+  for (std::map<std::string,int>::const_iterator itr = 
 	 inputStringToNode.begin(); 
        itr != inputStringToNode.end(); 
        itr++){ 
     Input the_input; 
     the_input.name = itr->first; 
-    the_input.offset = itr->second.offset; 
-    the_input.scale = itr->second.scale; 
-    inputs[itr->second.index] = the_input; 
+    the_input.offset = m_input_node_offset.at(itr->second); 
+    the_input.scale = m_input_node_scale.at(itr->second);
+    inputs[itr->second] = the_input; 
   }
   assert(inputs.size() == inputStringToNode.size()); 
 
@@ -150,18 +152,18 @@ TTrainedNetwork::calculateWithNormalization(TTrainedNetwork::DMap& in) const {
   for (std::map<std::string,double>::const_iterator itr = in.begin(); 
        itr != in.end(); 
        itr++){ 
-    std::map<std::string,InputNode>::const_iterator input_node_pair = 
+    std::map<std::string,int>::const_iterator input_node_ptr = 
       inputStringToNode.find(itr->first); 
-    assert(input_node_pair != inputStringToNode.end()); 
-    const InputNode& the_node = input_node_pair->second; 
+    assert(input_node_ptr != inputStringToNode.end()); 
+    const int node_n = input_node_ptr->second; 
 
     // get and scale the raw input value
     double raw_value = itr->second; 
-    raw_value += the_node.offset; 
-    raw_value *= the_node.scale; 
+    raw_value += m_input_node_offset.at(node_n); 
+    raw_value *= m_input_node_scale.at(node_n); 
 
     // store in the inputs vector
-    raw_inputs.at(the_node.index) = raw_value; 
+    raw_inputs.at(node_n) = raw_value; 
   }
   return calculateOutputValues(raw_inputs); 
 }
@@ -267,7 +269,6 @@ bool TTrainedNetwork::is_consistent() const {
 }
 
 ClassImp( TTrainedNetwork)
-
 
 
 

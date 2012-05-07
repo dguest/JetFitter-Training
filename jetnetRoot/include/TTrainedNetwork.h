@@ -82,13 +82,12 @@ private:
   Int_t mnHidden;
   Int_t mnOutput;
 
-  struct InputNode { 
-    int index; 
-    double offset; 
-    double scale; 
-  }; 
-
-  std::map<std::string,InputNode> inputStringToNode; 
+  // in an ideal world these would be one object in a vector, but 
+  // this is a ROOT world where persistence could never be that easy  
+  std::vector<double> m_input_node_offset; 
+  std::vector<double> m_input_node_scale; 
+    
+  std::map<std::string,int> inputStringToNode; 
 
   std::vector<Int_t> mnHiddenLayerSize;
 
@@ -108,7 +107,7 @@ private:
   bool is_consistent() const; 
 
   ClassDef( TTrainedNetwork, 2 )
-
+  
 };
 
 #endif

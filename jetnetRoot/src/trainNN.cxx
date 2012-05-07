@@ -202,10 +202,19 @@ void trainNN(std::string inputfile,
   //  jn->SetLearningRateDecrease( 0.992 );
   //  jn->SetLearningRateDecrease( 0.99 );//0.992 || _2 = 0.99 _3 = 0.98 _4=0.99
   jn->SetLearningRateDecrease( 0.99 );//0.992
-  
-  cout << " setting pattern for training events " << endl;
-  int trainSampleNumber=0;
-  int testSampleNumber=1;
+
+  std::vector<JetNet::InputNode> jn_input_info; 
+  for (std::vector<InputVariableInfo>::const_iterator itr = 
+	 input_variables.begin(); 
+       itr != input_variables.end(); 
+       itr++) { 
+    JetNet::InputNode the_node; 
+    the_node.name = itr->name; 
+    the_node.offset = itr->offset; 
+    the_node.scale = itr->scale; 
+    jn_input_info.push_back(the_node); 
+  }
+  jn->setInputNodes(jn_input_info); 
   
   cout << " copying over training events " << endl;
   
@@ -414,7 +423,7 @@ void trainNN(std::string inputfile,
 
       cronology.open(chronology_name.c_str(),ios_base::app);
 
-      testError = jn->Test(); //BTAG();
+      testError = jn->Test(); 
 
       if (trainingError > maximumTrain) maximumTrain=trainingError;
       if (testError > maximumTrain) maximumTrain=testError;
@@ -464,24 +473,17 @@ void trainNN(std::string inputfile,
 
       TFile* file=new TFile(name,"recreate");
       TTrainedNetwork* trainedNetwork=jn->createTrainedNetwork();
-      trainedNetwork->Write();
-      file->Write(); //*** SUSPICIOUS: may result in two copies in the file
+      std::cout << "wriging trained network\n"; 
+      file->WriteTObject(trainedNetwork); 
+      // trainedNetwork->Write();
+      // file->Write(); //*** SUSPICIOUS: may result in two copies in the file
       
       // --- write in variable tree too 
-      in_var.write_to_file(file); 
+      // in_var.write_to_file(file); 
 
       file->Close();
       delete file;
 
-      /*
-	TFile* file2=new TFile(name);
-	trainedNetwork=(TTrainedNetwork*)file2->Get("TTrainedNetwork");
-	cout <<" hid lay 1 size: " << trainedNetwork->getnHiddenLayerSize()[0] << endl;
-	file2->Close();
-	delete file2;
-      */
-
-      //      jn->DumpToFile(name);
     }
   }
       

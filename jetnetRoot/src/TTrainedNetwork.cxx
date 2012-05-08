@@ -17,6 +17,29 @@ TTrainedNetwork::TTrainedNetwork()
   
 }
 
+TTrainedNetwork::TTrainedNetwork(Int_t nInput, 
+				 Int_t nHidden, 
+                                 Int_t nOutput,
+				 std::vector<Int_t> & nHiddenLayerSize, 
+                                 std::vector<TVectorD*> & thresholdVectors,
+                                 std::vector<TMatrixD*> & weightMatrices,
+                                 Int_t activationFunction,
+                                 bool linearOutput,
+                                 bool normalizeOutput)
+{
+  mnInput = nInput; 
+  mnHidden = nHidden; 
+  mnOutput = nOutput;
+  mnHiddenLayerSize = nHiddenLayerSize; 
+  mThresholdVectors = thresholdVectors;
+  mWeightMatrices = weightMatrices;
+  mActivationFunction = activationFunction;
+  mLinearOutput = linearOutput;
+  mNormalizeOutput = normalizeOutput;
+  maxExpValue = log(std::numeric_limits<double>::max());
+  
+}
+
 TTrainedNetwork::TTrainedNetwork(std::vector<TTrainedNetwork::Input> inputs, 
                                  Int_t nOutput,
                                  std::vector<TVectorD*> & thresholdVectors,

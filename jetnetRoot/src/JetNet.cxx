@@ -181,8 +181,10 @@ TTrainedNetwork* JetNet::createTrainedNetwork() const
        
 
   TTrainedNetwork* trainedNetwork=
-    new TTrainedNetwork(nn_inputs, 
+    new TTrainedNetwork(nInput, 
+			nHidden, 
 			nOutput,
+			nHiddenLayerSize, 
 			thresholdVectors,
 			weightMatrices,
 			menActFunction);

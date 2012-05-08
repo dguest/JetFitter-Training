@@ -30,6 +30,18 @@ public:
 
   TTrainedNetwork();
 
+  // old-school constructor (for compatability)
+  TTrainedNetwork(Int_t nInput, 
+		  Int_t nHidden, 
+		  Int_t nOutput,
+		  std::vector<Int_t> & nHiddenLayerSize, 
+		  std::vector<TVectorD*> & thresholdVectors,
+		  std::vector<TMatrixD*> & weightMatrices,
+		  Int_t activationFunction,
+		  bool linearOutput = false,
+		  bool normalizeOutput = false); 
+
+
   //class takes ownership of all pointers...
   TTrainedNetwork(std::vector<TTrainedNetwork::Input> inputs,
 		  Int_t nOutput,

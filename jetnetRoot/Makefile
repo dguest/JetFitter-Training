@@ -62,7 +62,7 @@ TJETNET_OBJECTS := $(JETNET_OBJ)
 TJETNET_OBJECTS += $(JETNET_CXX_OBJECTS)
 
 
-CXX_OBJECTS := $(JETNET_CXX_OBJECTS) pynn.o
+CXX_OBJECTS := $(JETNET_CXX_OBJECTS) pynn.o UnitTests.o
 
 # --------------------------------------------
 # -------- start here --------------
@@ -70,7 +70,7 @@ CXX_OBJECTS := $(JETNET_CXX_OBJECTS) pynn.o
 
 ALL_LIBS := $(LIB)libTJetNet.so
 ALL_LIBS += $(LIB)pynn.so
-all: $(ALL_LIBS) #cxx_test.exe # root_test.exe
+all: $(ALL_LIBS) UnitTests.exe # root_test.exe
 
 
 # ---build rules
@@ -113,9 +113,10 @@ OUTLIB_OPTS += -lJetnetTools
 
 EXE_OPTS := $(OUTLIB_OPTS)
 EXE_OPTS += $(LIBS)
-%.exe: $(BIN)/%.o 
+EXE_OPTS += -lTJetNet
+%.exe: $(BIN)/%.o libTJetNet.so
 	@echo making executable $@
-	@$(CC) $^ -o $@ $(OUTLIB_OPTS)
+	@$(CC) $< -o $@ $(EXE_OPTS)
 
 
 # --- library TJetnet

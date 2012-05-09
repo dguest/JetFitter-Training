@@ -123,9 +123,6 @@ void trainNN(std::string inputfile,
   if (nodesSecondLayer != 0){
     nlayer=4;
   }
-
-  
-
   
   nneurons[1]=nodesFirstLayer;
 
@@ -209,11 +206,7 @@ void trainNN(std::string inputfile,
 	 input_variables.begin(); 
        itr != input_variables.end(); 
        itr++) { 
-    JetNet::InputNode the_node; 
-    the_node.name = itr->name; 
-    the_node.offset = itr->offset; 
-    the_node.scale = itr->scale; 
-    jn_input_info.push_back(the_node); 
+    jn_input_info.push_back(convert_node<JetNet::InputNode>(*itr));
   }
   jn->setInputNodes(jn_input_info); 
   
@@ -472,9 +465,13 @@ void trainNN(std::string inputfile,
       name+=epoch;
       name+=".root";
 
-      TFile* file=new TFile(name,"recreate");
+      TFile* file = new TFile(name,"recreate");
       TTrainedNetwork* trainedNetwork = getTrainedNetwork(*jn);
       file->WriteTObject(trainedNetwork); 
+
+
+      
+      
       // trainedNetwork->Write();
       // file->Write(); //*** SUSPICIOUS: may result in two copies in the file
       
@@ -518,8 +515,8 @@ void trainNN(std::string inputfile,
     TTrainedNetwork* trainedNetwork=(TTrainedNetwork*)_file0->
       Get("TTrainedNetwork");
     
-    cout << " Reading back network with minimum" << endl;
-    setTrainedNetwork(*jn,trainedNetwork);
+    // cout << " Reading back network with minimum" << endl;
+    // setTrainedNetwork(*jn,trainedNetwork);
 
     std::string min_weights_name = out_dir + "/weightMinimum.root"; 
     TFile* file=new TFile(min_weights_name.c_str(),"recreate");

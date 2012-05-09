@@ -9,12 +9,9 @@
 //by Giacinto Piacquadio (18-02-2008)
 TTrainedNetwork* getTrainedNetwork(const JetNet& jn) 
 {
-  bool mDebug = true; 
-  
   Int_t nInput = jn.GetInputDim();
   Int_t nHidden = jn.GetHiddenLayerDim();
   std::vector<Int_t> nHiddenLayerSize;
-  //  Int_t* nHiddenLayerSize=new Int_t[nHidden];
 
   for (Int_t o=0;o<nHidden;++o)
   {
@@ -35,47 +32,20 @@ TTrainedNetwork* getTrainedNetwork(const JetNet& jn)
 
   for (Int_t o=0;o<nHidden+1;++o){
     
-    // if (mDebug) { 
-    //   if (o<nHidden) {
-    // 	cout << " Iterating on hidden layer n.: " << o << endl;
-    //   }
-    //   else {
-    // 	cout << " Considering output layer " << endl;
-    //   }
-    // }    
-
     int sizeActualLayer=(o<nHidden)?nHiddenLayerSize[o]:nOutput;
 
     for (Int_t s=0;s<sizeActualLayer;++s){
-      // if (o<nHidden){
-      // 	if (mDebug)
-      // 	  cout << " To hidden node: " << s << endl;
-      // }
-      // else {
-      // 	if (mDebug)
-      // 	  cout << " To output node: " << s << endl;
-      // }
       if (o==0) {
 	for (Int_t p=0;p<nInput;++p) {
-	  // if (mDebug)
-	  //   cout << " W from inp nod: " << p << "weight: " <<
-	  //     jn.GetWeight(o+1,s+1,p+1) << endl;
-	  weightMatrices[o]->operator() (p,s) = jn.GetWeight(o+1,s+1,p+1);
+	  (*weightMatrices[o])(p,s) = jn.GetWeight(o+1,s+1,p+1);
         }
       }
       else {
 	for (Int_t p=0;p<nHiddenLayerSize[o-1];++p) {
-	  // if (mDebug)
-	  //   cout << " W from lay : " << o-1 << " nd: " << 
-	  //     p << " weight: " <<
-	  //     jn.GetWeight(o+1,s+1,p+1) << endl;
-	  weightMatrices[o]->operator() (p,s)=jn.GetWeight(o+1,s+1,p+1);
+	  (*weightMatrices[o])(p,s) = jn.GetWeight(o+1,s+1,p+1);
 	}
       }
-      // if (mDebug)
-      // 	cout << " Threshold for node " << s << " : " << 
-      // 	  jn.GetThreshold(o+1,s+1) << endl;
-      thresholdVectors[o]->operator() (s) = jn.GetThreshold(o+1,s+1);
+      (*thresholdVectors[o])(s) = jn.GetThreshold(o+1,s+1);
     }
   }
 
@@ -92,10 +62,8 @@ TTrainedNetwork* getTrainedNetwork(const JetNet& jn)
   int activation_function = jn.GetActivationFunction(); 
 
   TTrainedNetwork* trainedNetwork=
-    new TTrainedNetwork(nInput, 
-			nHidden, 
+    new TTrainedNetwork(nn_inputs, 
 			nOutput,
-			nHiddenLayerSize, 
 			thresholdVectors,
 			weightMatrices,
 			activation_function);
@@ -103,7 +71,7 @@ TTrainedNetwork* getTrainedNetwork(const JetNet& jn)
   return trainedNetwork;
 
 }
-//______________________________________________________________________________
+//___________________________________________________________________________
 //by Giacinto Piacquadio (18-02-2008)
 void setTrainedNetwork(JetNet& jn, const TTrainedNetwork* trainedNetwork)
 {
@@ -158,17 +126,17 @@ void setTrainedNetwork(JetNet& jn, const TTrainedNetwork* trainedNetwork)
       {
 	for (Int_t p=0;p<nInput;++p)
 	{
-	  jn.SetWeight(weightMatrices[o]->operator() (p,s),o+1,s+1,p+1);
+	  jn.SetWeight((*weightMatrices[o])(p,s),o+1,s+1,p+1);
         }
       }
       else
       {
 	for (Int_t p=0;p<nHiddenLayerSize[o-1];++p)
 	{
-	  jn.SetWeight(weightMatrices[o]->operator() (p,s),o+1,s+1,p+1);
+	  jn.SetWeight((*weightMatrices[o])(p,s),o+1,s+1,p+1);
 	}
       }
-      jn.SetThreshold(thresholdVectors[o]->operator() (s),o+1,s+1);
+      jn.SetThreshold((*thresholdVectors[o])(s),o+1,s+1);
     }
   }      
 
@@ -184,3 +152,4 @@ void setTrainedNetwork(JetNet& jn, const TTrainedNetwork* trainedNetwork)
   jn.setInputNodes(jetnet_inputs); 
   
 }
+

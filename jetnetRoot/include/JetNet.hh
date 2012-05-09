@@ -126,15 +126,15 @@ public:
   void SetLearningRateDecrease( Double_t aValue );
 
 
-  Int_t GetUpdatesPerEpoch( void );
-  Int_t GetUpdatingProcedure( void );
-  Int_t GetErrorMeasure( void );
-  Int_t GetActivationFunction( void );
-  Int_t GetPatternsPerUpdate( void );
-  Double_t GetLearningRate( void );
-  Double_t GetMomentum( void );
-  Double_t GetInitialWeightsWidth( void );
-  Double_t GetLearningRateDecrease( void );
+  Int_t GetUpdatesPerEpoch( void ) const ;
+  Int_t GetUpdatingProcedure( void ) const ;
+  Int_t GetErrorMeasure( void ) const ;
+  Int_t GetActivationFunction( void ) const ;
+  Int_t GetPatternsPerUpdate( void ) const ;
+  Double_t GetLearningRate( void ) const ;
+  Double_t GetMomentum( void ) const ;
+  Double_t GetInitialWeightsWidth( void ) const ;
+  Double_t GetLearningRateDecrease( void ) const ;
     
   void LockInit( void ){ mInitLocked = kTRUE; };
   void UnlockInit( void ){ mInitLocked = kFALSE; };
@@ -146,9 +146,6 @@ public:
   void Normalize( void );
   void Randomize( void );
 
-  TTrainedNetwork* createTrainedNetwork() const;
-  void readBackTrainedNetwork(const TTrainedNetwork*);
-
   void setInputNodes(std::vector<InputNode> ); 
   std::vector<InputNode> getInputNodes() const; 
 
@@ -159,11 +156,13 @@ public:
     afLinear  = 4,
     afSigmoidEntropy = 5
   };
+
+
+  void SetWeight( Double_t weight,Int_t aLayerInd, Int_t aNodeInd, Int_t aConnectedNodeInd ); 
+  void SetThreshold( Double_t threshold, Int_t aLayerInd, Int_t aNodeInd);
     
 private:
   
-  void mSetWeight( Double_t weight,Int_t aLayerInd, Int_t aNodeInd, Int_t aConnectedNodeInd ); 
-  void mSetThreshold( Double_t threshold, Int_t aLayerInd, Int_t aNodeInd);
 
   Int_t CopyFile( TString aSrcFile, TString aDestFile );
   void Reinitialize( void ); // Synchronizing the paramaters of the class object from JETNET parameters

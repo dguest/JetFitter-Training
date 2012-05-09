@@ -14,6 +14,7 @@
 #include "JetNet.hh"
 #include "normedInput.hh"
 
+#include "NNAdapters.hh"
 #include "TTrainedNetwork.h"
 #include "testNN.hh"
 #include "nnExceptions.hh"
@@ -152,7 +153,7 @@ void testNN(std::string inputfile,
   			     n_neurons );
 
   jn->Init();
-  jn->readBackTrainedNetwork(trained_network);
+  setTrainedNetwork(*jn,trained_network);
 
   std::cout << "read in network" << std::endl;
 

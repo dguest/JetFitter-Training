@@ -5,7 +5,6 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <cmath>
-#include "TTrainedNetwork.h"
 #include "TFile.h"
 
 #include "TH1F.h"
@@ -97,188 +96,6 @@ JetNet::~JetNet( void )
   if( mDebug ){ std::cout << "=====> Leaving JetNet::~JetNet(...)" << std::endl; }
 }
 //______________________________________________________________________________
-//by Giacinto Piacquadio (18-02-2008)
-TTrainedNetwork* JetNet::createTrainedNetwork() const
-{
-
-  Int_t nInput=GetInputDim();
-  Int_t nHidden=GetHiddenLayerDim();
-  std::vector<Int_t> nHiddenLayerSize;
-  //  Int_t* nHiddenLayerSize=new Int_t[nHidden];
-
-  for (Int_t o=0;o<nHidden;++o)
-  {
-    nHiddenLayerSize.push_back(GetHiddenLayerSize(o+1));
-  }
-  Int_t nOutput=GetOutputDim();
-
-  std::vector<TVectorD*> thresholdVectors;
-  std::vector<TMatrixD*> weightMatrices;
-
-  for (Int_t o=0;o<nHidden+1;++o)
-  {
-     int sizeActualLayer=(o<nHidden)?nHiddenLayerSize[o]:nOutput;
-     int sizePreviousLayer=(o==0)?nInput:nHiddenLayerSize[o-1];
-     thresholdVectors.push_back(new TVectorD(sizeActualLayer));
-     weightMatrices.push_back(new TMatrixD(sizePreviousLayer,sizeActualLayer));
-  }
-
-  for (Int_t o=0;o<nHidden+1;++o){
-    
-    if (mDebug) { 
-      if (o<nHidden) {
-	cout << " Iterating on hidden layer n.: " << o << endl;
-      }
-      else {
-	cout << " Considering output layer " << endl;
-      }
-    }    
-
-    int sizeActualLayer=(o<nHidden)?nHiddenLayerSize[o]:nOutput;
-
-    for (Int_t s=0;s<sizeActualLayer;++s){
-      if (o<nHidden){
-	if (mDebug)
-	  cout << " To hidden node: " << s << endl;
-      }
-      else {
-	if (mDebug)
-	  cout << " To output node: " << s << endl;
-      }
-      if (o==0) {
-	for (Int_t p=0;p<nInput;++p) {
-	  if (mDebug)
-	    cout << " W from inp nod: " << p << "weight: " <<
-	      GetWeight(o+1,s+1,p+1) << endl;
-	  weightMatrices[o]->operator() (p,s) = GetWeight(o+1,s+1,p+1);
-        }
-      }
-      else {
-	for (Int_t p=0;p<nHiddenLayerSize[o-1];++p) {
-	  if (mDebug)
-	    cout << " W from lay : " << o-1 << " nd: " << 
-	      p << " weight: " <<
-	      GetWeight(o+1,s+1,p+1) << endl;
-	  weightMatrices[o]->operator() (p,s)=GetWeight(o+1,s+1,p+1);
-	}
-      }
-      if (mDebug)
-	cout << " Threshold for node " << s << " : " << 
-	  GetThreshold(o+1,s+1) << endl;
-      thresholdVectors[o]->operator() (s) = GetThreshold(o+1,s+1);
-    }
-  }
-
-  std::vector<TTrainedNetwork::Input> nn_inputs; 
-  for (std::vector<InputNode>::const_iterator itr = m_input_nodes.begin(); 
-       itr != m_input_nodes.end(); itr++) { 
-    TTrainedNetwork::Input the_node; 
-    the_node.name = itr->name; 
-    the_node.offset = itr->offset; 
-    the_node.scale = itr->scale; 
-    nn_inputs.push_back(the_node); 
-  }
-       
-
-  TTrainedNetwork* trainedNetwork=
-    new TTrainedNetwork(nInput, 
-			nHidden, 
-			nOutput,
-			nHiddenLayerSize, 
-			thresholdVectors,
-			weightMatrices,
-			menActFunction);
-						
-  return trainedNetwork;
-
-}
-//______________________________________________________________________________
-//by Giacinto Piacquadio (18-02-2008)
-void JetNet::readBackTrainedNetwork(const TTrainedNetwork* trainedNetwork)
-{
-
-  Int_t nInput=GetInputDim();
-  Int_t nHidden=GetHiddenLayerDim();
-  std::vector<Int_t> nHiddenLayerSize;
-
-  if (trainedNetwork->getnHidden()!=nHidden)
-  {
-    cout << " Network doesn't match nHidden.. not loading.." << endl;
-    return;
-  }
-
-  for (Int_t o=0;o<nHidden;++o)
-  {
-    nHiddenLayerSize.push_back(GetHiddenLayerSize(o+1));
-    if (nHiddenLayerSize[o]!=trainedNetwork->getnHiddenLayerSize()[o])
-    {
-      cout << " Network doesn't match layer " << o << 
-	"... not loading..." << endl;
-      return;
-    }
-  }
-  Int_t nOutput=GetOutputDim();
-
-  if (trainedNetwork->getnInput()!=nInput)
-  {
-    cout << " Network doesn't match nInput... not loading.." << endl;
-    return;
-  }
-
-
-  if (trainedNetwork->getnOutput()!=nOutput)
-  {
-    cout << " Network doesn't match nOutput.. not loading.." << endl;
-    return;
-  }
-  
-  //OK, everything matches... can go on...
-  
-  std::vector<TVectorD*> thresholdVectors=trainedNetwork->getThresholdVectors();
-  std::vector<TMatrixD*> weightMatrices=trainedNetwork->weightMatrices();
-  //ownership remains of the TTrainedNetwork
-
-  for (Int_t o=0;o<nHidden+1;++o)
-  {
-    int sizeActualLayer=(o<nHidden)?nHiddenLayerSize[o]:nOutput;
-    int sizePreviousLayer=(o==0)?nInput:nHiddenLayerSize[o-1];
-  
-    for (Int_t s=0;s<sizeActualLayer;++s)
-    {
-      Double_t nodeValue=0.;
-      if (o==0)
-      {
-	for (Int_t p=0;p<nInput;++p)
-	{
-	  mSetWeight(weightMatrices[o]->operator() (p,s),o+1,s+1,p+1);
-        }
-      }
-      else
-      {
-	for (Int_t p=0;p<nHiddenLayerSize[o-1];++p)
-	{
-	  mSetWeight(weightMatrices[o]->operator() (p,s),o+1,s+1,p+1);
-	}
-      }
-      mSetThreshold(thresholdVectors[o]->operator() (s),o+1,s+1);
-    }
-  }      
-
-  m_input_nodes.clear(); 
-
-  typedef std::vector<TTrainedNetwork::Input> TrainedInputs; 
-  TrainedInputs inputs = trainedNetwork->getInputs(); 
-  for (TrainedInputs::const_iterator itr = inputs.begin(); 
-       itr != inputs.end(); itr++){ 
-    InputNode node; 
-    node.name = itr->name; 
-    node.offset = itr->offset; 
-    node.scale = itr->scale; 
-    m_input_nodes.push_back(node); 
-  }
-  
-  cout << " Successfully read back Trained Network " << endl;
-}
 //______________________________________________________________________________
 
 void JetNet::setInputNodes(std::vector<JetNet::InputNode> v) { 
@@ -289,12 +106,12 @@ std::vector<JetNet::InputNode> JetNet::getInputNodes() const {
 }
 
   
-void JetNet::mSetWeight( Double_t weight,Int_t aLayerInd, Int_t aNodeInd, Int_t aConnectedNodeInd )
+void JetNet::SetWeight( Double_t weight,Int_t aLayerInd, Int_t aNodeInd, Int_t aConnectedNodeInd )
 {
   JNINT1.W[ JNINDX( aLayerInd, aNodeInd, aConnectedNodeInd )-1 ]=weight;
 }
 //______________________________________________________________________________
-void JetNet::mSetThreshold( Double_t threshold, Int_t aLayerInd, Int_t aNodeInd)
+void JetNet::SetThreshold( Double_t threshold, Int_t aLayerInd, Int_t aNodeInd)
 {
   JNINT1.T[ JNINDX( aLayerInd, aNodeInd, 0 )-1 ]=threshold;
 }
@@ -1129,47 +946,47 @@ void JetNet::SetLearningRateDecrease( Double_t aValue )
   // if( !mInitLocked ) this->Init();
 }
 //______________________________________________________________________________
-Int_t JetNet::GetUpdatesPerEpoch( void )
+Int_t JetNet::GetUpdatesPerEpoch( void ) const 
 { 
   return JNDAT1.MSTJN[ 8 ]; 
 }
 //______________________________________________________________________________
-Int_t JetNet::GetUpdatingProcedure( void )
+Int_t JetNet::GetUpdatingProcedure( void ) const 
 {  
   return JNDAT1.MSTJN[ 3 ]; 
 }
 //______________________________________________________________________________
-Int_t JetNet::GetErrorMeasure( void )
+Int_t JetNet::GetErrorMeasure( void ) const 
 { 
   return JNDAT1.MSTJN[ 3 ]; 
 }
 //______________________________________________________________________________
-Int_t JetNet::GetActivationFunction( void )
+Int_t JetNet::GetActivationFunction( void ) const 
 { 
   return JNDAT1.MSTJN[ 2 ]; 
 }
 //______________________________________________________________________________
-Int_t JetNet::GetPatternsPerUpdate( void )
+Int_t JetNet::GetPatternsPerUpdate( void ) const 
 { 
   return JNDAT1.MSTJN[ 1 ]; 
 }
 //______________________________________________________________________________
-Double_t JetNet::GetLearningRate( void )
+Double_t JetNet::GetLearningRate( void ) const 
 { 
   return JNDAT1.PARJN[ 0 ]; 
 }
 //______________________________________________________________________________
-Double_t JetNet::GetMomentum( void )
+Double_t JetNet::GetMomentum( void ) const 
 { 
   return JNDAT1.PARJN[ 1 ]; 
 }
 //______________________________________________________________________________
-Double_t JetNet::GetInitialWeightsWidth( void )
+Double_t JetNet::GetInitialWeightsWidth( void ) const 
 { 
   return JNDAT1.PARJN[ 3 ]; 
 }
 //______________________________________________________________________________
-Double_t JetNet::GetLearningRateDecrease( void )
+Double_t JetNet::GetLearningRateDecrease( void ) const 
 { 
   return JNDAT1.PARJN[ 10 ]; 
 }

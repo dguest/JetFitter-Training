@@ -1,3 +1,4 @@
+// -*-c++-*-
 // Author: Vassil Verguilov  11/05/2006
 
 #ifndef __NEURALDATASET_

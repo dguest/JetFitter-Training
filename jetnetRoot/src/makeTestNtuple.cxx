@@ -9,6 +9,7 @@
 #include <set>
 #include <algorithm>
 #include <TH1D.h>
+#include "NNAdapters.hh"
 #include "TTrainedNetwork.h"
 #include "JetNet.hh"
 #include <TVectorD.h>
@@ -99,7 +100,7 @@ void makeTestNtuple(IONames io_names, bool debug)
 
   jn->Init();
 
-  jn->readBackTrainedNetwork(trainedNetwork);
+  setTrainedNetwork(*jn,trainedNetwork);
 
   //END CROSS CHECK HERE 
 

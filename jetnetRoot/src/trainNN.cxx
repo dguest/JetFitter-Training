@@ -15,6 +15,7 @@
 #include "nnExceptions.hh"
 
 #include "TTrainedNetwork.h"
+#include "NNAdapters.hh"
 #include "trainNN.hh"
 
 #include "OwnerVector.hh"
@@ -472,7 +473,7 @@ void trainNN(std::string inputfile,
       name+=".root";
 
       TFile* file=new TFile(name,"recreate");
-      TTrainedNetwork* trainedNetwork=jn->createTrainedNetwork();
+      TTrainedNetwork* trainedNetwork = getTrainedNetwork(*jn);
       file->WriteTObject(trainedNetwork); 
       // trainedNetwork->Write();
       // file->Write(); //*** SUSPICIOUS: may result in two copies in the file
@@ -518,7 +519,7 @@ void trainNN(std::string inputfile,
       Get("TTrainedNetwork");
     
     cout << " Reading back network with minimum" << endl;
-    jn->readBackTrainedNetwork(trainedNetwork);
+    setTrainedNetwork(*jn,trainedNetwork);
 
     std::string min_weights_name = out_dir + "/weightMinimum.root"; 
     TFile* file=new TFile(min_weights_name.c_str(),"recreate");

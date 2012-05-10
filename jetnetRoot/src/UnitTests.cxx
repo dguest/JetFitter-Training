@@ -1,6 +1,7 @@
 #include "UnitTests.hh"
 #include <vector> 
 #include <iostream>
+#include <cstdlib>
 #include "TTrainedNetwork.h"
 #include "NNAdapters.hh"
 #include "JetNet.hh"
@@ -47,6 +48,7 @@ bool test_trained() {
 			   100, // training events
 			   4, //layers
 			   nneurons );
+  jn->Init(); 
 
   std::vector<JetNet::InputNode> jn_input_info; 
   for (std::vector<TTrainedNetwork::Input>::const_iterator itr = 
@@ -62,12 +64,37 @@ bool test_trained() {
   std::cout << "after jn in / out:\n"; 
   print_node_info(jn_read_back); 
 
-  jn->Init(); 
 
   TTrainedNetwork* jn_trained_out = getTrainedNetwork(*jn); 
   
   std::cout << "TTrainedNetwork from jn\n"; 
   print_node_info(jn_trained_out->getInputs()); 
+
+  std::map<std::string,double> input_map; 
+  std::vector<double> input_vector; 
+  for (int i = 0; i < 3; i++){ 
+    double value = i + 4; 
+    double normed_value = 
+      (value + inputs.at(i).offset ) * inputs.at(i).scale; 
+
+    jn->SetInputs(i,normed_value); 
+    input_map[inputs.at(i).name] = value; 
+    input_vector.push_back(normed_value); 
+  }
+
+  jn->Evaluate(); 
+  std::vector<double> ttrained_map_out = 
+    jn_trained_out->calculateWithNormalization(input_map); 
+  std::vector<double> ttrained_vector_out = 
+    jn_trained_out->calculateOutputValues(input_vector); 
+  
+  for (int i = 0; i < 3; i++){ 
+    std::cout << "output " << i << " -- JN: " << jn->GetOutput(i) 
+	      << ", TTrainedNetwork map: " << ttrained_map_out.at(i) 
+	      << ", TTrainedNetwork vec: " << ttrained_vector_out.at(i) 
+	      << std::endl;
+  }
+  
 
   JetNet* new_jn = new JetNet( 100, // testing events 
 			       100, // training events
@@ -79,6 +106,8 @@ bool test_trained() {
   print_node_info(new_jn->getInputNodes()); 
   new_jn->Init(); 
 
+
+  return true; 
 }
 
 

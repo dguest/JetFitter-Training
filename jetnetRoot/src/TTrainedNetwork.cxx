@@ -58,9 +58,13 @@ TTrainedNetwork::TTrainedNetwork(std::vector<TTrainedNetwork::Input> inputs,
   mNormalizeOutput = normalizeOutput;
   maxExpValue = log(std::numeric_limits<double>::max());
 
+  std::vector<TVectorD*>::const_iterator hidden_layer_threshold_vector_end = 
+    mThresholdVectors.end(); 
+  hidden_layer_threshold_vector_end--; 
+
   for (std::vector<TVectorD*>::const_iterator tr_itr 
 	 = mThresholdVectors.begin(); 
-       tr_itr != mThresholdVectors.end(); 
+       tr_itr != hidden_layer_threshold_vector_end; 
        tr_itr++){ 
     mnHiddenLayerSize.push_back((*tr_itr)->GetNrows()); 
   }
@@ -288,6 +292,14 @@ bool TTrainedNetwork::is_consistent() const {
     int n_weights_nodes = mWeightMatrices.at(layer_n)->GetNcols(); 
     if (n_threshold_nodes != n_weights_nodes) return false; 
   }
+  
+  if (mThresholdVectors.size() - 1 != mnHiddenLayerSize.size() ){ 
+    std::cerr << "size mThresholdVectors: " << mThresholdVectors.size() 
+	      << " size mnHiddenLayerSize: " << mnHiddenLayerSize.size()
+	      << std::endl; 
+    return false; 
+  }
+
   return true; 
 }
 

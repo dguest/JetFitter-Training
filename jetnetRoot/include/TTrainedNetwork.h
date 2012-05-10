@@ -118,7 +118,7 @@ private:
 
   bool is_consistent() const; 
 
-  ClassDef( TTrainedNetwork, 2 )
+  ClassDef( TTrainedNetwork, 3 )
   
 };
 

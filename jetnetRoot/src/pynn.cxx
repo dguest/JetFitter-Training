@@ -3,6 +3,7 @@
 #include <Python.h>
 #include <string> 
 #include <iostream>
+#include <stdexcept>
 #include "trainNN.hh"
 #include "testNN.hh"
 #include "nnExceptions.hh"
@@ -164,12 +165,12 @@ extern "C" PyObject* train_py(PyObject *self,
       PyErr_SetString(PyExc_IOError,"could not load dataset"); 
       return NULL; 
     }
-    catch (const WriteFileException& e){ 
-      PyErr_SetString(PyExc_IOError,"could not write output"); 
-      return NULL; 
-    }
     catch (const NNException& e) { 
       PyErr_SetString(PyExc_StandardError,"generic nn exception"); 
+      return NULL; 
+    }
+    catch (const std::runtime_error& e) { 
+      PyErr_SetString(PyExc_StandardError,e.what()); 
       return NULL; 
     }
   }  
@@ -242,14 +243,6 @@ extern "C" PyObject* test_py(PyObject *self,
 	     with_ip3d, 
 	     out_file); 
     }
-    catch (const LoadNetworkException& e){ 
-      PyErr_SetString(PyExc_IOError,"could not load network"); 
-      return NULL; 
-    }
-    catch (const WriteFileException& e){ 
-      PyErr_SetString(PyExc_IOError,"could not write output"); 
-      return NULL; 
-    }
     catch (const MissingLeafException& e) { 
       std::string error = "could not find leaf " + e.leaf_name() + 
 	" in chain" + e.chain_name() + " file " + input_file; 
@@ -260,7 +253,10 @@ extern "C" PyObject* test_py(PyObject *self,
       PyErr_SetString(PyExc_StandardError,"generic nn exception in testNN"); 
       return NULL; 
     }
-
+    catch (const std::runtime_error& e) { 
+      PyErr_SetString(PyExc_StandardError,e.what()); 
+      return NULL; 
+    }
   }
 
   Py_INCREF(Py_None);
@@ -318,14 +314,6 @@ extern "C" PyObject* make_test_ntuple(PyObject *self,
     try { 
       makeTestNtuple(io_names); 
     }
-    catch (const LoadNetworkException& e){ 
-      PyErr_SetString(PyExc_IOError,"could not load network"); 
-      return NULL; 
-    }
-    catch (const WriteFileException& e){ 
-      PyErr_SetString(PyExc_IOError,"could not write output"); 
-      return NULL; 
-    }
     catch (const LoadReducedDSException& e) { 
       std::string error = "could not load --- " + e.info(); 
       PyErr_SetString(PyExc_IOError,error.c_str()); 
@@ -333,6 +321,10 @@ extern "C" PyObject* make_test_ntuple(PyObject *self,
     }
     catch (const NNException& e) { 
       PyErr_SetString(PyExc_StandardError,"generic nn exception"); 
+      return NULL; 
+    }
+    catch (const std::runtime_error& e) { 
+      PyErr_SetString(PyExc_StandardError,e.what()); 
       return NULL; 
     }
 

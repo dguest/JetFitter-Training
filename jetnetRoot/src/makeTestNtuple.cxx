@@ -16,6 +16,7 @@
 #include <TMatrixD.h>
 #include <string> 
 #include "nnExceptions.hh"
+#include <stdexcept>
 #include "normedInput.hh"
 
 using namespace std;
@@ -32,13 +33,15 @@ void makeTestNtuple(IONames io_names, bool debug)
   std::string output_file_name = io_names.output_file; 
   std::string output_tree_name = io_names.output_tree; 
 
+  std::string nn_name = "TTrainedNetwork"; 
   TFile input_weights_file(input_weights_name.c_str());
   TTrainedNetwork* trainedNetwork = dynamic_cast<TTrainedNetwork*>
-    (input_weights_file.Get("TTrainedNetwork"));
+    (input_weights_file.Get(nn_name.c_str()));
 
   
   if (!trainedNetwork) {
-    throw LoadNetworkException(); 
+    throw std::runtime_error("could not load " + nn_name + 
+			     " from " + input_weights_name); 
   }
 
   Int_t nLayers=2+trainedNetwork->getnHiddenLayerSize().size();
@@ -149,7 +152,7 @@ void makeTestNtuple(IONames io_names, bool debug)
 
   TFile* outputFile = new TFile(output_file_name.c_str(),"recreate");
   if ( outputFile->IsZombie() ) { 
-    throw WriteFileException(); 
+    throw std::runtime_error("Can't write " + output_file_name); 
   }
 
   TTree* myTree=new TTree(output_tree_name.c_str(),output_tree_name.c_str());

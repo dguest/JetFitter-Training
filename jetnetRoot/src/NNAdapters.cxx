@@ -80,9 +80,14 @@ void setTrainedNetwork(JetNet& jn, const TTrainedNetwork* trainedNetwork)
   Int_t nHidden = jn.GetHiddenLayerDim();
   std::vector<Int_t> nHiddenLayerSize;
 
-  if (trainedNetwork->getnHidden()!=nHidden)
+  int tr_n_hidden = trainedNetwork->getnHidden(); 
+
+  if (tr_n_hidden != nHidden)
   {
-    throw std::runtime_error(" Network doesn't match nHidden");
+    std::string e_string = 
+      "Hidden layers mismatch -- JetNet: %i, TTrainedNetwork: %i"; 
+    std::string err = (boost::format(e_string) % nHidden % tr_n_hidden).str(); 
+    throw std::runtime_error(err); 
   }
 
   for (Int_t o=0;o<nHidden;++o)

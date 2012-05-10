@@ -13,6 +13,7 @@
 
 #include "normedInput.hh"
 #include "nnExceptions.hh"
+#include <stdexcept>
 
 #include "TTrainedNetwork.h"
 #include "NNAdapters.hh"
@@ -68,9 +69,7 @@ void trainNN(std::string inputfile,
   TFile *file= new TFile(inputfile.c_str());
   TTree *simu = dynamic_cast<TTree*>(file->Get("SVTree"));
   if (! simu){ 
-    std::cerr << "ERROR, could not find SVTree in " << inputfile << 
-      std::endl; 
-    throw LoadReducedDSException(); 
+    throw std::runtime_error("Could not find SVTree in " + inputfile); 
   }
 
   InputVariableContainer in_var; 
@@ -363,7 +362,7 @@ void trainNN(std::string inputfile,
 
   ofstream cronology(chronology_name.c_str(),ios_base::out);
   if (! cronology ) { 
-    throw WriteFileException(); 
+    throw std::runtime_error("Could not write " + chronology_name); 
   }
   
   cronology << "-------------SETTINGS----------------" << endl;

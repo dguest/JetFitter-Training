@@ -117,12 +117,13 @@ void testNN(std::string inputfile,
 
   // === above was from the top of the train routine
 
-  
-  TObject* trained_network_obj = trained_network_file.Get("TTrainedNetwork");
+  std::string nn_name = "TTrainedNetwork"; 
+  TObject* trained_network_obj = trained_network_file.Get(nn_name.c_str());
   TTrainedNetwork* trained_network = 
     dynamic_cast<TTrainedNetwork*>(trained_network_obj); 
   if (trained_network == 0){ 
-    throw LoadNetworkException(); 
+    throw std::runtime_error("could not load " + nn_name + 
+			     " from " + training_file); 
   }
 
   int n_inputs = trained_network->getnInput(); 

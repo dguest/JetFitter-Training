@@ -1,9 +1,11 @@
 #include "TTrainedNetwork.h"
 #include <iostream>
+#include <set> 
 #include <limits>
 #include <numeric>
 #include <cassert>
 #include <cstring>
+#include <stdexcept>
 
 TTrainedNetwork::TTrainedNetwork()
 {
@@ -174,14 +176,27 @@ void TTrainedNetwork::setNewWeights(std::vector<TVectorD*> & thresholdVectors,
 }
 
 std::vector<Double_t> 
-TTrainedNetwork::calculateWithNormalization(TTrainedNetwork::DMap& in) const { 
-  std::vector<Double_t> raw_inputs(mnInput); 
-  for (std::map<std::string,double>::const_iterator itr = in.begin(); 
-       itr != in.end(); 
+TTrainedNetwork::calculateWithNormalization(TTrainedNetwork::DMap& in) 
+  const { 
+  DMapI begin = in.begin(); 
+  DMapI end = in.end(); 
+  calculateWithNormalization(begin, end); 
+}
+
+std::vector<Double_t> 
+TTrainedNetwork::calculateWithNormalization(TTrainedNetwork::DMapI begin, 
+					    TTrainedNetwork::DMapI end) 
+  const { 
+  std::vector<Double_t> inputs(mnInput); 
+  for (std::map<std::string,double>::const_iterator itr = begin; 
+       itr != end; 
        itr++){ 
     std::map<std::string,int>::const_iterator input_node_ptr = 
       inputStringToNode.find(itr->first); 
-    assert(input_node_ptr != inputStringToNode.end()); 
+    if (input_node_ptr == inputStringToNode.end()) { 
+      throw std::runtime_error(itr->first + "not found in NN"); 
+    }
+
     const int node_n = input_node_ptr->second; 
 
     // get and scale the raw input value
@@ -190,9 +205,27 @@ TTrainedNetwork::calculateWithNormalization(TTrainedNetwork::DMap& in) const {
     raw_value *= m_input_node_scale.at(node_n); 
 
     // store in the inputs vector
-    raw_inputs.at(node_n) = raw_value; 
+    inputs.at(node_n) = raw_value; 
   }
-  return calculateOutputValues(raw_inputs); 
+
+  // make sure all nodes are filled
+  if (inputs.size() != inputStringToNode.size() ) { 
+    assert(inputs.size() < inputStringToNode.size() ); 
+    std::set<std::string> input_set;
+    for (DMapI itr = begin; itr != end; itr++) { 
+      input_set.insert(itr->first); 
+    }
+    std::string err = "nodes not filled in NN: "; 
+    for (std::map<std::string,int>::const_iterator itr = 
+	   inputStringToNode.begin(); 
+	 itr != inputStringToNode.end(); 
+	 itr++){
+      if (input_set.find(itr->first) == input_set.end() ) 
+	err.append(itr->first + " "); 
+    }
+    throw std::runtime_error(err); 
+  }
+  return calculateOutputValues(inputs); 
 }
 
 std::vector<Double_t>  
@@ -216,7 +249,7 @@ TTrainedNetwork::calculateOutputValues(std::vector<Double_t> & input) const
 
   if (static_cast<int>(input.size()) != mnInput)
   {
-    std::cout << "TTrainedNetwork WARNING Input size: " << input.size()
+    std::cerr << "TTrainedNetwork WARNING Input size: " << input.size()
 	      << " does not match with network: " << mnInput << std::endl;
     return std::vector<double>();
   }

@@ -27,6 +27,7 @@ public:
 
   typedef std::vector<Double_t> DVec; 
   typedef std::map<std::string, double> DMap; 
+  typedef DMap::const_iterator DMapI; 
 
   TTrainedNetwork();
 
@@ -81,6 +82,7 @@ public:
   DVec calculateOutputValues(DVec & input) const;
   // DVec calculateWithNormalization(DVec & input) const; 
   DVec calculateWithNormalization(DMap & input) const;
+  DVec calculateWithNormalization(DMapI begin, DMapI end) const;
 
   bool getIfLinearOutput() const { return mLinearOutput; };
 

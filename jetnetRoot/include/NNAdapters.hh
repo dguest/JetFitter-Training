@@ -2,11 +2,11 @@
 #define NN_ADAPTERS
 
 class JetNet; 
-class TTrainedNetwork; 
+class TFlavorNetwork; 
 
-TTrainedNetwork* getTrainedNetwork(const JetNet&); 
+TFlavorNetwork* getTrainedNetwork(const JetNet&); 
 
-void setTrainedNetwork(JetNet&, const TTrainedNetwork* trainedNetwork); 
+void setTrainedNetwork(JetNet&, const TFlavorNetwork* trainedNetwork); 
 
 
 template<class O, class I>

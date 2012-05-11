@@ -1,6 +1,6 @@
 #include <TH1F.h>
 #include <TH2F.h>
-#include "TTrainedNetwork.h"
+#include "TFlavorNetwork.h"
 #include "NetworkToHistoTool.hh"
 #include <cmath>
 #include <stdexcept> 
@@ -11,7 +11,7 @@
 // ClassImp( TNetworkToHistoTool)
 
 std::vector<TH1*> 
-NetworkToHistoTool::fromTrainedNetworkToHisto(TTrainedNetwork* trainedNetwork) const
+NetworkToHistoTool::fromTrainedNetworkToHisto(TFlavorNetwork* trainedNetwork) const
 {
 
   std::vector<TH1*> outputHistos;
@@ -122,7 +122,7 @@ TH1* NetworkToHistoTool::findHisto(std::string nameOfHisto,
 
 
 
-TTrainedNetwork* 
+TFlavorNetwork* 
 NetworkToHistoTool::fromHistoToTrainedNetwork(std::vector<TH1*> & inputHistos) const
 {
 
@@ -194,16 +194,16 @@ NetworkToHistoTool::fromHistoToTrainedNetwork(std::vector<TH1*> & inputHistos) c
   printf("WARNING: reading in histos with no normalization "
 	 "you need to fix this\n"); 
 
-  std::vector<TTrainedNetwork::Input> inputs; 
+  std::vector<TFlavorNetwork::Input> inputs; 
   for (int i = 0 ; i < nInput; i++) { 
-    TTrainedNetwork::Input the_input; 
+    TFlavorNetwork::Input the_input; 
     the_input.name = boost::lexical_cast<std::string>(i); 
     the_input.offset = 0; 
     the_input.scale = 0; 
     inputs.push_back(the_input); 
   }
-  TTrainedNetwork* trainedNetwork = 
-    new TTrainedNetwork(inputs,
+  TFlavorNetwork* trainedNetwork = 
+    new TFlavorNetwork(inputs,
 			nOutput,
 			thresholdVectors,
 			weightMatrices);

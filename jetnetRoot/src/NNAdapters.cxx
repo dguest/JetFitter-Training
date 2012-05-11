@@ -3,11 +3,11 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/format.hpp>
 #include "JetNet.hh"
-#include "TTrainedNetwork.h"
+#include "TFlavorNetwork.h"
 #include "NNAdapters.hh"
 
 //by Giacinto Piacquadio (18-02-2008)
-TTrainedNetwork* getTrainedNetwork(const JetNet& jn) 
+TFlavorNetwork* getTrainedNetwork(const JetNet& jn) 
 {
   Int_t nInput = jn.GetInputDim();
   Int_t nHidden = jn.GetHiddenLayerDim();
@@ -51,18 +51,18 @@ TTrainedNetwork* getTrainedNetwork(const JetNet& jn)
 
   typedef std::vector<JetNet::InputNode> JetNetInputs; 
   JetNetInputs jn_inputs = jn.getInputNodes(); 
-  std::vector<TTrainedNetwork::Input> nn_inputs; 
+  std::vector<TFlavorNetwork::Input> nn_inputs; 
   for (JetNetInputs::const_iterator itr = jn_inputs.begin(); 
        itr != jn_inputs.end(); itr++) { 
-    TTrainedNetwork::Input the_node = 
-      convert_node<TTrainedNetwork::Input>(*itr); 
+    TFlavorNetwork::Input the_node = 
+      convert_node<TFlavorNetwork::Input>(*itr); 
     nn_inputs.push_back(the_node); 
   }
        
   int activation_function = jn.GetActivationFunction(); 
 
-  TTrainedNetwork* trainedNetwork=
-    new TTrainedNetwork(nn_inputs, 
+  TFlavorNetwork* trainedNetwork=
+    new TFlavorNetwork(nn_inputs, 
 			nOutput,
 			thresholdVectors,
 			weightMatrices,
@@ -73,7 +73,7 @@ TTrainedNetwork* getTrainedNetwork(const JetNet& jn)
 }
 //___________________________________________________________________________
 //by Giacinto Piacquadio (18-02-2008)
-void setTrainedNetwork(JetNet& jn, const TTrainedNetwork* trainedNetwork)
+void setTrainedNetwork(JetNet& jn, const TFlavorNetwork* trainedNetwork)
 {
 
   Int_t nInput = jn.GetInputDim();
@@ -85,7 +85,7 @@ void setTrainedNetwork(JetNet& jn, const TTrainedNetwork* trainedNetwork)
   if (tr_n_hidden != nHidden)
   {
     std::string e_string = 
-      "Hidden layers mismatch -- JetNet: %i, TTrainedNetwork: %i"; 
+      "Hidden layers mismatch -- JetNet: %i, TFlavorNetwork: %i"; 
     std::string err = (boost::format(e_string) % nHidden % tr_n_hidden).str(); 
     throw std::runtime_error(err); 
   }
@@ -117,7 +117,7 @@ void setTrainedNetwork(JetNet& jn, const TTrainedNetwork* trainedNetwork)
   
   std::vector<TVectorD*> thresholdVectors=trainedNetwork->getThresholdVectors();
   std::vector<TMatrixD*> weightMatrices=trainedNetwork->weightMatrices();
-  //ownership remains of the TTrainedNetwork
+  //ownership remains of the TFlavorNetwork
 
   for (Int_t o=0;o<nHidden+1;++o)
   {
@@ -145,7 +145,7 @@ void setTrainedNetwork(JetNet& jn, const TTrainedNetwork* trainedNetwork)
     }
   }      
 
-  typedef std::vector<TTrainedNetwork::Input> TrainedInputs; 
+  typedef std::vector<TFlavorNetwork::Input> TrainedInputs; 
   std::vector<JetNet::InputNode> jetnet_inputs; 
   TrainedInputs inputs = trainedNetwork->getInputs(); 
   for (TrainedInputs::const_iterator itr = inputs.begin(); 

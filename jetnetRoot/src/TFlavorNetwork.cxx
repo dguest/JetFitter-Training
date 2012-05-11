@@ -1,4 +1,4 @@
-#include "TTrainedNetwork.h"
+#include "TFlavorNetwork.h"
 #include <iostream>
 #include <set> 
 #include <limits>
@@ -7,7 +7,7 @@
 #include <cstring>
 #include <stdexcept>
 
-TTrainedNetwork::TTrainedNetwork()
+TFlavorNetwork::TFlavorNetwork()
 {
   mnInput=0;
   mnHidden=0;
@@ -19,7 +19,7 @@ TTrainedNetwork::TTrainedNetwork()
   
 }
 
-TTrainedNetwork::TTrainedNetwork(Int_t nInput, 
+TFlavorNetwork::TFlavorNetwork(Int_t nInput, 
 				 Int_t nHidden, 
                                  Int_t nOutput,
 				 std::vector<Int_t> & nHiddenLayerSize, 
@@ -42,7 +42,7 @@ TTrainedNetwork::TTrainedNetwork(Int_t nInput,
   
 }
 
-TTrainedNetwork::TTrainedNetwork(std::vector<TTrainedNetwork::Input> inputs, 
+TFlavorNetwork::TFlavorNetwork(std::vector<TFlavorNetwork::Input> inputs, 
                                  Int_t nOutput,
                                  std::vector<TVectorD*> & thresholdVectors,
                                  std::vector<TMatrixD*> & weightMatrices,
@@ -90,14 +90,14 @@ TTrainedNetwork::TTrainedNetwork(std::vector<TTrainedNetwork::Input> inputs,
   for (unsigned i = 0; i < mnHiddenLayerSize.size(); ++i)
     nlayer_max = std::max(nlayer_max, mnHiddenLayerSize[i]);
   if (nlayer_max>=MAX_LAYER_LENGTH) {
-    std::cout<<"TTrainedNetwork ERROR Maximal layer size exceeded"<<std::endl;
+    std::cout<<"TFlavorNetwork ERROR Maximal layer size exceeded"<<std::endl;
     assert(false);
   }
 
   assert(is_consistent()); 
 }
 
-TTrainedNetwork::~TTrainedNetwork()
+TFlavorNetwork::~TFlavorNetwork()
 {
   std::vector<TVectorD*>::const_iterator vectBegin=mThresholdVectors.begin();
   std::vector<TVectorD*>::const_iterator vectEnd=mThresholdVectors.end();
@@ -121,7 +121,7 @@ TTrainedNetwork::~TTrainedNetwork()
 
 }
 
-std::vector<TTrainedNetwork::Input> TTrainedNetwork::getInputs() const { 
+std::vector<TFlavorNetwork::Input> TFlavorNetwork::getInputs() const { 
   std::map<int,Input> inputs; 
   for (std::map<std::string,int>::const_iterator itr = 
 	 inputStringToNode.begin(); 
@@ -143,7 +143,7 @@ std::vector<TTrainedNetwork::Input> TTrainedNetwork::getInputs() const {
   return inputs_vector; 
 }
 
-void TTrainedNetwork::setNewWeights(std::vector<TVectorD*> & thresholdVectors,
+void TFlavorNetwork::setNewWeights(std::vector<TVectorD*> & thresholdVectors,
 				    std::vector<TMatrixD*> & weightMatrices)
 {
 
@@ -176,16 +176,16 @@ void TTrainedNetwork::setNewWeights(std::vector<TVectorD*> & thresholdVectors,
 }
 
 std::vector<Double_t> 
-TTrainedNetwork::calculateWithNormalization(TTrainedNetwork::DMap& in) 
+TFlavorNetwork::calculateWithNormalization(TFlavorNetwork::DMap& in) 
   const { 
   DMapI begin = in.begin(); 
   DMapI end = in.end(); 
-  calculateWithNormalization(begin, end); 
+  return calculateWithNormalization(begin, end); 
 }
 
 std::vector<Double_t> 
-TTrainedNetwork::calculateWithNormalization(TTrainedNetwork::DMapI begin, 
-					    TTrainedNetwork::DMapI end) 
+TFlavorNetwork::calculateWithNormalization(TFlavorNetwork::DMapI begin, 
+					    TFlavorNetwork::DMapI end) 
   const { 
   std::vector<Double_t> inputs(mnInput); 
   for (std::map<std::string,double>::const_iterator itr = begin; 
@@ -229,7 +229,7 @@ TTrainedNetwork::calculateWithNormalization(TTrainedNetwork::DMapI begin,
 }
 
 std::vector<Double_t>  
-TTrainedNetwork::calculateOutputValues(std::vector<Double_t> & input) const 
+TFlavorNetwork::calculateOutputValues(std::vector<Double_t> & input) const 
 {
   // This method is now highly optimised (apart from the potential use
   // of a cheaper sigmoid function). Please be very careful changing
@@ -249,7 +249,7 @@ TTrainedNetwork::calculateOutputValues(std::vector<Double_t> & input) const
 
   if (static_cast<int>(input.size()) != mnInput)
   {
-    std::cerr << "TTrainedNetwork WARNING Input size: " << input.size()
+    std::cerr << "TFlavorNetwork WARNING Input size: " << input.size()
 	      << " does not match with network: " << mnInput << std::endl;
     return std::vector<double>();
   }
@@ -310,14 +310,14 @@ TTrainedNetwork::calculateOutputValues(std::vector<Double_t> & input) const
 }
 
 
-Double_t TTrainedNetwork::sigmoid(Double_t x) const { 
+Double_t TFlavorNetwork::sigmoid(Double_t x) const { 
   if (-2*x >= maxExpValue){
     return 0.;
   }
   return 1./(1.+exp(-2*x)); 
 }
 
-bool TTrainedNetwork::is_consistent() const { 
+bool TFlavorNetwork::is_consistent() const { 
   if (mThresholdVectors.size() != mWeightMatrices.size()) 
     return false; 
   for (unsigned layer_n = 0; layer_n < mThresholdVectors.size(); layer_n++){ 
@@ -336,7 +336,7 @@ bool TTrainedNetwork::is_consistent() const {
   return true; 
 }
 
-ClassImp( TTrainedNetwork)
+ClassImp( TFlavorNetwork)
 
 
 

@@ -1,8 +1,9 @@
 #include "UnitTests.hh"
 #include <vector> 
 #include <iostream>
+#include <stdexcept> 
 #include <cstdlib>
-#include "TTrainedNetwork.h"
+#include "TFlavorNetwork.h"
 #include "NNAdapters.hh"
 #include "JetNet.hh"
 
@@ -12,10 +13,10 @@ int main(int narg, char* varg[]) {
 }
 
 bool test_trained() { 
-  std::vector<TTrainedNetwork::Input> inputs; 
-  TTrainedNetwork::Input cat = {"cat",1,1}; 
-  TTrainedNetwork::Input dog = {"dog",2,2}; 
-  TTrainedNetwork::Input horse = {"horse",3,3}; 
+  std::vector<TFlavorNetwork::Input> inputs; 
+  TFlavorNetwork::Input cat = {"cat",1,1}; 
+  TFlavorNetwork::Input dog = {"dog",2,2}; 
+  TFlavorNetwork::Input horse = {"horse",3,3}; 
   inputs.push_back(cat); 
   inputs.push_back(dog); 
   inputs.push_back(horse); 
@@ -31,9 +32,9 @@ bool test_trained() {
   std::cout << "before:\n"; 
   print_node_info(inputs); 
 
-  TTrainedNetwork trained(inputs, 3, thresholds, weights); 
+  TFlavorNetwork trained(inputs, 3, thresholds, weights); 
 
-  std::vector<TTrainedNetwork::Input> read_back = trained.getInputs(); 
+  std::vector<TFlavorNetwork::Input> read_back = trained.getInputs(); 
 
   std::cout << "after:\n"; 
   print_node_info(read_back); 
@@ -51,7 +52,7 @@ bool test_trained() {
   jn->Init(); 
 
   std::vector<JetNet::InputNode> jn_input_info; 
-  for (std::vector<TTrainedNetwork::Input>::const_iterator itr = 
+  for (std::vector<TFlavorNetwork::Input>::const_iterator itr = 
 	 read_back.begin(); 
        itr != read_back.end(); 
        itr++) { 
@@ -65,14 +66,14 @@ bool test_trained() {
   print_node_info(jn_read_back); 
 
 
-  TTrainedNetwork* jn_trained_out = getTrainedNetwork(*jn); 
+  TFlavorNetwork* jn_trained_out = getTrainedNetwork(*jn); 
   
-  std::cout << "TTrainedNetwork from jn\n"; 
+  std::cout << "TFlavorNetwork from jn\n"; 
   print_node_info(jn_trained_out->getInputs()); 
 
   std::map<std::string,double> input_map; 
   std::vector<double> input_vector; 
-  for (int i = 0; i < 3; i++){ 
+  for (int i = 0; i < inputs.size(); i++){ 
     double value = i + 4; 
     double normed_value = 
       (value + inputs.at(i).offset ) * inputs.at(i).scale; 
@@ -83,15 +84,32 @@ bool test_trained() {
   }
 
   jn->Evaluate(); 
+  
+  std::cout << "calculate in a few ways: first with normalization..."; 
+  
   std::vector<double> ttrained_map_out = 
     jn_trained_out->calculateWithNormalization(input_map); 
-  std::vector<double> ttrained_vector_out = 
-    jn_trained_out->calculateOutputValues(input_vector); 
+  std::cout << "now without...\n"; 
+  std::vector<double> ttrained_vector_out; 
+  try { 
+    ttrained_vector_out = jn_trained_out->calculateOutputValues(input_vector); 
+  }
+  catch (std::out_of_range) { 
+    std::cout << "out of range thrown in calculateOutputValues: size " << 
+      "input_vector = " << input_vector.size() << " size input_map = " << 
+      input_map.size() << std::endl; 
+    throw; 
+  }
+  std::cout << "reading back...\n"; 
+  int v_out_size = ttrained_vector_out.size();  
+  int m_out_size = ttrained_map_out.size(); 
+  if (v_out_size != m_out_size)
+    printf("vector output size = %i, map = %i", v_out_size, m_out_size) ; 
   
   for (int i = 0; i < 3; i++){ 
     std::cout << "output " << i << " -- JN: " << jn->GetOutput(i) 
-	      << ", TTrainedNetwork map: " << ttrained_map_out.at(i) 
-	      << ", TTrainedNetwork vec: " << ttrained_vector_out.at(i) 
+	      << ", TFlavorNetwork map: " << ttrained_map_out.at(i) 
+	      << ", TFlavorNetwork vec: " << ttrained_vector_out.at(i) 
 	      << std::endl;
   }
   
@@ -102,7 +120,7 @@ bool test_trained() {
 			       nneurons );
 
   setTrainedNetwork(*new_jn,jn_trained_out); 
-  std::cout << "new_jn from TTrainedNetwork\n"; 
+  std::cout << "new_jn from TFlavorNetwork\n"; 
   print_node_info(new_jn->getInputNodes()); 
   new_jn->Init(); 
 
@@ -117,7 +135,7 @@ bool test_trained() {
   
   // cout << " create Trained Network object..." << endl;
   
-  // TTrainedNetwork* trainedNetwork = jn->createTrainedNetwork();
+  // TFlavorNetwork* trainedNetwork = jn->createTrainedNetwork();
 
   // cout << " now getting value with trained Network ";
 
@@ -178,7 +196,7 @@ bool test_trained() {
   //   fromTrainedNetworkToHisto(trainedNetwork);
 
   // cout << " From histo to network back..." << endl;
-  // TTrainedNetwork* trainedNetwork2 = myHistoTool.
+  // TFlavorNetwork* trainedNetwork2 = myHistoTool.
   //   fromHistoToTrainedNetwork(myHistos);
 
   // cout << " reading back " << endl;

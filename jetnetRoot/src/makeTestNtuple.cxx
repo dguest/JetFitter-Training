@@ -10,7 +10,7 @@
 #include <algorithm>
 #include <TH1D.h>
 #include "NNAdapters.hh"
-#include "TTrainedNetwork.h"
+#include "TFlavorNetwork.h"
 #include "JetNet.hh"
 #include <TVectorD.h>
 #include <TMatrixD.h>
@@ -33,9 +33,9 @@ void makeTestNtuple(IONames io_names, bool debug)
   std::string output_file_name = io_names.output_file; 
   std::string output_tree_name = io_names.output_tree; 
 
-  std::string nn_name = "TTrainedNetwork"; 
+  std::string nn_name = "TFlavorNetwork"; 
   TFile input_weights_file(input_weights_name.c_str());
-  TTrainedNetwork* trainedNetwork = dynamic_cast<TTrainedNetwork*>
+  TFlavorNetwork* trainedNetwork = dynamic_cast<TFlavorNetwork*>
     (input_weights_file.Get(nn_name.c_str()));
 
   

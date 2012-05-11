@@ -15,7 +15,7 @@
 #include "nnExceptions.hh"
 #include <stdexcept>
 
-#include "TTrainedNetwork.h"
+#include "TFlavorNetwork.h"
 #include "NNAdapters.hh"
 #include "trainNN.hh"
 
@@ -465,7 +465,7 @@ void trainNN(std::string inputfile,
       name+=".root";
 
       TFile* file = new TFile(name,"recreate");
-      TTrainedNetwork* trainedNetwork = getTrainedNetwork(*jn);
+      TFlavorNetwork* trainedNetwork = getTrainedNetwork(*jn);
       file->WriteTObject(trainedNetwork); 
 
 
@@ -511,8 +511,8 @@ void trainNN(std::string inputfile,
 
 
     TFile *_file0 = new TFile(name);
-    TTrainedNetwork* trainedNetwork=(TTrainedNetwork*)_file0->
-      Get("TTrainedNetwork");
+    TFlavorNetwork* trainedNetwork=(TFlavorNetwork*)_file0->
+      Get("TFlavorNetwork");
     
     // cout << " Reading back network with minimum" << endl;
     // setTrainedNetwork(*jn,trainedNetwork);

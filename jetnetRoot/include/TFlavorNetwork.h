@@ -1,6 +1,6 @@
 //-*-c++-*-
-#ifndef __TTrainedNetwork_
-#define __TTrainedNetwork_
+#ifndef __TFlavorNetwork_
+#define __TFlavorNetwork_
 
 #include "TObject.h"
 #include "TMatrixD.h"
@@ -11,12 +11,12 @@
 #include <map>
 
 /******************************************************
-  @class TTrainedNetwork
+  @class TFlavorNetwork
   Created : 18-02-2008
   @author Giacinto Piacquadio (giacinto.piacquadio AT physik.uni-freiburg.de)
 ********************************************************/
 
-class TTrainedNetwork : public TObject
+class TFlavorNetwork : public TObject
 {
 public:
   struct Input { 
@@ -29,10 +29,10 @@ public:
   typedef std::map<std::string, double> DMap; 
   typedef DMap::const_iterator DMapI; 
 
-  TTrainedNetwork();
+  TFlavorNetwork();
 
   // old-school constructor (for compatability)
-  TTrainedNetwork(Int_t nInput, 
+  TFlavorNetwork(Int_t nInput, 
 		  Int_t nHidden, 
 		  Int_t nOutput,
 		  std::vector<Int_t> & nHiddenLayerSize, 
@@ -44,7 +44,7 @@ public:
 
 
   //class takes ownership of all pointers...
-  TTrainedNetwork(std::vector<TTrainedNetwork::Input> inputs,
+  TFlavorNetwork(std::vector<TFlavorNetwork::Input> inputs,
 		  Int_t nOutput,
 		  std::vector<TVectorD*> & thresholdVectors,
 		  std::vector<TMatrixD*> & weightMatrices,
@@ -52,7 +52,7 @@ public:
                   bool linearOutput=false,
                   bool normalizeOutput=false);
 
-  ~TTrainedNetwork();
+  ~TFlavorNetwork();
 
   std::vector<Input> getInputs() const; 
 
@@ -120,7 +120,7 @@ private:
 
   bool is_consistent() const; 
 
-  ClassDef( TTrainedNetwork, 3 )
+  ClassDef( TFlavorNetwork, 3 )
   
 };
 

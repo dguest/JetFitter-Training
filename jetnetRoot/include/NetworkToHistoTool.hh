@@ -6,7 +6,7 @@
 #include <vector>
 
 class TH1;
-class TTrainedNetwork;
+class TFlavorNetwork;
 
 //by Giacinto Piacquadio (19-2-2008)
 
@@ -18,9 +18,9 @@ public:
 
   ~NetworkToHistoTool() {};
 
-  std::vector<TH1*> fromTrainedNetworkToHisto(TTrainedNetwork*) const;
+  std::vector<TH1*> fromTrainedNetworkToHisto(TFlavorNetwork*) const;
   
-  TTrainedNetwork* fromHistoToTrainedNetwork(std::vector<TH1*> &) const;
+  TFlavorNetwork* fromHistoToTrainedNetwork(std::vector<TH1*> &) const;
 
 private:
 

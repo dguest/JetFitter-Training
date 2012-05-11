@@ -15,7 +15,7 @@
 #include "normedInput.hh"
 
 #include "NNAdapters.hh"
-#include "TTrainedNetwork.h"
+#include "TFlavorNetwork.h"
 #include "testNN.hh"
 #include "nnExceptions.hh"
 
@@ -117,10 +117,10 @@ void testNN(std::string inputfile,
 
   // === above was from the top of the train routine
 
-  std::string nn_name = "TTrainedNetwork"; 
+  std::string nn_name = "TFlavorNetwork"; 
   TObject* trained_network_obj = trained_network_file.Get(nn_name.c_str());
-  TTrainedNetwork* trained_network = 
-    dynamic_cast<TTrainedNetwork*>(trained_network_obj); 
+  TFlavorNetwork* trained_network = 
+    dynamic_cast<TFlavorNetwork*>(trained_network_obj); 
   if (trained_network == 0){ 
     throw std::runtime_error("could not load " + nn_name + 
 			     " from " + training_file); 

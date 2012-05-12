@@ -1,4 +1,4 @@
-#include "PtEtaCategoryTool.hh"
+#include "BinTool.hh"
 #include <vector>
 #include <iostream>
 #include <ctime>
@@ -23,19 +23,19 @@ int main (int narg, char* argv[]){
   values.push_back(4); 
   
 
-  CategoryMap cat_map(values); 
+  BinTool cat_map(values); 
   
-  std::cout << cat_map.get_category(1e-4) << std::endl; 
-  std::cout << cat_map.get_category(1e-5) << std::endl; 
-  std::cout << cat_map.get_category(1e-6) << std::endl; 
-  std::cout << cat_map.get_category(1e-7) << std::endl; 
-  std::cout << cat_map.get_category(0) << std::endl; 
-  std::cout << cat_map.get_category(-1e-7) << std::endl; 
-  std::cout << cat_map.get_category(-1e-6) << std::endl; 
-  std::cout << cat_map.get_category(-1e-5) << std::endl; 
-  std::cout << cat_map.get_category(-1e-4) << std::endl; 
+  std::cout << cat_map.get_bin(1e-4) << std::endl; 
+  std::cout << cat_map.get_bin(1e-5) << std::endl; 
+  std::cout << cat_map.get_bin(1e-6) << std::endl; 
+  std::cout << cat_map.get_bin(1e-7) << std::endl; 
+  std::cout << cat_map.get_bin(0) << std::endl; 
+  std::cout << cat_map.get_bin(-1e-7) << std::endl; 
+  std::cout << cat_map.get_bin(-1e-6) << std::endl; 
+  std::cout << cat_map.get_bin(-1e-5) << std::endl; 
+  std::cout << cat_map.get_bin(-1e-4) << std::endl; 
 
-  for (CategoryMap::const_iterator itr = cat_map.begin(); 
+  for (BinTool::const_iterator itr = cat_map.begin(); 
        itr != cat_map.end(); 
        itr++){ 
     std::cout << itr->first << "\t " << itr->second << std::endl; 
@@ -47,9 +47,9 @@ int main (int narg, char* argv[]){
   
   for (unsigned i = 0; i < 100000000; i++){ 
     float value = (float(rand()) / float(RAND_MAX) - 0.5 ) * 10; 
-    int cat = cat_map.get_category(value); 
+    int cat = cat_map.get_bin(value); 
 
-    hist->Fill(cat); 
+    hist->Fill(cat);  
 
     assert(cat >= 0); 
   }

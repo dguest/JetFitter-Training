@@ -3,7 +3,7 @@
 #include <TTree.h>
 #include <iostream>
 #include "writeNtuple_byPt.hh"
-#include "PtEtaCategoryTool.hh"
+#include "BinTool.hh"
 #include <cmath>
 #include <cstdlib> // for rand, srand
 #include <ctime> 
@@ -30,12 +30,12 @@ int writeNtuple_byPt(SVector input_files,
   srand(time(0)); 
 
   // --- setup pt / eta categories
-  CategoryMap pt_categories(pt_cat_vec); 
+  BinTool pt_categories(pt_cat_vec); 
 
   std::vector<double> eta_cat_vec; 
   eta_cat_vec.push_back(0.7); 
   eta_cat_vec.push_back(1.5); 
-  CategoryMap abs_eta_categories(eta_cat_vec); 
+  BinTool abs_eta_categories(eta_cat_vec); 
 
   // --- setup observer variables (if they aren't given)
   bool built_observers = observers.build_default_values(); 
@@ -246,8 +246,8 @@ int writeNtuple_byPt(SVector input_files,
 
   std::cout << "Total entries are: " << num_entries << endl;
   
-  int numPtBins = pt_categories.size(); 
-  int numEtaBins = abs_eta_categories.size(); 
+  int numPtBins = pt_categories.size() + 1; 
+  int numEtaBins = abs_eta_categories.size() + 1; 
 
   FlavorCountPtEta count_b(numPtBins, numEtaBins, 4); 
   FlavorCountPtEta count_c(numPtBins, numEtaBins, 4); 
@@ -263,8 +263,8 @@ int writeNtuple_byPt(SVector input_files,
 	JetPt <= magic::min_jet_pt_gev)  
       continue;
 
-    int cat_pT = pt_categories.get_category(JetPt); 
-    int cat_eta = abs_eta_categories.get_category(fabs(JetEta));
+    int cat_pT = pt_categories.get_bin(JetPt); 
+    int cat_eta = abs_eta_categories.get_bin(fabs(JetEta));
       
     int flavour = abs(Flavour);
       
@@ -299,8 +299,8 @@ int writeNtuple_byPt(SVector input_files,
 	JetPt > magic::min_jet_pt_gev &&
 	mass > -100) {
 
-      cat_pT = pt_categories.get_category(JetPt);
-      cat_eta = abs_eta_categories.get_category(fabs(JetEta)); 
+      cat_pT = pt_categories.get_bin(JetPt);
+      cat_eta = abs_eta_categories.get_bin(fabs(JetEta)); 
       
       cat_flavour = abs(Flavour);
 

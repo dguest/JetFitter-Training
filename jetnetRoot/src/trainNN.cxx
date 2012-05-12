@@ -8,7 +8,6 @@
 #include <cstdlib> // rand
 #include <ctime> // to seed srand
 #include "JetNet.hh"
-#include "doNormalization.hh"
 #include "NetworkToHistoTool.hh"
 
 #include "normedInput.hh"
@@ -18,8 +17,6 @@
 #include "TFlavorNetwork.h"
 #include "NNAdapters.hh"
 #include "trainNN.hh"
-
-#include "OwnerVector.hh"
 
 #include <iostream>
 
@@ -339,16 +336,18 @@ void trainNN(std::string inputfile,
   //jn->Normalize();
 
   jn->Shuffle(true,false);
-  
-  if (restartTrainingFrom == 0) {
-    jn->Init();
-  }
-  else {
-    std::stringstream weight_name; 
-    weight_name << out_dir; 
-    weight_name << "/Weights" << restartTrainingFrom << ".root"; 
-    jn->ReadFromFile(weight_name.str().c_str());
-  }
+
+  // -- the code below the assert is almost certainly broken
+  assert(restartTrainingFrom == 0); 
+  // if (restartTrainingFrom == 0) {
+  //   jn->Init();
+  // }
+  // else {
+  //   std::stringstream weight_name; 
+  //   weight_name << out_dir; 
+  //   weight_name << "/Weights" << restartTrainingFrom << ".root"; 
+  //   jn->ReadFromFile(weight_name.str().c_str());
+  // }
   
   float minimumError = 1e10;
   int epochesWithRisingError = 0;
@@ -545,6 +544,3 @@ void trainNN(std::string inputfile,
 }
 
 
-// ===================================================================
-// ========== draw routine (this should be a new function) ===========
-// ===================================================================

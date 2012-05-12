@@ -93,10 +93,13 @@ void trainNN(std::string inputfile,
   // training variables
   TeachingVariables teach; 
   
-  in_tree->SetBranchAddress("weight",&teach.weight);
-  in_tree->SetBranchAddress("bottom",&teach.bottom);
-  in_tree->SetBranchAddress("charm", &teach.charm);
-  in_tree->SetBranchAddress("light", &teach.light);
+  if (in_tree->SetBranchAddress("weight",&teach.weight) ||
+      in_tree->SetBranchAddress("bottom",&teach.bottom) ||
+      in_tree->SetBranchAddress("charm", &teach.charm) ||
+      in_tree->SetBranchAddress("light", &teach.light) ) 
+    throw std::runtime_error("SVTree in " + inputfile + 
+			     " missing one of: weight, bottom, charm,"
+			     " light"); 
 
   int* nneurons;
 

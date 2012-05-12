@@ -8,7 +8,7 @@
 #include <cstdlib> // rand
 #include <ctime> // to seed srand
 #include "JetNet.hh"
-#include "NetworkToHistoTool.hh"
+#include "NetworkToHistoTool.hh" // not currently used
 
 #include "normedInput.hh"
 #include "nnExceptions.hh"
@@ -63,8 +63,8 @@ void trainNN(std::string inputfile,
   cout << " nodesSecondLayer: " << nodesSecondLayer << endl;
   
   
-  TFile *file= new TFile(inputfile.c_str());
-  TTree *simu = dynamic_cast<TTree*>(file->Get("SVTree"));
+  TFile* input_file = new TFile(inputfile.c_str());
+  TTree* simu = dynamic_cast<TTree*>(input_file->Get("SVTree"));
   if (! simu){ 
     throw std::runtime_error("Could not find SVTree in " + inputfile); 
   }
@@ -252,12 +252,7 @@ void trainNN(std::string inputfile,
     else if (fabs(light-1) < 1e-4) {
       jn->SetEventWeightTrainSet(  training_counter, weight*lweight );
     }
-     
-
     training_counter+=1;
-
-    //not used!
-    //    eventWeight=weight;
 
   }
 
@@ -403,8 +398,6 @@ void trainNN(std::string inputfile,
 			      (int)std::floor((float)nIterations/10.+0.5),
 			      1,std::floor((float)nIterations/10.+1.5));
 
-  double maximumTrain=0;
-  double minimumTrain=1e10;
 
   for(int epoch=restartTrainingFrom+1;epoch<=nIterations;++epoch){
     if (epoch!=restartTrainingFrom+1) {
@@ -413,14 +406,7 @@ void trainNN(std::string inputfile,
 
     if (epoch%10==0 || epoch==restartTrainingFrom+1) {
 
-      cronology.open(chronology_name.c_str(),ios_base::app);
-
       testError = jn->Test(); 
-
-      if (trainingError > maximumTrain) maximumTrain=trainingError;
-      if (testError > maximumTrain) maximumTrain=testError;
-      if (trainingError < minimumTrain) minimumTrain=trainingError;
-      if (testError < minimumTrain) minimumTrain=testError;
 
       histoTraining->Fill(epoch/10.0,trainingError);
       histoTesting->Fill(epoch/10.0,testError);
@@ -432,20 +418,23 @@ void trainNN(std::string inputfile,
       }
       else {
 	epochesWithRisingError+=10;
-	if (trainingError>testError) {
-	  epochWithMinimum=epoch;
-	}
+	// NOTE: changed Sat May 12 17:04:56 CEST 2012, 
+	//       should ask giacinto why he was doing this in the first place
+	// if (trainingError>testError) {
+	//   epochWithMinimum=epoch;
+	// }
       }
       
-      
+      cronology.open(chronology_name.c_str(),ios_base::app);
       if (epochesWithRisingError>300) {
-	if (trainingError<minimumError) {
-	  cout << " End of training. Minimum already on epoch: " 
-	       << epochWithMinimum << endl;
-	  cronology << " End of training. Minimum already on epoch: " 
-		    << epochWithMinimum << endl;
-	  break;
-	} 
+	// Sat May 12 17:06:06 CEST 2012 --- commented this out 
+	// if (trainingError<minimumError) { 
+	cout << " End of training. Minimum already on epoch: " 
+	     << epochWithMinimum << endl;
+	cronology << " End of training. Minimum already on epoch: " 
+		  << epochWithMinimum << endl;
+	break;
+	// } 
       }
       
       cronology << "Epoch: [" << epoch <<

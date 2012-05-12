@@ -70,18 +70,19 @@ public:
   void SetEventWeightTrainSet( Int_t aPatternInd, Double_t aValue );
   void SetEventWeightTestSet( Int_t aPatternInd, Double_t aValue );
 
-  Double_t GetInputTrainSet( Int_t aPatternInd, Int_t aInputInd );
-  Double_t GetOutputTrainSet( Int_t aPatternInd, Int_t aOutputInd );
-  Double_t GetInputTestSet( Int_t aPatternInd, Int_t aInputInd );
-  Double_t GetOutputTestSet( Int_t aPatternInd, Int_t aOutputInd );
+  Double_t GetInputTrainSet( Int_t aPatternInd, Int_t aInputInd ) const ;
+  Double_t GetOutputTrainSet( Int_t aPatternInd, Int_t aOutputInd ) const ;
+  Double_t GetInputTestSet( Int_t aPatternInd, Int_t aInputInd ) const ;
+  Double_t GetOutputTestSet( Int_t aPatternInd, Int_t aOutputInd ) const;
   
-  Double_t GetEventWeightTrainSet( Int_t aPatternInd );
-  Double_t GetEventWeightTestSet( Int_t aPatternInd );
+  Double_t GetEventWeightTrainSet( Int_t aPatternInd ) const;
+  Double_t GetEventWeightTestSet( Int_t aPatternInd ) const;
 
-  Double_t GetWeight( Int_t aLayerInd, Int_t aNodeInd, Int_t aConnectedNodeInd ) const; 
+  Double_t GetWeight( Int_t aLayerInd, Int_t aNodeInd, 
+		      Int_t aConnectedNodeInd ) const; 
   Double_t GetThreshold( Int_t aLayerInd, Int_t aNodeInd) const;
 
-  Int_t GetEpochs( void ) { return mEpochs; };
+  Int_t GetEpochs( void ) const { return mEpochs; } ;
   void SetEpochs( const Int_t aEpochs ) { mEpochs = aEpochs; mCurrentEpoch = 0; };
   void Init( void );
 
@@ -92,25 +93,25 @@ public:
 
   void Shuffle ( Bool_t aShuffleTrainSet = true, Bool_t aShuffleTestSet = true );
  
-  void SaveDataAscii( TString aFileName = "jndata.dat" );
+  void SaveDataAscii( TString aFileName = "jndata.dat" ) const;
   void SaveDataRoot( TString aFileName = "jndata.root" );
 
   void LoadDataAscii( TString aFileName = "jndata.dat" );
   void LoadDataRoot( TString aFileName = "jndata.root" );
   
-  void DumpToFile( TString aFileName = "fort.8" );
+  void DumpToFile( TString aFileName = "fort.8" ) const;
   void ReadFromFile( TString aFileName = "fort.8" );
 
-  Double_t GetOutput( Int_t aIndex = 0 );
+  Double_t GetOutput( Int_t aIndex = 0 ) const;
   void SetInputs( Int_t aIndex = 0, Double_t aValue = 0.0 );
   void Evaluate( Int_t aPattern );
   void Evaluate();
 
   void writeNetworkInfo(Int_t typeOfInfo = 0);
 
-  Int_t GetLayerCount( void ){ return mLayerCount; };
+  Int_t GetLayerCount( void ) const { return mLayerCount; };
   //Number of layers in NN
-  Int_t GetUnitCount( Int_t aLayer );
+  Int_t GetUnitCount( Int_t aLayer ) const ;
   //Number of units in NN  
 
   void SelectiveFields( Int_t aLayerA, Int_t aNodeA1, Int_t aNodeA2, Int_t aNodeB1, Int_t aNodeB2, Int_t aSwitch = 0 );
@@ -138,8 +139,8 @@ public:
     
   void LockInit( void ){ mInitLocked = kTRUE; };
   void UnlockInit( void ){ mInitLocked = kFALSE; };
-  Int_t GetMSTJN( Int_t aIndex );
-  Double_t GetPARJN( Int_t aIndex );
+  Int_t GetMSTJN( Int_t aIndex ) const;
+  Double_t GetPARJN( Int_t aIndex ) const;
   void SetMSTJN( Int_t aIndex, Int_t aValue );
   void SetPARJN( Int_t aIndex, Double_t aValue );
   
@@ -199,18 +200,19 @@ inline void JetNet::SetOutputTestSet( Int_t aPatternInd, Int_t aOutputInd, Doubl
   mpOutputTestSet->SetData( aPatternInd, aOutputInd, aValue );
 }
 //______________________________________________________________________________
-inline Double_t JetNet::GetInputTrainSet( Int_t aPatternInd, Int_t aInputInd )
+inline Double_t JetNet::GetInputTrainSet( Int_t aPatternInd, 
+					  Int_t aInputInd ) const 
 {
   // Returns the value of the cell corresponding to unit aInputInd in pattern aPatternInd into INPUT TRAIN set
   return mpInputTrainSet->GetData( aPatternInd, aInputInd );
 }
 //______________________________________________________________________________
-inline Double_t JetNet::GetEventWeightTrainSet( Int_t aPatternInd )
+inline Double_t JetNet::GetEventWeightTrainSet( Int_t aPatternInd ) const
 {
   return mpInputTrainSet->GetEventWeight( aPatternInd);
 }
 //______________________________________________________________________________
-inline Double_t JetNet::GetEventWeightTestSet( Int_t aPatternInd )
+inline Double_t JetNet::GetEventWeightTestSet( Int_t aPatternInd ) const
 {
   return mpInputTestSet->GetEventWeight( aPatternInd);
 }

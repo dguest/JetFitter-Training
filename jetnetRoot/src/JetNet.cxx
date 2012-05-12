@@ -563,7 +563,8 @@ void JetNet::SetInputTestSet( Int_t aPatternInd, Int_t aInputInd, Double_t aValu
   mpInputTestSet->SetData( aPatternInd, aInputInd, aValue );
 }
 //______________________________________________________________________________
-Double_t JetNet::GetOutputTrainSet( Int_t aPatternInd, Int_t aOutputInd )
+Double_t JetNet::GetOutputTrainSet( Int_t aPatternInd, 
+				    Int_t aOutputInd ) const 
 {
   // Returns the value of the cell corresponding to unit aInputInd in pattern aPatternInd into OUTPUT TRAIN set
   return mpOutputTrainSet->GetData( aPatternInd, aOutputInd );
@@ -580,19 +581,19 @@ void JetNet::SetEventWeightTestSet( Int_t aPatternInd, Double_t aValue )
   mpInputTestSet->SetEventWeight(aPatternInd,aValue);
 }
 //______________________________________________________________________________
-Double_t JetNet::GetInputTestSet( Int_t aPatternInd, Int_t aInputInd )
+Double_t JetNet::GetInputTestSet( Int_t aPatternInd, Int_t aInputInd ) const
 {
   // Returns the value of the cell corresponding to unit aInputInd in pattern aPatternInd into INPUT TEST set
   return mpInputTestSet->GetData( aPatternInd, aInputInd );
 }
 //______________________________________________________________________________
-Double_t JetNet::GetOutputTestSet( Int_t aPatternInd, Int_t aOutputInd )
+Double_t JetNet::GetOutputTestSet( Int_t aPatternInd, Int_t aOutputInd ) const
 {
   // Returns the value of the cell corresponding to unit aInputInd in pattern aPatternInd into OUTPUT TEST set
   return mpOutputTestSet->GetData( aPatternInd, aOutputInd );
 }
 //______________________________________________________________________________
-void  JetNet::SaveDataAscii( TString aFileName )
+void  JetNet::SaveDataAscii( TString aFileName ) const 
 {
   // Saves the Input/Output test and train data in plain text file
   ofstream out;
@@ -765,13 +766,13 @@ void JetNet::SetInputs( Int_t aIndex, Double_t aValue )
   JNDAT1.OIN[ aIndex ] = float ( aValue );
 }
 //______________________________________________________________________________
-Double_t JetNet::GetOutput( Int_t aIndex )
+Double_t JetNet::GetOutput( Int_t aIndex ) const 
 {
   // Returns the output of the network 
   return Double_t ( JNDAT1.OUT[ aIndex ] );
 }
 //______________________________________________________________________________
-void JetNet::DumpToFile( TString aFileName )
+void JetNet::DumpToFile( TString aFileName ) const 
 {
   // Dumps the network data into JETNET specific format
   JNDUMP( -8 );
@@ -881,7 +882,7 @@ void JetNet::Randomize( void )
   mpOutputTestSet->Randomize();
 }
 //______________________________________________________________________________
-Int_t JetNet::GetUnitCount( Int_t aLayer )
+Int_t JetNet::GetUnitCount( Int_t aLayer ) const 
 { 
   // Returns the number of the units in specfic layer
   if( ( aLayer > -1 ) && ( aLayer < mLayerCount ) ) 
@@ -991,12 +992,12 @@ Double_t JetNet::GetLearningRateDecrease( void ) const
   return JNDAT1.PARJN[ 10 ]; 
 }
 //______________________________________________________________________________
-Int_t JetNet::GetMSTJN( Int_t aIndex )
+Int_t JetNet::GetMSTJN( Int_t aIndex ) const 
 {
   return JNDAT1.MSTJN[ aIndex ]; 
 }
 //______________________________________________________________________________
-Double_t JetNet::GetPARJN( Int_t aIndex )
+Double_t JetNet::GetPARJN( Int_t aIndex ) const 
 {
   return JNDAT1.PARJN[ aIndex ];
 }

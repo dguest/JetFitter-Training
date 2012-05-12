@@ -7,8 +7,10 @@
 #include <sstream>
 #include <cstdlib> // rand
 #include <ctime> // to seed srand
+#include <boost/format.hpp>
+
 #include "JetNet.hh"
-#include "NetworkToHistoTool.hh" // not currently used
+// #include "NetworkToHistoTool.hh" // not currently used
 
 #include "normedInput.hh"
 #include "nnExceptions.hh"
@@ -19,12 +21,12 @@
 #include "trainNN.hh"
 
 #include <iostream>
+#include <ostream> 
 
 #include "TMatrixD.h"
 #include "TVectorD.h"
 
 
-using namespace std;
 
 
 void trainNN(std::string inputfile,
@@ -56,30 +58,30 @@ void trainNN(std::string inputfile,
   gROOT->ProcessLine("#include <TTree.h>"); 
   gROOT->ProcessLine("#include <TFile.h>"); 
   
-  cout << "starting with settings: " << endl;
-  cout << " nIterations: " << nIterations << endl;
-  cout << " dilutionFactor: " << dilutionFactor << endl;
-  cout << " nodesFirstLayer: " << nodesFirstLayer << endl;
-  cout << " nodesSecondLayer: " << nodesSecondLayer << endl;
+  std::cout << "starting with settings: " << std::endl;
+  std::cout << " nIterations: " << nIterations << std::endl;
+  std::cout << " dilutionFactor: " << dilutionFactor << std::endl;
+  std::cout << " nodesFirstLayer: " << nodesFirstLayer << std::endl;
+  std::cout << " nodesSecondLayer: " << nodesSecondLayer << std::endl;
   
   
   TFile* input_file = new TFile(inputfile.c_str());
-  TTree* simu = dynamic_cast<TTree*>(input_file->Get("SVTree"));
-  if (! simu){ 
+  TTree* in_tree = dynamic_cast<TTree*>(input_file->Get("SVTree"));
+  if (! in_tree){ 
     throw std::runtime_error("Could not find SVTree in " + inputfile); 
   }
 
   InputVariableContainer in_var; 
   if (input_variables.size() == 0) { 
     std::cout << "WARNING: no input variables given, using defaults\n"; 
-    in_var.set_hardcoded_defaults(simu); 
+    in_var.set_hardcoded_defaults(in_tree); 
   }
   else { 
     for (std::vector<InputVariableInfo>::const_iterator 
 	   itr = input_variables.begin(); 
 	 itr != input_variables.end(); 
 	 itr++){
-      in_var.add_variable(*itr, simu); 
+      in_var.add_variable(*itr, in_tree); 
     }
   }
 
@@ -92,15 +94,12 @@ void trainNN(std::string inputfile,
   }
 
   // training variables
-  Double_t        weight;
-  Int_t           bottom;
-  Int_t           charm;
-  Int_t           light;
+  TeachingVariables teach; 
   
-  simu->SetBranchAddress("weight",&weight);
-  simu->SetBranchAddress("bottom",   &bottom);
-  simu->SetBranchAddress("charm",   &charm);
-  simu->SetBranchAddress("light",&light);
+  in_tree->SetBranchAddress("weight",&teach.weight);
+  in_tree->SetBranchAddress("bottom",&teach.bottom);
+  in_tree->SetBranchAddress("charm", &teach.charm);
+  in_tree->SetBranchAddress("light", &teach.light);
 
   int* nneurons;
 
@@ -136,19 +135,21 @@ void trainNN(std::string inputfile,
   
   //setting learning parameters
 
-  cout << " now providing training events " << endl;
-  
-  Int_t numberTrainingEvents=0;
-  Int_t numberTestingEvents=0;
+  std::cout << " now providing training events " << std::endl;
 
-  int n_entries = simu->GetEntries(); 
+  int n_entries = in_tree->GetEntries(); 
   std::cout << n_entries << " entries in chain\n"; 
+
+  TrainingSettings settings; 
+  settings.dilution_factor = dilutionFactor; 
+  settings.n_training_events = 0; 
+  settings.n_testing_events = 0; 
 
   if (n_training_events_target > 0) { 
     int target_entries = min(n_training_events_target, 
 			     n_entries / dilutionFactor); 
-    numberTrainingEvents = target_entries; 
-    numberTestingEvents = target_entries; 
+    settings.n_training_events = target_entries; 
+    settings.n_testing_events = target_entries; 
   }
   else { 
     for (Int_t i = 0; i < n_entries; i++) {
@@ -158,44 +159,25 @@ void trainNN(std::string inputfile,
 	  " Looping over event " << i << std::endl;
       }
     
-      if (i%dilutionFactor==0) numberTrainingEvents+=1;
-      if (i%dilutionFactor==1) numberTestingEvents+=1;
+      if (i%dilutionFactor==0) settings.n_training_events+=1;
+      if (i%dilutionFactor==1) settings.n_testing_events+=1;
 
     }
   }
   
-  cout << " N. training events: " << numberTrainingEvents << 
-    " N. testing events: " << numberTestingEvents << endl;
+  std::cout << " N. training events: " << settings.n_training_events << 
+    " N. testing events: " << settings.n_testing_events << endl;
 
-
-  cout << "now start to setup the network..." << endl;
-  
  
-  JetNet* jn = new JetNet( numberTestingEvents, 
-			     numberTrainingEvents, 
+  JetNet* jn = new JetNet( settings.n_testing_events, 
+			     settings.n_training_events, 
 			     nlayer, 
 			     nneurons );
 
-  cout <<  " setting learning method... " << endl;
-
-  //  jn->SetMSTJN(4,12); Fletscher-Rieves (Scaled Conj Grad)
-
-  int nPatternsPerUpdate=200;// || _2 = 200 (before 100) _3,_4=20
-  
-  jn->SetPatternsPerUpdate( nPatternsPerUpdate );
-  jn->SetUpdatesPerEpoch( (int)std::floor((float)numberTrainingEvents/
-					  (float)nPatternsPerUpdate) );
-  jn->SetUpdatingProcedure( 0 );
-  jn->SetErrorMeasure( 0 );
-  jn->SetActivationFunction( 1 );
-  //  jn->SetLearningRate( 0.5);//0.8 || _2 =0.5 _3=0.05 _4=0.15
-  jn->SetLearningRate( 0.5);//0.8 //move to 20 for _3 _4 = 0.15
-  //  jn->SetMomentum( 0.3 );//0.3 //is now 0.5 || _2 = 0.3 _3 = 0.03 _4 = 0.05
-  jn->SetMomentum( 0.03 );//0.3 //is now 0.5
-  jn->SetInitialWeightsWidth( 1. );
-  //  jn->SetLearningRateDecrease( 0.992 );
-  //  jn->SetLearningRateDecrease( 0.99 );//0.992 || _2 = 0.99 _3 = 0.98 _4=0.99
-  jn->SetLearningRateDecrease( 0.99 );//0.992
+  std::cout <<  " setting up JetNet... " << endl;
+  jn->SetUpdatesPerEpoch( int(std::floor(float(settings.n_training_events)/
+					 float(N_PATTERNS_PER_UPDATE) )));
+  setup_jetnet(jn); 
 
   std::vector<JetNet::InputNode> jn_input_info; 
   for (std::vector<InputVariableInfo>::const_iterator itr = 
@@ -206,126 +188,14 @@ void trainNN(std::string inputfile,
   }
   jn->setInputNodes(jn_input_info); 
   
-  cout << " copying over training events " << endl;
+  std::cout << " copying over training events " << std::endl;
+  copy_training_events(std::cout, jn, in_var, teach, in_tree, 
+		       settings, flavor_weights); 
   
-  int training_counter=0;
-  for (Int_t i = 0; i < n_entries; i++) {
-    
-    if (i % 100000 == 0 ) {
-      std::cout << " Copying over training events. Looping over event " 
-		<< i << std::endl;
-    }
-
-    if (i%dilutionFactor!=0) continue;
-    if (n_training_events_target > 0) { 
-
-      float number_events_remaining = 
-	float(n_entries - i) / float(dilutionFactor); 
-      float number_events_needed = numberTrainingEvents - training_counter; 
-      float keep_event_probibility = 
-	number_events_needed / number_events_remaining; 
-
-      float f_rand = float(rand()) / float(RAND_MAX); 
-      if (f_rand > keep_event_probibility) continue; 
-    }
-
-    simu->GetEntry(i);
-
-    if (bottom==0 && charm==0 && light==0) continue;
-
-    for (int var_num = 0; var_num < in_var.size(); var_num++){ 
-      jn->SetInputTrainSet( training_counter, 
-			    var_num, 
-			    in_var.at(var_num).get_normed() );
-    }
-
-    jn->SetOutputTrainSet( training_counter, 0, bottom );
-    jn->SetOutputTrainSet( training_counter, 1, charm );
-    jn->SetOutputTrainSet( training_counter, 2, light );
-
-    if (fabs(bottom-1) < 1e-4) {
-      jn->SetEventWeightTrainSet(  training_counter, weight*bweight );
-    }
-    else if (fabs(charm-1) < 1e-4){
-      jn->SetEventWeightTrainSet(  training_counter, weight*cweight);
-    }
-    else if (fabs(light-1) < 1e-4) {
-      jn->SetEventWeightTrainSet(  training_counter, weight*lweight );
-    }
-    training_counter+=1;
-
-  }
-
-  if (training_counter != numberTrainingEvents){
-    cout << " counter up to: " << training_counter << 
-      " while events in training sample are " << 
-      numberTrainingEvents << endl;
-    return;
-  }
-
-  cout << " setting pattern for testing events " << endl;
-
   
-  cout << " copying over testing events " << endl;
-
-  int testing_counter=0;
-  for (Int_t i = 0; i < n_entries; i++) {
-    
-    if (i % 100000 == 0 ) {
-      std::cout << " Copying over testing events."
-	" Looping over event " << i << std::endl;
-    }
-    
-    if (i%dilutionFactor!=1) continue;
-
-    if (n_training_events_target > 0) { 
-
-      float number_events_remaining = 
-	float(n_entries - i) / float(dilutionFactor); 
-      float number_events_needed = numberTestingEvents - testing_counter; 
-      float keep_event_probibility = 
-	number_events_needed / number_events_remaining; 
-
-      float f_rand = float(rand()) / float(RAND_MAX); 
-      if (f_rand > keep_event_probibility) continue; 
-    }
-    
-    simu->GetEntry(i);
-
-
-    if (bottom==0 && charm==0 && light==0) continue;
-
-    for (int var_num = 0; var_num < in_var.size(); var_num++){ 
-      jn->SetInputTestSet( testing_counter, 
-			   var_num, 
-			   in_var.at(var_num).get_normed() );
-    }
-
-    jn->SetOutputTestSet( testing_counter, 0, bottom );
-    jn->SetOutputTestSet( testing_counter, 1, charm );
-    jn->SetOutputTestSet( testing_counter, 2, light );
-
-    if (fabs(bottom-1) < 1e-4) {
-	jn->SetEventWeightTestSet( testing_counter, weight*bweight );
-      }
-    else if (fabs(charm-1) < 1e-4) {
-      jn->SetEventWeightTestSet(  testing_counter, weight*cweight );
-    }
-    else if (fabs(light-1) < 1e-4){
-      jn->SetEventWeightTestSet(  testing_counter, weight*lweight );
-    }
-    testing_counter+=1;
-
-    //not used!
-    //    eventWeight=weight;
-  }
-    
-  if (testing_counter != numberTestingEvents){
-    cout << " counter up to: " << testing_counter << 
-      " while events in testing sample are " << numberTestingEvents << 
-      ". Normal due to cuts..." << endl;
-    return;  
-  }
+  std::cout << " copying over testing events " << std::endl;
+  copy_testing_events(std::cout, jn, in_var, teach, in_tree, 
+		      settings, flavor_weights); 
 
   //normalize inputvariables?
   //jn->Normalize();
@@ -355,36 +225,11 @@ void trainNN(std::string inputfile,
   std::string chronology_name = out_dir + "/trainingCronology.txt"; 
 
   ofstream cronology(chronology_name.c_str(),ios_base::out);
-  if (! cronology ) { 
+  if (! cronology ) 
     throw std::runtime_error("Could not write " + chronology_name); 
-  }
   
-  cronology << "-------------SETTINGS----------------" << endl;
-  cronology << "Epochs: " << jn->GetEpochs() << std::endl;
-  cronology << "Updates Per Epoch: " << jn->GetUpdatesPerEpoch() << std::endl;
-  cronology << "Updating Procedure: " << jn->GetUpdatingProcedure() 
-	    << std::endl;
-  cronology << "Error Measure: " << jn->GetErrorMeasure() << std::endl;
-  cronology << "Patterns Per Update: " << jn->GetPatternsPerUpdate() 
-	    << std::endl;
-  cronology << "Learning Rate: " << jn->GetLearningRate() << std::endl;
-  cronology << "Momentum: " << jn->GetMomentum() << std::endl;
-  cronology << "Initial Weights Width: " << jn->GetInitialWeightsWidth() 
-	    << std::endl;
-  cronology << "Learning Rate Decrease: " << jn->GetLearningRateDecrease() 
-	    << std::endl;
-  cronology << "Activation Function: " << jn->GetActivationFunction() 
-	    << std::endl;
-  cronology << "-------------LAYOUT------------------" << endl;
-  cronology << "Input variables: " << jn->GetInputDim() << endl;
-  cronology << "Output variables: " << jn->GetOutputDim() << endl;
-  cronology << "Hidden layers: " << jn->GetHiddenLayerDim() << endl;
-  cronology << "Layout : ";
-  for (Int_t s=0; s < jn->GetHiddenLayerDim() + 2; ++s) {
-    cronology << jn->GetHiddenLayerSize(s);
-    if (s < jn->GetHiddenLayerDim()+1) cronology << "-";
-  }
-  cronology << endl;
+  dump_nn_settings(cronology, jn); 
+
   cronology << "--------------HISTORY-----------------" << endl;
   cronology << "History of iterations: " << endl;
   cronology.close();
@@ -429,7 +274,7 @@ void trainNN(std::string inputfile,
       if (epochesWithRisingError>300) {
 	// Sat May 12 17:06:06 CEST 2012 --- commented this out 
 	// if (trainingError<minimumError) { 
-	cout << " End of training. Minimum already on epoch: " 
+	std::cout << " End of training. Minimum already on epoch: " 
 	     << epochWithMinimum << endl;
 	cronology << " End of training. Minimum already on epoch: " 
 		  << epochWithMinimum << endl;
@@ -441,7 +286,7 @@ void trainNN(std::string inputfile,
 	"] Error: " << trainingError << 
 	" Test: " << testError << endl;
 
-      cout << "Epoch: [" << epoch <<
+      std::cout << "Epoch: [" << epoch <<
 	"] Error: " << trainingError << 
 	" Test: " << testError << endl;
 
@@ -502,7 +347,7 @@ void trainNN(std::string inputfile,
     TFlavorNetwork* trainedNetwork=(TFlavorNetwork*)_file0->
       Get("TFlavorNetwork");
     
-    // cout << " Reading back network with minimum" << endl;
+    // std::cout << " Reading back network with minimum" << endl;
     // setTrainedNetwork(*jn,trainedNetwork);
 
     std::string min_weights_name = out_dir + "/weightMinimum.root"; 
@@ -518,7 +363,7 @@ void trainNN(std::string inputfile,
 
   } 
   else {
-    cout << " using network at last iteration (minimum not reached..." << endl;
+    std::cout << " using network at last iteration (minimum not reached..." << endl;
   }
   
   std::string training_info_name = out_dir + "/trainingInfo.root"; 
@@ -532,4 +377,206 @@ void trainNN(std::string inputfile,
 
 }
 
+int copy_testing_events(std::ostream& stream, 
+			JetNet* jn, 
+			const InputVariableContainer& in_buffer, 
+			TeachingVariables& teach, 
+			TTree* in_tree,
+			const TrainingSettings& s, 
+			const FlavorWeights& w) { 
 
+  int testing_counter=0;
+  int n_entries = in_tree->GetEntries(); 
+  for (Int_t i = 0; i < n_entries; i++) {
+    
+    if (i % 100000 == 0 ) {
+      stream << " Copying over testing events."
+	" Looping over event " << i << std::endl;
+    }
+    
+    if (i % s.dilution_factor !=1 ) continue;
+
+    // if (n_training_events_target > 0) { 
+
+    float number_events_remaining = 
+      float(n_entries - i) / float(s.dilution_factor); 
+    float number_events_needed = 
+      s.n_testing_events - testing_counter; 
+    float keep_event_probibility = 
+      number_events_needed / number_events_remaining; 
+
+    float f_rand = float(rand()) / float(RAND_MAX); 
+    if (f_rand > keep_event_probibility) continue; 
+    // }
+    
+    in_tree->GetEntry(i);
+
+
+    if (! is_flavor_tagged(teach) ) continue;
+
+    for (int var_num = 0; var_num < in_buffer.size(); var_num++){ 
+      jn->SetInputTestSet( testing_counter, 
+			   var_num, 
+			   in_buffer.at(var_num).get_normed() );
+    }
+
+    jn->SetOutputTestSet( testing_counter, 0, teach.bottom );
+    jn->SetOutputTestSet( testing_counter, 1, teach.charm );
+    jn->SetOutputTestSet( testing_counter, 2, teach.light );
+
+    if (teach.bottom) {
+	jn->SetEventWeightTestSet( testing_counter, 
+				   teach.weight *w.bottom );
+      }
+    else if (teach.charm) {
+      jn->SetEventWeightTestSet(  testing_counter, 
+				  teach.weight*w.charm );
+    }
+    else if (teach.light){
+      jn->SetEventWeightTestSet(  testing_counter, 
+				  teach.weight*w.light );
+    }
+    testing_counter+=1;
+
+    //not used!
+    //    eventWeight=weight;
+  }
+    
+  if (testing_counter != s.n_testing_events){
+    std::string form_str = 
+      "counter up to: %i while events in testing sample are %i"; 
+    std::string err = (boost::format(form_str) % 
+		       testing_counter % 
+		       s.n_testing_events).str(); 
+    throw std::runtime_error(err); 
+  }
+  return testing_counter; 
+
+}
+
+int copy_training_events(std::ostream& stream, JetNet* jn, 
+			 const InputVariableContainer& in_buffer, 
+			 TeachingVariables& teach, 
+			 TTree* in_tree,
+			 const TrainingSettings& s, 
+			 const FlavorWeights& w) { 
+
+  int n_entries = in_tree->GetEntries(); 
+  int training_counter=0;
+  for (Int_t i = 0; i < n_entries; i++) {
+    
+    if (i % 100000 == 0 ) {
+      std::cout << " Copying over training events. Looping over event " 
+		<< i << std::endl;
+    }
+
+    if (i % s.dilution_factor != 0) continue;
+
+    float number_events_remaining = 
+      float(n_entries - i) / float(s.dilution_factor); 
+    float number_events_needed = 
+      s.n_training_events - training_counter; 
+    float keep_event_probibility = 
+      number_events_needed / number_events_remaining; 
+
+    float f_rand = float(rand()) / float(RAND_MAX); 
+    if (f_rand > keep_event_probibility) continue; 
+
+
+    in_tree->GetEntry(i);
+
+    if (! is_flavor_tagged(teach)) continue;
+
+    for (int var_num = 0; var_num < in_buffer.size(); var_num++){ 
+      jn->SetInputTrainSet( training_counter, 
+			    var_num, 
+			    in_buffer.at(var_num).get_normed() );
+    }
+
+    jn->SetOutputTrainSet( training_counter, 0, teach.bottom );
+    jn->SetOutputTrainSet( training_counter, 1, teach.charm );
+    jn->SetOutputTrainSet( training_counter, 2, teach.light );
+
+    if (teach.bottom) {
+      jn->SetEventWeightTrainSet(  training_counter, 
+				   teach.weight * w.bottom );
+    }
+    else if (teach.charm){
+      jn->SetEventWeightTrainSet(  training_counter, 
+				   teach.weight * w.charm);
+    }
+    else if (teach.light) {
+      jn->SetEventWeightTrainSet(  training_counter, 
+				   teach.weight * w.light);
+    }
+    training_counter+=1;
+
+  }
+
+  if (training_counter != s.n_training_events){
+
+    std::string form_str = 
+      "counter up to: %i while events in training sample are %i"; 
+    std::string err = (boost::format(form_str) % 
+		       training_counter % 
+		       s.n_training_events).str(); 
+    throw std::runtime_error(err); 
+  }
+  return training_counter; 
+
+}
+
+void setup_jetnet(JetNet* jn) { 
+  //  jn->SetMSTJN(4,12); Fletscher-Rieves (Scaled Conj Grad)
+
+  
+  jn->SetPatternsPerUpdate( N_PATTERNS_PER_UPDATE );
+  jn->SetUpdatingProcedure( 0 );
+  jn->SetErrorMeasure( 0 );
+  jn->SetActivationFunction( 1 );
+  //  jn->SetLearningRate( 0.5);//0.8 || _2 =0.5 _3=0.05 _4=0.15
+  jn->SetLearningRate( 0.5);//0.8 //move to 20 for _3 _4 = 0.15
+  //  jn->SetMomentum( 0.3 );//0.3 //is now 0.5 || _2 = 0.3 _3 = 0.03 _4 = 0.05
+  jn->SetMomentum( 0.03 );//0.3 //is now 0.5
+  jn->SetInitialWeightsWidth( 1. );
+  //  jn->SetLearningRateDecrease( 0.992 );
+  //  jn->SetLearningRateDecrease( 0.99 );//0.992 || _2 = 0.99 _3 = 0.98 _4=0.99
+  jn->SetLearningRateDecrease( 0.99 );//0.992
+}
+
+bool is_flavor_tagged(const TeachingVariables& t){ 
+  bool has_tag = t.bottom || t.charm || t.light; 
+  if (has_tag &&
+      t.bottom + t.charm + t.light != 1) 
+    throw std::runtime_error("jet was tagged with int != 1"); 
+  return has_tag; 
+}
+
+void dump_nn_settings(ostream& cronology, const JetNet* jn) {   
+  cronology << "-------------SETTINGS----------------" << endl;
+  cronology << "Epochs: " << jn->GetEpochs() << std::endl;
+  cronology << "Updates Per Epoch: " << jn->GetUpdatesPerEpoch() << std::endl;
+  cronology << "Updating Procedure: " << jn->GetUpdatingProcedure() 
+	    << std::endl;
+  cronology << "Error Measure: " << jn->GetErrorMeasure() << std::endl;
+  cronology << "Patterns Per Update: " << jn->GetPatternsPerUpdate() 
+	    << std::endl;
+  cronology << "Learning Rate: " << jn->GetLearningRate() << std::endl;
+  cronology << "Momentum: " << jn->GetMomentum() << std::endl;
+  cronology << "Initial Weights Width: " << jn->GetInitialWeightsWidth() 
+	    << std::endl;
+  cronology << "Learning Rate Decrease: " << jn->GetLearningRateDecrease() 
+	    << std::endl;
+  cronology << "Activation Function: " << jn->GetActivationFunction() 
+	    << std::endl;
+  cronology << "-------------LAYOUT------------------" << endl;
+  cronology << "Input variables: " << jn->GetInputDim() << endl;
+  cronology << "Output variables: " << jn->GetOutputDim() << endl;
+  cronology << "Hidden layers: " << jn->GetHiddenLayerDim() << endl;
+  cronology << "Layout : ";
+  for (Int_t s=0; s < jn->GetHiddenLayerDim() + 2; ++s) {
+    cronology << jn->GetHiddenLayerSize(s);
+    if (s < jn->GetHiddenLayerDim()+1) cronology << "-";
+  }
+  cronology << endl;
+}

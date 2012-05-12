@@ -19,8 +19,6 @@
 #include <stdexcept>
 #include "normedInput.hh"
 
-using namespace std;
-
 
 void makeTestNtuple(IONames io_names, bool debug)
 
@@ -46,7 +44,7 @@ void makeTestNtuple(IONames io_names, bool debug)
 
   Int_t nLayers=2+trainedNetwork->getnHiddenLayerSize().size();
   
-  cout << " Layers number: " << nLayers << endl;
+  std::cout << " Layers number: " << nLayers << std::endl;
   
   //BEGIN HERE
   
@@ -56,21 +54,21 @@ void makeTestNtuple(IONames io_names, bool debug)
   nneurons[2]=trainedNetwork->getnHiddenLayerSize()[1];
   nneurons[3]=trainedNetwork->getnOutput();
   
-  cout << " [0]: " <<  nneurons[0] << " [1]: " << nneurons[1] << 
-    " [2]: " << nneurons[2] << " [3] :" << nneurons[3] << endl;
+  std::cout << " [0]: " <<  nneurons[0] << " [1]: " << nneurons[1] << 
+    " [2]: " << nneurons[2] << " [3] :" << nneurons[3] << std::endl;
   
   Int_t nInput=trainedNetwork->getnInput();
-  cout << " Input size: " << nInput;
+  std::cout << " Input size: " << nInput;
 
   vector<Int_t> nHiddenLayerSize=trainedNetwork->getnHiddenLayerSize();
   Int_t nHidden=nHiddenLayerSize.size();
   
   for (Int_t o=0;o<nHidden;++o) {
-      cout << " Hidden lay: " << o << " size: " << nHiddenLayerSize[o];
+      std::cout << " Hidden lay: " << o << " size: " << nHiddenLayerSize[o];
     }
   Int_t nOutput=trainedNetwork->getnOutput();
   
-  cout << " Output size: " << nOutput << endl;
+  std::cout << " Output size: " << nOutput << std::endl;
   
   
   //now calculate the value using:
@@ -109,7 +107,7 @@ void makeTestNtuple(IONames io_names, bool debug)
 
 
 
-  cout << " file name to open is: " << input_dataset_name << endl;
+  std::cout << " file name to open is: " << input_dataset_name << std::endl;
 
   TFile file(input_dataset_name.c_str());
 
@@ -199,7 +197,7 @@ void makeTestNtuple(IONames io_names, bool debug)
   
   Int_t num_entries = simu->GetEntries(); 
 
-  cout << "Total entries are: " << num_entries << endl;
+  std::cout << "Total entries are: " << num_entries << std::endl;
 
   for (Int_t i = 0;i < num_entries; ++i){
 

@@ -45,6 +45,7 @@ namespace train_nn {
 }
 
 void dump_nn_settings(std::ostream& stream, const JetNet* jn); 
+std::ostream& operator<<(std::ostream& in, const JetNet* jn); 
 
 int copy_testing_events(std::ostream& stream, 
 			JetNet* jn, 

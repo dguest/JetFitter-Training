@@ -44,9 +44,6 @@ void trainNN(std::string inputfile,
 
   srand(time(0)); 
   printf("--- starting trainNN ----\n"); 
-  double bweight = flavor_weights.bottom;
-  double cweight = flavor_weights.charm;
-  double lweight = flavor_weights.light;
 
   if (n_hidden_layer_nodes.size() == 0){
     std::cout << "WARNING: setting hidden layers to default sizes\n"; 
@@ -98,10 +95,13 @@ void trainNN(std::string inputfile,
   // training variables
   TeachingVariables teach; 
   
-  in_tree->SetBranchAddress("weight",&teach.weight);
-  in_tree->SetBranchAddress("bottom",&teach.bottom);
-  in_tree->SetBranchAddress("charm", &teach.charm);
-  in_tree->SetBranchAddress("light", &teach.light);
+  if (in_tree->SetBranchAddress("weight",&teach.weight) ||
+      in_tree->SetBranchAddress("bottom",&teach.bottom) ||
+      in_tree->SetBranchAddress("charm", &teach.charm) ||
+      in_tree->SetBranchAddress("light", &teach.light) ) 
+    throw std::runtime_error("SVTree in " + inputfile + 
+			     " missing one of: weight, bottom, charm,"
+			     " light"); 
 
   int* nneurons;
 
@@ -231,7 +231,7 @@ void trainNN(std::string inputfile,
   if (! cronology ) 
     throw std::runtime_error("Could not write " + chronology_name); 
   
-  dump_nn_settings(cronology, jn); 
+  cronology << jn; 
 
   cronology << "--------------HISTORY-----------------" << endl;
   cronology << "History of iterations: " << endl;
@@ -596,4 +596,9 @@ void dump_nn_settings(ostream& cronology, const JetNet* jn) {
     if (s < jn->GetHiddenLayerDim()+1) cronology << "-";
   }
   cronology << endl;
+}
+
+std::ostream& operator<<(std::ostream& in, const JetNet* jn) { 
+  dump_nn_settings(in, jn); 
+  return in; 
 }

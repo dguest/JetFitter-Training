@@ -206,6 +206,7 @@ void trainNN(std::string inputfile,
 
   // -- the code below the assert is almost certainly broken
   assert(restartTrainingFrom == 0); 
+  jn->Init();
   // if (restartTrainingFrom == 0) {
   //   jn->Init();
   // }

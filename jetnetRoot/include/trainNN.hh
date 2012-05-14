@@ -11,7 +11,7 @@ class TTree;
 
 
 
-// for external use 
+// --- for external use 
 struct FlavorWeights 
 {
   double bottom; 
@@ -19,7 +19,7 @@ struct FlavorWeights
   double light; 
 }; 
 
-// for internal use
+// --- for internal use
 struct TrainingSettings 
 {
   int dilution_factor; 
@@ -37,6 +37,7 @@ struct TeachingVariables
 const int N_PATTERNS_PER_UPDATE = 200;// || _2 = 200 (before 100) _3,_4=20
 
 bool is_flavor_tagged(const TeachingVariables&); 
+void copy_cat_trees(TFile& dest_file, const TFile& source_file); 
 
 namespace train_nn { 
   const std::vector<InputVariableInfo> INPUT_VARS; 

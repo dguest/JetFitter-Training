@@ -1,6 +1,8 @@
 #include <TTree.h>
 #include <TFile.h>
 #include <TH1F.h>
+#include "TCollection.h"
+#include "TKey.h"
 
 #include <string.h>
 #include <cmath>
@@ -338,32 +340,28 @@ void trainNN(std::string inputfile,
   if (epochWithMinimum != 0) {
 
     std::string weights_out_name = out_dir + "/Weights"; 
-    TString name(weights_out_name.c_str());
-    name += epochWithMinimum;
-    name += ".root";
+    TString min_file_name(weights_out_name.c_str());
+    min_file_name += epochWithMinimum;
+    min_file_name += ".root";
 
 
-    TFile *_file0 = new TFile(name);
-    TFlavorNetwork* trainedNetwork=(TFlavorNetwork*)_file0->
-      Get("TFlavorNetwork");
+    TFile min_file(min_file_name);
+    TFlavorNetwork* trainedNetwork = 
+      dynamic_cast<TFlavorNetwork*>(min_file.Get("TFlavorNetwork"));
     
     // std::cout << " Reading back network with minimum" << endl;
     // setTrainedNetwork(*jn,trainedNetwork);
 
     std::string min_weights_name = out_dir + "/weightMinimum.root"; 
-    TFile* file=new TFile(min_weights_name.c_str(),"recreate");
-    file->WriteTObject(trainedNetwork);
+    TFile out_min(min_weights_name.c_str(),"recreate");
+    out_min.WriteTObject(trainedNetwork);
 
-    // write in variable tree too 
-    in_var.write_to_file(file); 
-
-    file->Close();
-    delete file;
-
+    copy_cat_trees(out_min, *input_file); 
 
   } 
   else {
-    std::cout << " using network at last iteration (minimum not reached..." << endl;
+    std::cout << " using network at last iteration (minimum not reached)" 
+	      << endl;
   }
   
   std::string training_info_name = out_dir + "/trainingInfo.root"; 
@@ -375,6 +373,24 @@ void trainNN(std::string inputfile,
   delete histoFile;
 
 
+}
+
+// TODO: it would be better to replace these category trees with some other
+// data format
+void copy_cat_trees(TFile& dest_file, const TFile& source_file) { 
+  const TList* keys = source_file.GetListOfKeys(); 
+  TIter the_iter(keys); 
+  for (TIter obj = the_iter.Begin(); obj != the_iter.End(); ++obj) { 
+    TKey* key = dynamic_cast<TKey*>(*obj); 
+    assert(key); 
+    std::string name = key->GetName(); 
+    std::string obj_name = key->GetClassName(); 
+    if (obj_name == "TTree" && name.find("_cat") != std::string::npos) { 
+      TTree* the_tree = static_cast<TTree*>(key->ReadObj()); 
+      assert(the_tree); 
+      dest_file.WriteTObject(the_tree); 
+    }
+  }
 }
 
 int copy_testing_events(std::ostream& stream, 

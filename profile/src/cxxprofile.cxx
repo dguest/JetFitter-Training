@@ -21,7 +21,7 @@ PyObject* py_profile_fast(PyObject *self,
   PyObject* int_leaves = 0; 
   PyObject* double_leaves = 0; 
   const char* output_file = "out.root"; 
-  const char *kwlist[] = {
+  const char* kwlist[] = {
     "in_file",
     "tree", 
     "ints", 
@@ -113,8 +113,8 @@ std::vector<LeafInfo> build_leaf_info(PyObject* list)
     PyObject* max = PyTuple_GetItem(info_tuple, 2); 
 
     if (!PyString_Check(name) ||
-	!PyFloat_Check(min) ||
-	!PyFloat_Check(max) ) { 
+	!PyNumber_Check(min) ||
+	!PyNumber_Check(max) ) { 
       PyErr_SetString(PyExc_IOError,"leaf tuple values must be "
 		      "(string, float, float)"); 
       return info; 

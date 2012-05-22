@@ -7,6 +7,7 @@
 // #include <boost/ptr_container/ptr_map.hpp>
 #include <boost/ptr_container/ptr_vector.hpp>
 #include <cmath> // for rand
+#include <algorithm>
 
 #include "TFile.h"
 #include "TTree.h"
@@ -15,7 +16,9 @@ int profile_fast(std::string file_name,
 		 std::string tree_name, 
 		 std::vector<LeafInfo> int_leaves, 
 		 std::vector<LeafInfo> double_leaves, 
-		 std::string output_file_name) { 
+		 std::string output_file_name, 
+		 int max_entries, 
+		 int n_bins) { 
   
   TFile file(file_name.c_str()); 
   if (file.IsZombie() || !file.IsOpen() ) { 
@@ -53,11 +56,11 @@ int profile_fast(std::string file_name,
   boost::ptr_vector<double> double_buffer; 
   boost::ptr_vector<int> int_buffer; 
   boost::ptr_vector<double> converted_doubles; 
+  std::vector<RangeCut> cuts; 
 
   std::map<std::string,FilterHist*> hists; 
 
   typedef std::vector<LeafInfo>::const_iterator LeafItr; 
-  const size_t n_bin = 400; 
 
   for (LeafItr leaf_itr = int_leaves.begin(); 
        leaf_itr != int_leaves.end(); 
@@ -68,7 +71,6 @@ int profile_fast(std::string file_name,
     bool error = tree->SetBranchAddress(leaf_itr->name.c_str(),the_int); 
     if (error) 
       throw std::runtime_error("could not find branch " + leaf_itr->name); 
-
     
     double* the_double = new double; 
     converted_doubles.push_back(the_double); 
@@ -76,12 +78,11 @@ int profile_fast(std::string file_name,
 	 check_itr != check_buffer.end(); check_itr++){ 
       std::string hist_name = leaf_itr->name + "_" + check_itr->first; 
       hists[hist_name] = 
-	new FilterHist(n_bin,leaf_itr->min, leaf_itr->max, 
+	new FilterHist(n_bins,leaf_itr->min, leaf_itr->max, 
 		       the_double, check_itr->second);
     }
-
+    cuts.push_back(RangeCut(the_double,leaf_itr->min, leaf_itr->max)); 
   }
-
 
   for (LeafItr leaf_itr = double_leaves.begin(); 
        leaf_itr != double_leaves.end(); 
@@ -97,28 +98,36 @@ int profile_fast(std::string file_name,
 	 check_itr != check_buffer.end(); check_itr++){ 
       std::string hist_name = leaf_itr->name + "_" + check_itr->first; 
       hists[hist_name] =
-	new FilterHist(n_bin,leaf_itr->min, leaf_itr->max, 
+	new FilterHist(n_bins,leaf_itr->min, leaf_itr->max, 
 		       the_double, check_itr->second);
     }
-
-    
+    cuts.push_back(RangeCut(the_double,leaf_itr->min, leaf_itr->max)); 
   }
 
-  size_t n_entries = tree->GetEntries(); 
-  size_t n_to_convert = int_buffer.size(); 
-  assert(n_to_convert == converted_doubles.size()); 
+  int n_entries = tree->GetEntries(); 
+  int n_to_convert = int_buffer.size(); 
+  assert(n_to_convert == int(converted_doubles.size())); 
 
-  for (size_t entry_n = 0; entry_n < n_entries; entry_n++){ 
-    if (entry_n > 1000) break; 
+  int n_cut = 0; 
+  if (max_entries < 0) max_entries = n_entries; 
+  else max_entries = std::min(max_entries, n_entries); 
+
+  for (int entry_n = 0; entry_n < max_entries; entry_n++){ 
+    if (max_entries >= 0 && int(entry_n) > max_entries) break; 
     tree->GetEntry(entry_n); 
-    for (size_t i = 0; i < n_to_convert; i++){ 
+    for (int i = 0; i < n_to_convert; i++){ 
       converted_doubles[i] = int_buffer[i]; 
     }
+
+    if ( !is_in_range(cuts) ) {
+      n_cut++; 
+      continue; 
+    }
+
     for (std::map<std::string, FilterHist*>::iterator itr = 
 	   hists.begin(); itr != hists.end(); itr++){ 
       itr->second->fill(); 
     }
-	 
   }
 
   TFile out_file(output_file_name.c_str(),"recreate"); 
@@ -128,7 +137,6 @@ int profile_fast(std::string file_name,
     itr->second->SetName(itr->first.c_str()); 
     out_file.WriteTObject(itr->second); 
   }
-
 
   // clean up
   out_file.Close(); 
@@ -142,8 +150,7 @@ int profile_fast(std::string file_name,
     delete itr->second; 
   }
 
-
-  return n_entries; 
+  return max_entries - n_cut; 
 
 }
 
@@ -177,4 +184,29 @@ int FilterHist::fill()
 
   Fill(*m_in_buffer); 
   return 1; 
+}
+
+RangeCut::RangeCut(double* value, double lower, double upper): 
+  m_value(value), 
+  m_lower(lower), 
+  m_upper(upper) 
+{
+}
+
+bool RangeCut::in_range() const 
+{
+  bool above = *m_value > m_lower; 
+  bool below = *m_value < m_upper; 
+  return above && below; 
+}
+
+bool is_in_range(const std::vector<RangeCut>& cuts)
+{
+  for (std::vector<RangeCut>::const_iterator itr = cuts.begin(); 
+	 itr != cuts.end(); itr++){ 
+    if (!itr->in_range()) { 
+      return false; 
+    }
+  }
+  return true; 
 }

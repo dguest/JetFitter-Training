@@ -9,8 +9,9 @@
 #include "profile_fast.hh"
   
 static const char* doc_string = 
-  "profile_fast(file, tree, ints, doubles, output)\n"
-  "builds file 'output'"; 
+  "profile_fast(file, tree, ints, doubles, output, max_entries, n_bins)"
+  " --> n_passed"
+  "\nbuilds file 'output', returns the number of events which passed"; 
 
 PyObject* py_profile_fast(PyObject *self, 
 			  PyObject *args, 
@@ -21,17 +22,21 @@ PyObject* py_profile_fast(PyObject *self,
   PyObject* int_leaves = 0; 
   PyObject* double_leaves = 0; 
   const char* output_file = "out.root"; 
+  int max_entries = -1; 
+  int n_bins = 500; 
   const char* kwlist[] = {
     "in_file",
     "tree", 
     "ints", 
     "doubles", 
     "output", 
+    "max_entries",
+    "n_bins", 
     NULL};
     
   bool ok = PyArg_ParseTupleAndKeywords
     (args, keywds, 
-     "ss|OOs", 
+     "ss|OOsii", 
      // I think python people argue about whether this should be 
      // a const char** or a char**
      const_cast<char**>(kwlist),
@@ -39,7 +44,9 @@ PyObject* py_profile_fast(PyObject *self,
      &tree_name, 
      &int_leaves, 
      &double_leaves, 
-     &output_file); 
+     &output_file, 
+     &max_entries, 
+     &n_bins); 
 
   if (!ok) return NULL;
 
@@ -51,7 +58,8 @@ PyObject* py_profile_fast(PyObject *self,
   int n_entries = 0; 
   try { 
     n_entries = profile_fast(file_name, tree_name, 
-			     int_leaf_vec, double_leaf_vec, output_file); 
+			     int_leaf_vec, double_leaf_vec, output_file, 
+			     max_entries, n_bins); 
   }
   catch (const std::runtime_error& e) { 
     PyErr_SetString(PyExc_IOError,e.what()); 

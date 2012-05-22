@@ -16,6 +16,7 @@ int profile_fast(std::string file_name,
 		 std::string tree_name, 
 		 std::vector<LeafInfo> int_leaves, 
 		 std::vector<LeafInfo> double_leaves, 
+		 std::vector<std::string> tag_leaves, 
 		 std::string output_file_name, 
 		 int max_entries, 
 		 int n_bins) { 
@@ -38,9 +39,10 @@ int profile_fast(std::string file_name,
 
   typedef std::map<std::string,int*> CheckBuffer; 
   CheckBuffer check_buffer; 
-  check_buffer["charm"] =  new int; 
-  check_buffer["bottom"] = new int; 
-  check_buffer["light"] =  new int; 
+  for (std::vector<std::string>::const_iterator itr = tag_leaves.begin(); 
+       itr != tag_leaves.end(); itr++){ 
+    check_buffer[*itr] = new int; 
+  }
   for (std::map<std::string,int*>::const_iterator itr = 
 	 check_buffer.begin(); 
        itr != check_buffer.end(); 

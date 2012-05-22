@@ -21,6 +21,7 @@ PyObject* py_profile_fast(PyObject *self,
   const char* tree_name; 
   PyObject* int_leaves = 0; 
   PyObject* double_leaves = 0; 
+  PyObject* tag_leaves = 0; 
   const char* output_file = "out.root"; 
   int max_entries = -1; 
   int n_bins = 500; 
@@ -29,6 +30,7 @@ PyObject* py_profile_fast(PyObject *self,
     "tree", 
     "ints", 
     "doubles", 
+    "tags",
     "output", 
     "max_entries",
     "n_bins", 
@@ -36,7 +38,7 @@ PyObject* py_profile_fast(PyObject *self,
     
   bool ok = PyArg_ParseTupleAndKeywords
     (args, keywds, 
-     "ss|OOsii", 
+     "ss|OOOsii", 
      // I think python people argue about whether this should be 
      // a const char** or a char**
      const_cast<char**>(kwlist),
@@ -44,6 +46,7 @@ PyObject* py_profile_fast(PyObject *self,
      &tree_name, 
      &int_leaves, 
      &double_leaves, 
+     &tag_leaves, 
      &output_file, 
      &max_entries, 
      &n_bins); 
@@ -54,11 +57,14 @@ PyObject* py_profile_fast(PyObject *self,
   if (PyErr_Occurred()) return NULL; 
   std::vector<LeafInfo> double_leaf_vec = build_leaf_info(double_leaves); 
   if (PyErr_Occurred()) return NULL; 
+  std::vector<std::string> tag_leaves_vec = build_string_vec(tag_leaves); 
+  if (PyErr_Occurred()) return NULL; 
 
   int n_entries = 0; 
   try { 
     n_entries = profile_fast(file_name, tree_name, 
-			     int_leaf_vec, double_leaf_vec, output_file, 
+			     int_leaf_vec, double_leaf_vec, tag_leaves_vec, 
+			     output_file, 
 			     max_entries, n_bins); 
   }
   catch (const std::runtime_error& e) { 
@@ -94,6 +100,28 @@ extern "C" {
 
 }
 
+std::vector<std::string> build_string_vec(PyObject* list) 
+{
+  std::vector<std::string> out; 
+  if (!list) { 
+    return out; 
+  }
+  int n_obj = PyList_Size(list); 
+  if (PyErr_Occurred()) {
+    PyErr_SetString(PyExc_IOError,"tags takes a list"); 
+    return out; 
+  }
+  for (int n = 0; n < n_obj; n++) { 
+    PyObject* the_obj = PyList_GetItem(list, n); 
+    std::string the_string = PyString_AsString(the_obj); 
+    if (PyErr_Occurred()) { 
+      PyErr_SetString(PyExc_IOError,"tags must be a list of strings"); 
+      return out; 
+    }
+    out.push_back(the_string); 
+  }
+  return out; 
+}
 
 std::vector<LeafInfo> build_leaf_info(PyObject* list)
 {

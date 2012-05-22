@@ -44,6 +44,7 @@ int profile_fast(std::string file,
 		 std::string tree, 
 		 std::vector<LeafInfo> int_leaves, 
 		 std::vector<LeafInfo> double_leaves, 
+		 std::vector<std::string> tag_leaves, 
 		 std::string output_file_name, 
 		 int max_entries = -1, 
 		 int n_bins = 500); 

@@ -14,6 +14,14 @@ def get_allowed_rds_variables(input_files, jet_collection,
         'BTag_%s_JetFitterTagNN/PerfTreeAll' % (jet_collection + 'AOD') )
 
     sample_tree = sample_root_file.Get(input_tree_name)
+
+    # stupid bug fix 
+    # FIXME: fix stupid bug fix
+    if sample_tree = None: 
+        input_tree_name = (
+            'BTag_%s_JetFitterCharm/PerfTreeAll' % (jet_collection) )
+        sample_tree = sample_root_file.Get(input_tree_name)
+        
     leaves_dict = utils.get_leaves_in_tree(sample_tree)
 
     if whitelist: 

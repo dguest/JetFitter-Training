@@ -34,8 +34,8 @@ COMMON_LIBS := $(HERE)/../common
 
 # --- set compiler and flags (roll c options and include paths together)
 CXX          := g++
-CXXFLAGS     := -O2 -Wall -fPIC -I$(INC) -I$(COMMON_INC)
-LDFLAGS      := -Wl,-no-undefined 
+CXXFLAGS     := -O2 -Wall -fPIC -I$(INC) -I$(COMMON_INC) -g
+LDFLAGS      := -Wl,-no-undefined
 LIBS         := -L$(COMMON_LIBS) -Wl,-rpath,$(COMMON_LIBS) 
 LIBS         += -lJetnetTools
 
@@ -53,6 +53,7 @@ PY_LDFLAGS += -shared
 # ---- define objects
 GEN_OBJ     := writeNtuple_Official.o writeNtuple_common.o
 GEN_OBJ     += writeNtuple_byPt.o 
+GEN_OBJ     += flatNtuple.o
 EXE_OBJ     := $(GEN_OBJ) main.o
 
 PY_OBJ       := pyprep.o

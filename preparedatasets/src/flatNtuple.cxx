@@ -37,10 +37,10 @@ int flatNtuple(SVector input_files,
   // BinTool abs_eta_categories(eta_cat_vec); 
 
   // --- setup observer variables (if they aren't given)
-  bool built_observers = observers.build_default_values(); 
-  if (built_observers){ 
-    throw std::runtime_error("no observers given"); 
-  }
+  // bool built_observers = observers.build_default_values(); 
+  // if (built_observers){ 
+  //   throw std::runtime_error("no observers given"); 
+  // }
 
 
   // run output 
@@ -55,8 +55,6 @@ int flatNtuple(SVector input_files,
   std::cout << " processing to obtain: " << jetCollection
 	    << " root file "  << std::endl;
   
-  std::string baseBTag("BTag_");
-
   // --- io trees 
   typedef boost::ptr_vector<TTree>::iterator TreeItr; 
   TFile output_file(output_file_name.c_str(),"recreate"); 
@@ -75,7 +73,7 @@ int flatNtuple(SVector input_files,
        name_itr != observers.discriminators.end(); 
        name_itr++){ 
     std::cout << "instantiating " << *name_itr << std::endl;
-    std::string chain_name = baseBTag + jetCollection + 
+    std::string chain_name = jetCollection + 
       "_" + *name_itr + "/PerfTreeAll"; 
 
     TChain* the_chain = new TChain(chain_name.c_str()); 
@@ -116,9 +114,9 @@ int flatNtuple(SVector input_files,
 
   // --- load jetfitter chain 
   std::string suffixJF("_JetFitterCharm/PerfTreeAll");
-  std::cout << "instantiating " << suffixJF << std::endl;
+  std::cout << "instantiating " << jetCollection << suffixJF << std::endl;
   boost::scoped_ptr<TChain> treeJF
-    (new TChain((baseBTag+jetCollection+suffixJF).c_str()));
+    (new TChain((jetCollection+suffixJF).c_str()));
 
   for (SVector::const_iterator in_file_itr = input_files.begin(); 
        in_file_itr != input_files.end(); 

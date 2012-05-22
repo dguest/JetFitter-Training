@@ -3,6 +3,7 @@
 
 #include <string> 
 #include <vector>
+#include <map>
 #include "TH1D.h"
 
 class TChain; 
@@ -37,6 +38,19 @@ private:
   double m_lower; 
   double m_upper; 
 }; 
+
+class Hists : public std::map<std::string,FilterHist*>
+{
+public: 
+  ~Hists(); 
+}; 
+
+class CheckBuffer: public std::map<std::string,int*> 
+{
+public: 
+  ~CheckBuffer(); 
+};
+
 
 bool is_in_range(const std::vector<RangeCut>&); 
 

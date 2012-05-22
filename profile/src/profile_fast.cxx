@@ -37,13 +37,13 @@ int profile_fast(std::string file_name,
   }
   tree->SetBranchStatus("*",0); 
 
-  typedef std::map<std::string,int*> CheckBuffer; 
+  // typedef std::map<std::string,int*> CheckBuffer; 
   CheckBuffer check_buffer; 
   for (std::vector<std::string>::const_iterator itr = tag_leaves.begin(); 
        itr != tag_leaves.end(); itr++){ 
     check_buffer[*itr] = new int; 
   }
-  for (std::map<std::string,int*>::const_iterator itr = 
+  for (CheckBuffer::const_iterator itr = 
 	 check_buffer.begin(); 
        itr != check_buffer.end(); 
        itr++){ 
@@ -60,7 +60,8 @@ int profile_fast(std::string file_name,
   boost::ptr_vector<double> converted_doubles; 
   std::vector<RangeCut> cuts; 
 
-  std::map<std::string,FilterHist*> hists; 
+  // typedef std::map<std::string,FilterHist*> Hists; 
+  Hists hists; 
 
   typedef std::vector<LeafInfo>::const_iterator LeafItr; 
 
@@ -76,6 +77,9 @@ int profile_fast(std::string file_name,
     
     double* the_double = new double; 
     converted_doubles.push_back(the_double); 
+
+    hists[leaf_itr->name] = new FilterHist
+      (n_bins, leaf_itr->min, leaf_itr->max, the_double); 
     for (CheckBuffer::const_iterator check_itr = check_buffer.begin(); 
 	 check_itr != check_buffer.end(); check_itr++){ 
       std::string hist_name = leaf_itr->name + "_" + check_itr->first; 
@@ -95,7 +99,9 @@ int profile_fast(std::string file_name,
     bool error = tree->SetBranchAddress(leaf_itr->name.c_str(), the_double); 
     if (error) 
       throw std::runtime_error("could not find branch " + leaf_itr->name); 
-    
+
+    hists[leaf_itr->name] = new FilterHist
+      (n_bins, leaf_itr->min, leaf_itr->max, the_double); 
     for (CheckBuffer::const_iterator check_itr = check_buffer.begin(); 
 	 check_itr != check_buffer.end(); check_itr++){ 
       std::string hist_name = leaf_itr->name + "_" + check_itr->first; 
@@ -126,34 +132,35 @@ int profile_fast(std::string file_name,
       continue; 
     }
 
-    for (std::map<std::string, FilterHist*>::iterator itr = 
-	   hists.begin(); itr != hists.end(); itr++){ 
+    for (Hists::iterator itr = hists.begin(); itr != hists.end(); itr++){ 
       itr->second->fill(); 
     }
   }
 
   TFile out_file(output_file_name.c_str(),"recreate"); 
 
-  for (std::map<std::string, FilterHist*>::iterator itr = 
-	 hists.begin(); itr != hists.end(); itr++){ 
+  for (Hists::iterator itr = hists.begin(); itr != hists.end(); itr++){ 
     itr->second->SetName(itr->first.c_str()); 
     out_file.WriteTObject(itr->second); 
   }
 
   // clean up
   out_file.Close(); 
-  for (std::map<std::string, FilterHist*>::iterator itr = 
-	 hists.begin(); itr != hists.end(); itr++){ 
-    delete itr->second; 
-  }
-  
-  for (CheckBuffer::iterator itr = check_buffer.begin(); 
-       itr != check_buffer.end(); itr++){ 
-    delete itr->second; 
-  }
 
   return max_entries - n_cut; 
 
+}
+
+Hists::~Hists() {
+  for (iterator itr = begin(); itr != end(); itr++){ 
+    delete itr->second; 
+  }
+}
+
+CheckBuffer::~CheckBuffer() { 
+  for (iterator itr = begin(); itr != end(); itr++){ 
+    delete itr->second; 
+  }
 }
 
 FilterHist::FilterHist(int n_bins, double min, double max, 

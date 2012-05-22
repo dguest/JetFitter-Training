@@ -1,6 +1,7 @@
 import os, random, array
 
-def profile_rds(rds_file, tree_name = 'SVTree'): 
+def profile_rds(rds_file, tree_name = 'SVTree', 
+                max_entries = False): 
     from ROOT import TH1D, TTree, TFile, TIter, gROOT
     
     root_file = TFile(rds_file)
@@ -71,6 +72,8 @@ def profile_rds(rds_file, tree_name = 'SVTree'):
     for n, entry in enumerate(sv_tree): 
         if n % 10000 == 0: 
             print '%i entries processed' % n
+            if max_entries and n > max_entries: 
+                break
 
         for leaf, hist in hists.items(): 
             hist.fill(entry)
@@ -124,13 +127,14 @@ def build_mean_rms_tree(mean_rms_dict, tree_name = ''):
     print "fuck this shit, I'm going textfile"
     
         
-def make_profile_file(reduced_dataset, profile_file = None): 
+def make_profile_file(reduced_dataset, profile_file = None, 
+                      max_entries = False): 
     from ROOT import TFile
     if profile_file is None: 
         rds_dir = os.path.dirname(reduced_dataset)
         profile_file = os.path.join(rds_dir,'profiled.root')
 
-    hists = profile_rds(reduced_dataset)
+    hists = profile_rds(reduced_dataset, max_entries = max_entries)
     save_file = TFile(profile_file, 'recreate')
 
     for name, hist in hists.items(): 

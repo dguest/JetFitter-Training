@@ -169,8 +169,8 @@ std::vector<LeafInfo> build_leaf_info(PyObject* list)
     PyObject* max = 0; 
     if (tup_size == 4) { 
       PyObject* n_bins = PyTuple_GetItem(info_tuple, 1); 
-      if (!PyInt_Check(n_bins) ){ 
-	PyErr_SetString(PyExc_IOError,"n_bins must be an int"); 
+      if (!PyInt_Check(n_bins) || PyInt_AsLong(n_bins) < 1 ){ 
+	PyErr_SetString(PyExc_IOError,"n_bins must be an int > 1"); 
 	return info; 
       }
       i.n_bins = PyInt_AsLong(n_bins); 

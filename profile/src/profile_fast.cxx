@@ -90,11 +90,11 @@ std::pair<int,int> profile_fast(std::string file_name,
       plot_max += 0.5; 
     }
     else if (n_bins == -1) { 
-      n_bins = max_entries / 100; 
+      n_bins = std::min(max_entries / 100, magic::MAX_AUTO_BINS); 
     }
 
     hists[leaf_itr->name] = new FilterHist
-      (n_bins, leaf_itr->min, leaf_itr->max, the_double); 
+      (n_bins, plot_min, plot_max, the_double); 
     for (CheckBuffer::const_iterator check_itr = check_buffer.begin(); 
 	 check_itr != check_buffer.end(); check_itr++){ 
       std::string hist_name = leaf_itr->name + "_" + check_itr->first; 
@@ -117,7 +117,7 @@ std::pair<int,int> profile_fast(std::string file_name,
 
     int n_bins = leaf_itr->n_bins; 
     if (n_bins < 0) 
-      n_bins = max_entries / 100; 
+      n_bins = std::min(max_entries / 100, magic::MAX_AUTO_BINS); 
 
     hists[leaf_itr->name] = new FilterHist
       (n_bins, leaf_itr->min, leaf_itr->max, the_double); 
@@ -161,10 +161,7 @@ std::pair<int,int> profile_fast(std::string file_name,
   }
 
   // clean up
-  out_file.Close(); 
-
   return std::make_pair(max_entries - n_cut, n_cut); 
-
 }
 
 Hists::~Hists() {

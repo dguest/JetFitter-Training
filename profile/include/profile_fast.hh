@@ -17,6 +17,10 @@ struct LeafInfo
   int n_bins; 
 };
 
+namespace magic { 
+  const int MAX_AUTO_BINS = 100000; 
+} 
+
 class FilterHist: public TH1D
 {
 public: 

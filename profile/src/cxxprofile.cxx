@@ -9,9 +9,9 @@
 #include "profile_fast.hh"
   
 static const char* doc_string = 
-  "profile_fast(file, tree, ints, doubles, output, max_entries, n_bins)"
+  "profile_fast(file, tree, ints, doubles, tags, output, max_entries, n_bins)"
   " --> n_passed"
-  "\nbuilds file 'output', returns the number of events which passed"; 
+  "\nbuilds file 'output', returns tuple (passing_events,failing_events)";
 
 PyObject* py_profile_fast(PyObject *self, 
 			  PyObject *args, 
@@ -60,19 +60,19 @@ PyObject* py_profile_fast(PyObject *self,
   std::vector<std::string> tag_leaves_vec = build_string_vec(tag_leaves); 
   if (PyErr_Occurred()) return NULL; 
 
-  int n_entries = 0; 
+  std::pair<int,int> n_pass_fail(std::make_pair(0,0)); 
   try { 
-    n_entries = profile_fast(file_name, tree_name, 
-			     int_leaf_vec, double_leaf_vec, tag_leaves_vec, 
-			     output_file, 
-			     max_entries, n_bins); 
+    n_pass_fail = profile_fast(file_name, tree_name, 
+			       int_leaf_vec, double_leaf_vec, tag_leaves_vec, 
+			       output_file, 
+			       max_entries, n_bins); 
   }
   catch (const std::runtime_error& e) { 
     PyErr_SetString(PyExc_IOError,e.what()); 
     return 0; 
   }
   
-  return Py_BuildValue("i",n_entries); 
+  return Py_BuildValue("ii",n_pass_fail.first, n_pass_fail.second); 
 
   // --- make sure you call INCREF if you return Py_None
   // Py_INCREF(Py_None);

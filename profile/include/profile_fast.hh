@@ -3,6 +3,7 @@
 
 #include <string> 
 #include <vector>
+#include <utility> // pair
 #include <map>
 #include "TH1D.h"
 
@@ -54,13 +55,13 @@ public:
 
 bool is_in_range(const std::vector<RangeCut>&); 
 
-int profile_fast(std::string file, 
-		 std::string tree, 
-		 std::vector<LeafInfo> int_leaves, 
-		 std::vector<LeafInfo> double_leaves, 
-		 std::vector<std::string> tag_leaves, 
-		 std::string output_file_name, 
-		 int max_entries = -1, 
-		 int n_bins = 500); 
+std::pair<int,int> profile_fast(std::string file, 
+				std::string tree, 
+				std::vector<LeafInfo> int_leaves, 
+				std::vector<LeafInfo> double_leaves, 
+				std::vector<std::string> tag_leaves, 
+				std::string output_file_name, 
+				int max_entries = -1, 
+				int n_bins = 500); 
 
 #endif // PROFILE_FAST_H

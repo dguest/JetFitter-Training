@@ -4,22 +4,22 @@
 #include <cassert>
 #include <boost/format.hpp>
 #include <boost/lexical_cast.hpp>
-// #include <boost/ptr_container/ptr_map.hpp>
 #include <boost/ptr_container/ptr_vector.hpp>
 #include <cmath> // for rand
+#include <utility> // pair
 #include <algorithm>
 
 #include "TFile.h"
 #include "TTree.h"
 
-int profile_fast(std::string file_name, 
-		 std::string tree_name, 
-		 std::vector<LeafInfo> int_leaves, 
-		 std::vector<LeafInfo> double_leaves, 
-		 std::vector<std::string> tag_leaves, 
-		 std::string output_file_name, 
-		 int max_entries, 
-		 int n_bins) { 
+std::pair<int,int> profile_fast(std::string file_name, 
+				std::string tree_name, 
+				std::vector<LeafInfo> int_leaves, 
+				std::vector<LeafInfo> double_leaves, 
+				std::vector<std::string> tag_leaves, 
+				std::string output_file_name, 
+				int max_entries, 
+				int n_bins) { 
   
   TFile file(file_name.c_str()); 
   if (file.IsZombie() || !file.IsOpen() ) { 
@@ -147,7 +147,7 @@ int profile_fast(std::string file_name,
   // clean up
   out_file.Close(); 
 
-  return max_entries - n_cut; 
+  return std::make_pair(max_entries - n_cut, n_cut); 
 
 }
 

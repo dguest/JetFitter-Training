@@ -171,7 +171,8 @@ def build_mean_rms_tree(mean_rms_dict, tree_name = ''):
     
         
 def make_profile_file(reduced_dataset, profile_file = None, 
-                      max_entries = False, tree = 'SVTree'): 
+                      max_entries = False, tree = 'SVTree', 
+                      pt_range = None): 
     """
     new and improved: now uses cxxprofile, which should be a lot faster
     """
@@ -191,6 +192,8 @@ def make_profile_file(reduced_dataset, profile_file = None,
 
     doubles = []
     for var, var_range in range_dict['Double_t'].iteritems(): 
+        if pt_range and var == 'JetPt': 
+            var_range = pt_range
         doubles.append( (var,var_range[0], var_range[1]) )
 
     if not max_entries: max_entries = -1

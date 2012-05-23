@@ -1,7 +1,10 @@
 import os, random, array
 
-def profile_rds(rds_file, tree_name = 'SVTree', 
-                max_entries = False): 
+def find_leaf_ranges_by_type(rds_file, tree_name = 'SVTree', 
+                             max_entries = False): 
+    """
+    Returns a dict keyed by type. The values of the dict are 
+    """
     from ROOT import TH1D, TTree, TFile, TIter, gROOT
     
     root_file = TFile(rds_file)
@@ -18,7 +21,48 @@ def profile_rds(rds_file, tree_name = 'SVTree',
         leaf_values[name] = []
         leaf_types[name] = leaf.GetTypeName()
 
+    # find ranges
+    if not max_entries: max_entries = 20000
+    for n, entry in enumerate(sv_tree): 
+        if n > max_entries : break 
+        for leaf in leaf_values.keys(): 
+            value = getattr(entry,leaf)
+            leaf_values[leaf].append(value)
 
+    leaf_ranges = {}
+    for leaf, v in leaf_values.iteritems(): 
+        leaf_ranges[leaf] = (min(v), max(v))
+        
+    # sort by type
+    all_types = set(leaf_types.values())
+    leaves_by_type = {t : {} for t in all_types}
+    for leaf_name, leaf_range in leaf_ranges.iteritems(): 
+        the_type = leaf_types[leaf_name]
+        leaves_by_type[the_type][leaf_name] = leaf_range
+
+    return leaves_by_type
+
+
+def profile_rds(rds_file, tree_name = 'SVTree', 
+                max_entries = False): 
+    """
+    Returns a list of hists. This function is not compiled (slow). 
+    """
+    from ROOT import TH1D, TTree, TFile, TIter, gROOT
+    
+    root_file = TFile(rds_file)
+    sv_tree = root_file.Get(tree_name)
+
+    leaf_values = {}
+    leaf_types = {}
+
+    leaf_names = []
+    leaf_list = sv_tree.GetListOfLeaves()
+    for leaf in TIter(leaf_list): 
+        name = leaf.GetName()
+        leaf_names.append(name)
+        leaf_values[name] = []
+        leaf_types[name] = leaf.GetTypeName()
 
     # find ranges
     for n, entry in enumerate(sv_tree): 
@@ -32,7 +76,6 @@ def profile_rds(rds_file, tree_name = 'SVTree',
 
             leaf_values[leaf].append(value)
 
-        
     leaf_ranges = {}
     for leaf, v in leaf_values.iteritems(): 
         leaf_ranges[leaf] = (min(v), max(v))
@@ -128,19 +171,32 @@ def build_mean_rms_tree(mean_rms_dict, tree_name = ''):
     
         
 def make_profile_file(reduced_dataset, profile_file = None, 
-                      max_entries = False): 
-    from ROOT import TFile
+                      max_entries = False, tree = 'SVTree'): 
+    """
+    new and improved: now uses cxxprofile, which should be a lot faster
+    """
     if profile_file is None: 
         rds_dir = os.path.dirname(reduced_dataset)
         profile_file = os.path.join(rds_dir,'profiled.root')
 
-    hists = profile_rds(reduced_dataset, max_entries = max_entries)
-    save_file = TFile(profile_file, 'recreate')
+    from cxxprofile import profile_fast
+    range_dict = find_leaf_ranges_by_type(reduced_dataset, tree_name = tree)
 
-    for name, hist in hists.items(): 
-        print 'saving %s, %i entries' % (name, hist.GetEntries())
+    ints = []
+    for var, var_range in range_dict['Int_t'].iteritems(): 
+        ints.append( (var,var_range[0],var_range[1]) )
+
+    doubles = []
+    for var, var_range in range_dict['Double_t'].iteritems(): 
+        doubles.append( (var,var_range[0], var_range[1]) )
+
+    tags = ['charm','bottom','light']
+
+    n_pass, n_fail = profile_fast(
+        in_file = reduced_dataset, tree = tree, out_file = profile_file, 
+        ints = ints, doubles = doubles, tags = tags)
     
-        save_file.WriteTObject(hist)
+    return n_pass, n_fail
 
 def read_back_profile_file(profile_file): 
     from ROOT import TFile, TIter, gROOT

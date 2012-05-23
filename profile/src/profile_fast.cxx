@@ -102,7 +102,7 @@ std::pair<int,int> profile_fast(std::string file_name,
 	new FilterHist(n_bins,plot_min, plot_max, 
 		       the_double, check_itr->second);
     }
-    cuts.push_back(RangeCut(the_double,leaf_itr->min, leaf_itr->max)); 
+    cuts.push_back(RangeCut(the_double,plot_min, plot_max)); 
   }
 
   for (LeafItr leaf_itr = double_leaves.begin(); 
@@ -217,8 +217,8 @@ RangeCut::RangeCut(double* value, double lower, double upper):
 
 bool RangeCut::in_range() const 
 {
-  bool above = *m_value > m_lower; 
-  bool below = *m_value < m_upper; 
+  bool above = *m_value >= m_lower; 
+  bool below = *m_value <= m_upper; 
   return above && below; 
 }
 

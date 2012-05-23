@@ -9,7 +9,7 @@
 #include "profile_fast.hh"
   
 static const char* doc_string = 
-  "profile_fast(file, tree, ints, doubles, tags, output, max_entries, n_bins)"
+  "profile_fast(input, tree, ints, doubles, tags, output, max_entries, n_bins)"
   " --> n_passed"
   "\nbuilds file 'output', returns tuple (passing_events,failing_events)";
 
@@ -26,7 +26,7 @@ PyObject* py_profile_fast(PyObject *self,
   int max_entries = -1; 
   int n_bins = 500; 
   const char* kwlist[] = {
-    "in_file",
+    "input",
     "tree", 
     "ints", 
     "doubles", 

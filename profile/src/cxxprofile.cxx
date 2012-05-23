@@ -10,11 +10,11 @@
   
 static const char* doc_string = 
   "profile_fast"
-  "(in_file, tree, out_file, ints, doubles, tags, max_entries)"
-  " --> n_passed, n_failed"
-  "\nbuilds file 'output', "
-  "'ints' and 'doubles' take a list of tuples (name, n_bins, min, max) "
-  "where n_bins defaults to (max - min + 1) for int, "
+  "(in_file, tree, out_file, ints, doubles, tags, max_entries) "
+  "--> n_passed, n_failed\n"
+  "Builds file 'output'.\n"
+  "'ints' and 'doubles' take a list of tuples (name, n_bins, min, max).\n"
+  "If not given, n_bins defaults to (max - min + 1) for int, "
   "(n_entries / 100) for doubles";
 
 PyObject* py_profile_fast(PyObject *self, 

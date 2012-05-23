@@ -10,11 +10,11 @@
   
 static const char* doc_string = 
   "profile_fast"
-  "(in_file, tree, out_file, ints, doubles, tags, max_entries, n_bins)"
+  "(in_file, tree, out_file, ints, doubles, tags, max_entries)"
   " --> n_passed, n_failed"
-  "\nbuilds file 'output', returns tuple (passing_events,failing_events)"
-  "\n'ints' and 'doubles' take a list of tuples (n_bins, min, max)"
-  "where n_bins defaults to (max - min) for int, "
+  "\nbuilds file 'output', "
+  "'ints' and 'doubles' take a list of tuples (name, n_bins, min, max) "
+  "where n_bins defaults to (max - min + 1) for int, "
   "(n_entries / 100) for doubles";
 
 PyObject* py_profile_fast(PyObject *self, 
@@ -40,7 +40,7 @@ PyObject* py_profile_fast(PyObject *self,
     
   bool ok = PyArg_ParseTupleAndKeywords
     (args, keywds, 
-     "sss|OOOii", 
+     "sss|OOOi", 
      // I think python people argue about whether this should be 
      // a const char** or a char**
      const_cast<char**>(kwlist),

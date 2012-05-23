@@ -182,19 +182,23 @@ def make_profile_file(reduced_dataset, profile_file = None,
     from cxxprofile import profile_fast
     range_dict = find_leaf_ranges_by_type(reduced_dataset, tree_name = tree)
 
+    tags = ['charm','bottom','light']
+
     ints = []
     for var, var_range in range_dict['Int_t'].iteritems(): 
+        if var in tags: continue
         ints.append( (var,var_range[0],var_range[1]) )
 
     doubles = []
     for var, var_range in range_dict['Double_t'].iteritems(): 
         doubles.append( (var,var_range[0], var_range[1]) )
 
-    tags = ['charm','bottom','light']
+    if not max_entries: max_entries = -1
 
     n_pass, n_fail = profile_fast(
         in_file = reduced_dataset, tree = tree, out_file = profile_file, 
-        ints = ints, doubles = doubles, tags = tags)
+        ints = ints, doubles = doubles, tags = tags, 
+        max_entries = max_entries)
     
     return n_pass, n_fail
 

@@ -18,8 +18,7 @@ std::pair<int,int> profile_fast(std::string file_name,
 				std::vector<LeafInfo> double_leaves, 
 				std::vector<std::string> tag_leaves, 
 				std::string output_file_name, 
-				int max_entries, 
-				int n_bins) { 
+				int max_entries) { 
   
   TFile file(file_name.c_str()); 
   if (file.IsZombie() || !file.IsOpen() ) { 
@@ -60,6 +59,10 @@ std::pair<int,int> profile_fast(std::string file_name,
   boost::ptr_vector<double> converted_doubles; 
   std::vector<RangeCut> cuts; 
 
+  int n_entries = tree->GetEntries(); 
+  if (max_entries < 0) max_entries = n_entries; 
+  else max_entries = std::min(max_entries, n_entries); 
+
   // typedef std::map<std::string,FilterHist*> Hists; 
   Hists hists; 
 
@@ -78,13 +81,25 @@ std::pair<int,int> profile_fast(std::string file_name,
     double* the_double = new double; 
     converted_doubles.push_back(the_double); 
 
+    int n_bins = leaf_itr->n_bins; 
+    double plot_min = leaf_itr->min; 
+    double plot_max = leaf_itr->max; 
+    if (n_bins == -2) { 
+      n_bins = int(round(plot_max - plot_min + 1)); 
+      plot_min -= 0.5; 
+      plot_max += 0.5; 
+    }
+    else if (n_bins == -1) { 
+      n_bins = max_entries / 100; 
+    }
+
     hists[leaf_itr->name] = new FilterHist
       (n_bins, leaf_itr->min, leaf_itr->max, the_double); 
     for (CheckBuffer::const_iterator check_itr = check_buffer.begin(); 
 	 check_itr != check_buffer.end(); check_itr++){ 
       std::string hist_name = leaf_itr->name + "_" + check_itr->first; 
       hists[hist_name] = 
-	new FilterHist(n_bins,leaf_itr->min, leaf_itr->max, 
+	new FilterHist(n_bins,plot_min, plot_max, 
 		       the_double, check_itr->second);
     }
     cuts.push_back(RangeCut(the_double,leaf_itr->min, leaf_itr->max)); 
@@ -100,6 +115,10 @@ std::pair<int,int> profile_fast(std::string file_name,
     if (error) 
       throw std::runtime_error("could not find branch " + leaf_itr->name); 
 
+    int n_bins = leaf_itr->n_bins; 
+    if (n_bins < 0) 
+      n_bins = max_entries / 100; 
+
     hists[leaf_itr->name] = new FilterHist
       (n_bins, leaf_itr->min, leaf_itr->max, the_double); 
     for (CheckBuffer::const_iterator check_itr = check_buffer.begin(); 
@@ -112,13 +131,10 @@ std::pair<int,int> profile_fast(std::string file_name,
     cuts.push_back(RangeCut(the_double,leaf_itr->min, leaf_itr->max)); 
   }
 
-  int n_entries = tree->GetEntries(); 
   int n_to_convert = int_buffer.size(); 
   assert(n_to_convert == int(converted_doubles.size())); 
 
   int n_cut = 0; 
-  if (max_entries < 0) max_entries = n_entries; 
-  else max_entries = std::min(max_entries, n_entries); 
 
   for (int entry_n = 0; entry_n < max_entries; entry_n++){ 
     if (max_entries >= 0 && int(entry_n) > max_entries) break; 

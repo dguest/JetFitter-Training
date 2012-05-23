@@ -14,6 +14,7 @@ struct LeafInfo
   std::string name; 
   double max; 
   double min; 
+  int n_bins; 
 };
 
 class FilterHist: public TH1D
@@ -61,7 +62,6 @@ std::pair<int,int> profile_fast(std::string file,
 				std::vector<LeafInfo> double_leaves, 
 				std::vector<std::string> tag_leaves, 
 				std::string output_file_name, 
-				int max_entries = -1, 
-				int n_bins = 500); 
+				int max_entries = -1); 
 
 #endif // PROFILE_FAST_H

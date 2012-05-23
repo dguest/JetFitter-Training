@@ -9,9 +9,13 @@
 #include "profile_fast.hh"
   
 static const char* doc_string = 
-  "profile_fast(input, tree, ints, doubles, tags, output, max_entries, n_bins)"
-  " --> n_passed"
-  "\nbuilds file 'output', returns tuple (passing_events,failing_events)";
+  "profile_fast"
+  "(in_file, tree, out_file, ints, doubles, tags, max_entries, n_bins)"
+  " --> n_passed, n_failed"
+  "\nbuilds file 'output', returns tuple (passing_events,failing_events)"
+  "\n'ints' and 'doubles' take a list of tuples (n_bins, min, max)"
+  "where n_bins defaults to (max - min) for int, "
+  "(n_entries / 100) for doubles";
 
 PyObject* py_profile_fast(PyObject *self, 
 			  PyObject *args, 
@@ -19,37 +23,34 @@ PyObject* py_profile_fast(PyObject *self,
 {
   const char* file_name; 
   const char* tree_name; 
+  const char* output_file; 
   PyObject* int_leaves = 0; 
   PyObject* double_leaves = 0; 
   PyObject* tag_leaves = 0; 
-  const char* output_file = "out.root"; 
   int max_entries = -1; 
-  int n_bins = 500; 
   const char* kwlist[] = {
-    "input",
+    "in_file",
     "tree", 
+    "out_file", 
     "ints", 
     "doubles", 
     "tags",
-    "output", 
     "max_entries",
-    "n_bins", 
     NULL};
     
   bool ok = PyArg_ParseTupleAndKeywords
     (args, keywds, 
-     "ss|OOOsii", 
+     "sss|OOOii", 
      // I think python people argue about whether this should be 
      // a const char** or a char**
      const_cast<char**>(kwlist),
      &file_name,
      &tree_name, 
+     &output_file, 
      &int_leaves, 
      &double_leaves, 
      &tag_leaves, 
-     &output_file, 
-     &max_entries, 
-     &n_bins); 
+     &max_entries); 
 
   if (!ok) return NULL;
 
@@ -65,7 +66,7 @@ PyObject* py_profile_fast(PyObject *self,
     n_pass_fail = profile_fast(file_name, tree_name, 
 			       int_leaf_vec, double_leaf_vec, tag_leaves_vec, 
 			       output_file, 
-			       max_entries, n_bins); 
+			       max_entries); 
   }
   catch (const std::runtime_error& e) { 
     PyErr_SetString(PyExc_IOError,e.what()); 
@@ -140,23 +141,53 @@ std::vector<LeafInfo> build_leaf_info(PyObject* list)
       PyErr_SetString(PyExc_IOError,"leaf info takes a tuple list"); 
       return info; 
     }
-    if (PyTuple_Size(info_tuple) != 3) { 
-      PyErr_SetString(PyExc_IOError,"leaf tuple must have three values"); 
+    int tup_size = PyTuple_Size(info_tuple); 
+    if (tup_size < 3 || tup_size > 4) { 
+      PyErr_SetString(PyExc_IOError,"leaf tuple must have 3 or 4 values:"
+		      "(name, n_bin, min, max) or (name, min, max)"); 
       return info; 
     }
-    PyObject* name = PyTuple_GetItem(info_tuple, 0); 
-    PyObject* min = PyTuple_GetItem(info_tuple, 1); 
-    PyObject* max = PyTuple_GetItem(info_tuple, 2); 
 
-    if (!PyString_Check(name) ||
-	!PyNumber_Check(min) ||
-	!PyNumber_Check(max) ) { 
-      PyErr_SetString(PyExc_IOError,"leaf tuple values must be "
-		      "(string, float, float)"); 
+    LeafInfo i; 
+    PyObject* name = PyTuple_GetItem(info_tuple, 0); 
+    if (!PyString_Check(name)){
+      PyErr_SetString(PyExc_IOError,
+		      "first leaf tuple values must be a string"); 
       return info; 
     }
-    LeafInfo i; 
     i.name = PyString_AsString(name); 
+
+    for (int n = 1; n < tup_size; n++){ 
+      PyObject* number = PyTuple_GetItem(info_tuple,n); 
+      if (!PyNumber_Check(number)) { 
+	PyErr_SetString(PyExc_IOError,"leaf tuple values must be numbers"); 
+	return info; 
+      }
+    }
+
+    PyObject* min = 0; 
+    PyObject* max = 0; 
+    if (tup_size == 4) { 
+      PyObject* n_bins = PyTuple_GetItem(info_tuple, 1); 
+      if (!PyInt_Check(n_bins) ){ 
+	PyErr_SetString(PyExc_IOError,"n_bins must be an int"); 
+	return info; 
+      }
+      i.n_bins = PyInt_AsLong(n_bins); 
+      min = PyTuple_GetItem(info_tuple,2); 
+      max = PyTuple_GetItem(info_tuple,3); 
+    }
+    else { 
+      min = PyTuple_GetItem(info_tuple,1); 
+      max = PyTuple_GetItem(info_tuple,2); 
+      if (PyInt_Check(min) && PyInt_Check(max) ) { 
+	i.n_bins = -2; 		// -2 = calculate from range
+      }
+      else { 
+	i.n_bins = -1; 		// -1 = calculate from entries
+      }
+    }
+
     i.min = PyFloat_AsDouble(min); 
     i.max = PyFloat_AsDouble(max); 
     info.push_back(i); 

@@ -8,7 +8,12 @@ def find_leaf_ranges_by_type(rds_file, tree_name = 'SVTree',
     from ROOT import TH1D, TTree, TFile, TIter, gROOT
     
     root_file = TFile(rds_file)
+    if root_file == None: 
+        raise IOError('could not load %s' % rds_file)
     sv_tree = root_file.Get(tree_name)
+
+    if sv_tree == None: 
+        raise IOError('could not load %s' % tree_name)
 
     leaf_values = {}
     leaf_types = {}

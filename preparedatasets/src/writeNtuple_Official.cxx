@@ -11,6 +11,7 @@
 #include <string>
 #include <algorithm>
 #include <fstream>
+#include <stdexcept>
 #include <boost/ptr_container/ptr_vector.hpp>
 #include <boost/scoped_ptr.hpp>
 
@@ -20,9 +21,8 @@
 int writeNtuple_Official(SVector input_files, 
 			 Observers observers, 
 			 std::vector<double> pt_cat_vec, 
-			 std::string jetCollectionName,
+			 std::string jetCollection,
 			 std::string output_file, 
-			 std::string suffix,
 			 bool forNN) 
 {
 
@@ -42,8 +42,6 @@ int writeNtuple_Official(SVector input_files,
     std::cout << observers << std::endl;
   }
 
-  std::string jetCollection = jetCollectionName + suffix;
-
   // run output 
   // std::ofstream out_stream("output.out", ios_base::out | ios_base::trunc); 
 
@@ -56,8 +54,6 @@ int writeNtuple_Official(SVector input_files,
   std::cout << " processing to obtain: " << jetCollection 
        << " root file "  << endl;
   
-  std::string baseBTag("BTag_");
-
   // --- io trees 
   boost::scoped_ptr<TFile> file(new TFile(output_file.c_str(),"recreate"));
   boost::scoped_ptr<TTree> output_tree(new TTree("SVTree","SVTree"));
@@ -72,7 +68,7 @@ int writeNtuple_Official(SVector input_files,
        name_itr != observers.discriminators.end(); 
        name_itr++){ 
     std::cout << "instantiating " << *name_itr << endl;
-    std::string chain_name = baseBTag + jetCollection + 
+    std::string chain_name = jetCollection + 
       "_" + *name_itr + "/PerfTreeAll"; 
 
     TChain* the_chain = new TChain(chain_name.c_str()); 
@@ -86,7 +82,7 @@ int writeNtuple_Official(SVector input_files,
     }
 
     if (the_chain->GetEntries() == 0)
-      throw LoadOfficialDSException();
+      throw std::runtime_error("could not load " + chain_name);
 
     // define buffers in which to store the vars
     double* the_buffer = new double; 
@@ -103,10 +99,10 @@ int writeNtuple_Official(SVector input_files,
 
 
   // --- load jetfitter chain 
-  std::string suffixJF("_JetFitterTagNN/PerfTreeAll");
-  std::cout << "instantiating JetFitterTagNN " << endl;
+  std::string suffixJF("_JetFitterCharm/PerfTreeAll");
+  std::cout << "instantiating JetFitterCharm " << endl;
   boost::scoped_ptr<TChain> treeJF
-    (new TChain((baseBTag+jetCollection+suffixJF).c_str()));
+    (new TChain((jetCollection+suffixJF).c_str()));
 
   for (SVector::const_iterator in_file_itr = input_files.begin(); 
        in_file_itr != input_files.end(); 

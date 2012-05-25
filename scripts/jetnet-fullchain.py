@@ -24,7 +24,7 @@ from ConfigParser import SafeConfigParser
 class UglyWarning(UserWarning): pass
 
 default_pt_divisions = [25.0, 35.0, 50.0, 80.0, 120.0, 200.0]
-observer_discriminators = ['IP2D','IP3D','SV1','COMB']
+observer_discriminators = ['IP3D']
 training_variable_whitelist = [
     'nVTX', 
     'nTracksAtVtx', 
@@ -45,7 +45,7 @@ rapidity_vars = [
 
 def run_full_chain(input_files, working_dir = None, output_path = None, 
                    rds_name = 'reduced_dataset.root', 
-                   jet_collection = 'AntiKt4TopoEMJets', 
+                   jet_collection = 'BTag_AntiKt4TopoEMJetsReTagged', 
                    do_test = False, 
                    pt_divisions = default_pt_divisions, 
                    flavor_weights = {}, 

@@ -1,5 +1,6 @@
 from jetnet import utils
 def get_allowed_rds_variables(input_files, jet_collection, 
+                              full_dir_name = None, 
                               whitelist = None): 
     """
     return a tuple of double_variables, int_variables, checking the 
@@ -17,10 +18,12 @@ def get_allowed_rds_variables(input_files, jet_collection,
 
     # stupid bug fix 
     # FIXME: fix stupid bug fix
-    if sample_tree = None: 
+    if sample_tree == None: 
         input_tree_name = (
-            'BTag_%s_JetFitterCharm/PerfTreeAll' % (jet_collection) )
+            '%s_JetFitterCharm/PerfTreeAll' % (jet_collection) )
         sample_tree = sample_root_file.Get(input_tree_name)
+        if sample_tree == None: 
+            raise IOError("could not find %s" % input_tree_name)
         
     leaves_dict = utils.get_leaves_in_tree(sample_tree)
 

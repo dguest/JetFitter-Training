@@ -40,9 +40,24 @@ def get_xy(file_name, variable, signal, backgrounds):
         y_function = rejection.rejection)
     return np.array(sig_array), np.array(bkg_array)
 
+def get_xy_new(file_name, variable, signal, backgrounds): 
+
+    the_file = TFile(file_name)
+    signal_hist_name = '_'.join([variable, signal])
+    the_signal_hist = the_file.Get(signal_hist_name)
+
+    background_names = ['_'.join([variable,b]) for b in backgrounds]
+    background_hists = [the_file.Get(n) for n in background_names]
+
+    sig_array, bkg_array = rejection.plots_to_xy(
+        signal = the_signal_hist, 
+        background = background_hists, 
+        y_function = rejection.rejection)
+    return np.array(sig_array), np.array(bkg_array)
+
 
 def build_comparison(files, signal, background, do_bw = False, 
-                     baseline = None):  
+                     baseline = None, array_getter = get_xy):  
     """
     signal and background are strings
     """
@@ -91,7 +106,7 @@ def build_comparison(files, signal, background, do_bw = False,
         short_file_names = files
     
     if baseline: 
-        baseline_x, baseline_y = get_xy(
+        baseline_x, baseline_y = array_getter(
             file_name = baseline, 
             variable = variables, 
             signal = signal, 
@@ -100,7 +115,7 @@ def build_comparison(files, signal, background, do_bw = False,
 
     ccycle = itertools.cycle(colors)
     for color, file_name, short_name in zip(ccycle, files, short_file_names): 
-        vals_x, vals_y = get_xy(
+        vals_x, vals_y = array_getter(
             file_name = file_name, 
             variable = variables, 
             signal = signal, 
@@ -177,11 +192,17 @@ if __name__ == '__main__':
     parser.add_option('--bw', action = 'store_true', 
                       help = 'print in black and white')
     parser.add_option('--baseline', default = None)
+    parser.add_option('--new', action = 'store_true')
 
     options, args = parser.parse_args(sys.argv[1:])
     
     if len(args) == 0: 
         sys.exit(parser.get_usage())
+
+    if options.new: 
+        array_getter = get_xy_new
+    else: 
+        array_getter = get_xy
     
     from jetnet.perf import rejection 
 
@@ -197,7 +218,9 @@ if __name__ == '__main__':
                                       signal = signal, 
                                       background = background, 
                                       do_bw = options.bw, 
-                                      baseline = options.baseline)
+                                      baseline = options.baseline, 
+                                      array_getter = array_getter, 
+                                      )
             all_plots.append(canvas)
                                           
 

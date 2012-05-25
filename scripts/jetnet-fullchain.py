@@ -116,14 +116,19 @@ if __name__ == '__main__':
 
     training_variables = training_variable_whitelist
     if options.whitelist: 
-        training_variables = []
-        if options.do_rapidity: 
-            warn('--whitelist option overrides --rapidity option')
-        with open(options.whitelist) as white_file: 
-            for line in white_file: 
-                var = line.strip()
-                if var: 
-                    training_variables.append(var)
+        whitelist = options.whitelist
+    else: 
+        whitelist = 'whitelist.txt'
+
+    training_variables = []
+
+    if options.do_rapidity: 
+        warn('--whitelist option overrides --rapidity option')
+    with open(whitelist) as white_file: 
+        for line in white_file: 
+            var = line.strip()
+            if var: 
+                training_variables.append(var)
 
     config_file_name = options.config
     flavor_weights = {}

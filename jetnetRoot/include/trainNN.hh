@@ -19,6 +19,13 @@ struct FlavorWeights
   double light; 
 }; 
 
+namespace train { 
+  const unsigned push_min_to_xtest    = 1u << 0; 
+  const unsigned req_training_lt_min  = 1u << 1; 
+
+  const unsigned giacintos = push_min_to_xtest | req_training_lt_min;
+}
+
 // --- for internal use
 struct TrainingSettings 
 {
@@ -76,7 +83,8 @@ void trainNN(std::string inputfile,
 	     std::vector<InputVariableInfo> = train_nn::INPUT_VARS, 
 	     FlavorWeights flavor_weights = train_nn::FLAVOR_WEIGHTS,  
 	     int n_training_events_target = -1, 
-	     bool debug = true);
+	     bool debug = true, 
+	     unsigned bit_flags = train::giacintos);
 
 
 #endif // TRAIN_NN_H

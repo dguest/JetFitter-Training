@@ -40,7 +40,8 @@ void trainNN(std::string inputfile,
 	     std::vector<InputVariableInfo> input_variables, 
 	     FlavorWeights flavor_weights, 
 	     int n_training_events_target, 
-	     bool debug) {
+	     bool debug, 
+	     unsigned bit_flags) {
 
   srand(time(0)); 
   printf("--- starting trainNN ----\n"); 
@@ -268,21 +269,23 @@ void trainNN(std::string inputfile,
 	epochesWithRisingError+=10;
 	// NOTE: changed Sat May 12 17:04:56 CEST 2012, 
 	//       should ask giacinto why he was doing this in the first place
-	// if (trainingError>testError) {
-	//   epochWithMinimum=epoch;
-	// }
+	if (trainingError>testError && 
+	    (bit_flags & train::push_min_to_xtest)) {
+	  epochWithMinimum=epoch;
+	}
       }
       
       cronology.open(chronology_name.c_str(),ios_base::app);
       if (epochesWithRisingError>300) {
 	// Sat May 12 17:06:06 CEST 2012 --- commented this out 
-	// if (trainingError<minimumError) { 
-	std::cout << " End of training. Minimum already on epoch: " 
-	     << epochWithMinimum << endl;
-	cronology << " End of training. Minimum already on epoch: " 
-		  << epochWithMinimum << endl;
+	if (trainingError < minimumError || 
+	    !(bit_flags & train::req_training_lt_min) ) { 
+	  std::cout << " End of training. Minimum already on epoch: " 
+		    << epochWithMinimum << endl;
+	  cronology << " End of training. Minimum already on epoch: " 
+		    << epochWithMinimum << endl;
 	break;
-	// } 
+	} 
       }
       
       cronology << "Epoch: [" << epoch <<

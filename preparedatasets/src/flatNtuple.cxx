@@ -23,7 +23,8 @@
 int flatNtuple(SVector input_files, 
 	       Observers observers, 
 	       std::string jetCollection,
-	       std::string output_file_name) 
+	       std::string output_file_name, 
+	       const unsigned flags) 
 {
   // using namespace std;
   // srand(time(0)); 
@@ -67,6 +68,8 @@ int flatNtuple(SVector input_files,
   boost::ptr_vector<TChain> observer_chains; 
   boost::ptr_vector<double> observer_write_buffers; 
   boost::ptr_vector<int> int_observer_write_buffers;
+  
+  WtRatioCtr ratios; 
 
   // ---- loop to set observer variables and chains
   for (SVector::const_iterator name_itr = observers.discriminators.begin(); 
@@ -108,6 +111,9 @@ int flatNtuple(SVector input_files,
 	" file: " + *input_files.begin();  
       throw std::runtime_error
 	("could not find Discriminator in " + location); 
+    }
+    if (flags & bf::save_weight_ratios) { 
+      ratios.add(*name_itr, the_chain, output_tree); 
     }
   }
 
@@ -268,6 +274,7 @@ int flatNtuple(SVector input_files,
       //read the others only on demand (faster)
       for (unsigned short j = 0; j < observer_chains.size(); j++){ 
 	observer_chains.at(j).GetEntry(i); 
+	ratios.update(); 
       }
 
       output_tree.Fill();
@@ -285,3 +292,71 @@ int flatNtuple(SVector input_files,
   
 }
   
+WtRatio::WtRatio(const double* num, const double* denom, double* prod): 
+  m_num(num), 
+  m_denom(denom), 
+  m_prod(prod)
+{ 
+}
+
+void WtRatio::update() { 
+  *m_prod = log(*m_num / *m_denom); 
+}
+
+
+void WtRatioCtr::add(std::string base, TChain* the_chain, TTree& out_tree) { 
+  double* num_buffer = new double; 
+  m_doubles.push_back(num_buffer); 
+  the_chain->SetBranchStatus("Likelihood_c", 1); 
+  int ec = the_chain->SetBranchAddress("Likelihood_c", num_buffer); 
+  if (ec) { 
+    throw std::runtime_error("could not set Likelihood_c"); 
+  }
+  std::vector<std::string> denom_tags; 
+  denom_tags.push_back("b"); 
+  denom_tags.push_back("u"); 
+  for (size_t i = 0; i < denom_tags.size(); i++) { 
+    std::string tag_str = denom_tags.at(i); 
+    double* denom_buffer = new double; 
+    m_doubles.push_back(denom_buffer); 
+    std::string this_tag = "Likelihood_" + tag_str; 
+    the_chain->SetBranchStatus(this_tag.c_str(),1); 
+    ec = the_chain->SetBranchAddress(this_tag.c_str(), denom_buffer); 
+    if (ec) throw std::runtime_error("could not set" + this_tag); 
+    
+    std::string out_br_name = "logC" + tag_str + base; 
+    double* prod_buffer = new double; 
+    m_doubles.push_back(prod_buffer); 
+    out_tree.Branch(out_br_name.c_str(), prod_buffer); 
+    
+    WtRatio the_ratio(num_buffer, denom_buffer, prod_buffer); 
+    push_back(the_ratio); 
+  }
+
+}
+
+void WtRatioCtr::add_bcu(const double* b, const double* c, const double* u, 
+			 TTree& out_tree) { 
+
+  assert(false); 		// not totally figured out
+  double* b_buffer = new double; 
+  m_doubles.push_back(b_buffer); 
+  out_tree.Branch("log_c_b", b_buffer); 
+    
+  WtRatio b_ratio(c, b, b_buffer); 
+  push_back(b_ratio); 
+
+  double* u_buffer = new double; 
+  m_doubles.push_back(u_buffer); 
+  out_tree.Branch("log_c_u", u_buffer); 
+
+  WtRatio u_ratio(c, u, u_buffer); 
+  push_back(u_ratio); 
+  
+}
+
+void WtRatioCtr::update() { 
+  for (iterator itr = begin(); itr != end(); itr++) { 
+    itr->update(); 
+  }
+}

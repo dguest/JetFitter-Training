@@ -192,6 +192,12 @@ def bin_rev_iter(hist):
     for bin_num in xrange(n_bins + 1,1, -1): 
         yield hist.GetBinContent(bin_num)
 
+def bin_fwd_iter(hist): 
+    n_bins = hist.GetNbinsX()
+    for bin_num in xrange(1,n_bins + 1): 
+        yield hist.GetBinContent(bin_num)
+
+
 # --- y axis functions 
 def sig_over_bg(signal, background, total_background): 
     if background == 0: 
@@ -211,7 +217,7 @@ def rejection(signal, background, total_background):
     return total_background / background
 rejection.string = 'rejection'
 
-def plots_to_xy(signal, background, y_function = rejection): 
+def plots_to_xy(signal, background, y_function = rejection, rev_itr = True): 
     
     if isinstance(background, list): 
         total_background = background[0].Clone(str(random()))
@@ -227,8 +233,13 @@ def plots_to_xy(signal, background, y_function = rejection):
 
     sig_array = array.array('d')
     bkg_array = array.array('d')
-    
-    bin_values = zip(bin_rev_iter(signal), bin_rev_iter(background))
+
+    if rev_itr == True: 
+        itr_func = bin_rev_iter
+    else: 
+        itr_func = bin_fwd_iter
+
+    bin_values = zip(itr_func(signal), itr_func(background))
     for sig_val, bkg_val in bin_values: 
         sum_signal += sig_val
         sum_background += bkg_val

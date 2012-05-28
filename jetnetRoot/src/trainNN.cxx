@@ -41,7 +41,7 @@ void trainNN(std::string inputfile,
 	     FlavorWeights flavor_weights, 
 	     int n_training_events_target, 
 	     bool debug, 
-	     unsigned bit_flags) {
+	     const unsigned bit_flags) {
 
   srand(time(0)); 
   printf("--- starting trainNN ----\n"); 

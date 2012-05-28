@@ -84,7 +84,7 @@ void trainNN(std::string inputfile,
 	     FlavorWeights flavor_weights = train_nn::FLAVOR_WEIGHTS,  
 	     int n_training_events_target = -1, 
 	     bool debug = true, 
-	     unsigned bit_flags = train::giacintos);
+	     const unsigned bit_flags = train::giacintos);
 
 
 #endif // TRAIN_NN_H

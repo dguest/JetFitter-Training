@@ -1,4 +1,4 @@
-import os, random, array
+import os, random, array, re
 
 def find_leaf_ranges_by_type(rds_file, tree_name = 'SVTree', 
                              max_entries = False): 
@@ -188,6 +188,18 @@ def make_profile_file(reduced_dataset, profile_file = None,
     from cxxprofile import profile_fast
     range_dict = find_leaf_ranges_by_type(reduced_dataset, tree_name = tree)
 
+    # hack to deal with empty leafs, could be dangerous
+    bad_ranges = []
+    mv_finder = re.compile('C[ub]MV[0-9]')
+    for type_name, type_dict in range_dict.iteritems(): 
+        for var, var_range in type_dict.iteritems(): 
+            if var_range[0] == var_range[1] or mv_finder.search(var): 
+                bad_ranges.append((type_name,var))
+
+    for type_name, var in bad_ranges: 
+        print 'removing', var
+        del range_dict[type_name][var]
+
     tags = ['charm','bottom','light']
 
     ints = []
@@ -199,11 +211,16 @@ def make_profile_file(reduced_dataset, profile_file = None,
     for var, var_range in range_dict['Double_t'].iteritems(): 
         if pt_range and var == 'JetPt': 
             var_range = pt_range
-        d_tuple = (var,var_range[0], var_range[1])
+        span = var_range[1] - var_range[0]
+        low = var_range[0] - 0.1 * span 
+        high = var_range[1] + 0.1 * span 
+        d_tuple = (var, low, high)
         if force_n_bins: 
             d_tuple = (var, force_n_bins,var_range[0], var_range[1])
         doubles.append( d_tuple )
 
+
+    # cxx routine is programed to take -1 as all
     if not max_entries: max_entries = -1
 
     n_pass, n_fail = profile_fast(

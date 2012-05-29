@@ -1,4 +1,4 @@
-import os, sys, math, re, array
+import os, sys, math, re, array, reject
 from math import exp, log
 from random import random
 from ROOT import TTree, TH1D, TFile, TCanvas, TROOT, gPad, TGraph, TLegend
@@ -187,16 +187,6 @@ def fill_plots(plots_by_function, root_file, cut_list = [],
 
     print 'cut %i events' % n_cuts
 
-def bin_rev_iter(hist): 
-    n_bins = hist.GetNbinsX()
-    for bin_num in xrange(n_bins + 1,1, -1): 
-        yield hist.GetBinContent(bin_num)
-
-def bin_fwd_iter(hist): 
-    n_bins = hist.GetNbinsX()
-    for bin_num in xrange(1,n_bins + 1): 
-        yield hist.GetBinContent(bin_num)
-
 
 # --- y axis functions 
 def sig_over_bg(signal, background, total_background): 
@@ -211,52 +201,11 @@ def significance(signal, background, total_background):
     return signal / math.sqrt(signal + background)
 significance.string = '#frac{s}{#sqrt{s + b}}'
 
-def rejection(signal, background, total_background): 
-    if background == 0: 
-        return None
-    return total_background / background
-rejection.string = 'rejection'
-
-def plots_to_xy(signal, background, y_function = rejection, rev_itr = True): 
-    
-    if isinstance(background, list): 
-        total_background = background[0].Clone(str(random()))
-        for other_background in background[1:]: 
-            total_background.Add(other_background)
-        background = total_background
-        
-    total_signal = signal.GetEntries() 
-    total_background = background.GetEntries() 
-
-    sum_background = 0
-    sum_signal = 0
-
-    sig_array = array.array('d')
-    bkg_array = array.array('d')
-
-    if rev_itr == True: 
-        itr_func = bin_rev_iter
-    else: 
-        itr_func = bin_fwd_iter
-
-    bin_values = zip(itr_func(signal), itr_func(background))
-    for sig_val, bkg_val in bin_values: 
-        sum_signal += sig_val
-        sum_background += bkg_val
-
-        y_value = y_function(sum_signal, sum_background, total_background)
-        if y_value is not None: 
-            sig_array.append(sum_signal / total_signal)
-            bkg_array.append(y_value)
-
-
-    assert len(sig_array) == len(bkg_array)
-    return sig_array, bkg_array
 
 def plots_to_rej_vs_eff(signal, background, y_function = sig_over_bg, 
                         baseline = None): 
 
-    sig_array, bkg_array = plots_to_xy(signal, background, y_function)
+    sig_array, bkg_array = reject.plots_to_xy(signal, background, y_function)
     graph = TGraph(len(sig_array), sig_array, bkg_array)
     return graph
 
@@ -468,7 +417,7 @@ def make_plots_from(ntuple_file_name, cut_list = [jet_eta_cut],
         
         rej_vs_eff = draw_graphs(plots_by_function, 
                                  variable_list = plots, 
-                                 y_function = rejection, 
+                                 y_function = reject.rejection, 
                                  logy = True, 
                                  canvas_name = name)
 

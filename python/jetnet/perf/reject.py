@@ -1,5 +1,6 @@
 import array, random
 import ROOT
+from ROOT import TFile
 
 # --- utility functions 
 def rejection(signal, background, total_background): 
@@ -63,6 +64,8 @@ def plot_dict(root_file, target = 'TH1D'):
     """
     reads in a root file, returns a dict of all TH1D (or target)
     """
+    if isinstance(root_file, str): 
+        root_file = TFile(root_file)
     the_dict = {}
     key_list = root_file.GetListOfKeys()
     ROOT.gROOT.cd()

@@ -16,6 +16,7 @@
 #include <boost/scoped_ptr.hpp>
 #include <boost/lexical_cast.hpp>
 #include <stdexcept>
+#include <set> 
 
 //using namespace std;
 
@@ -138,6 +139,13 @@ int flatNtuple(SVector input_files,
   // --- variables used in slimming
   // TODO: these probably aren't used in the flat ntuple, 
   //       get rid of the hardcoding 
+
+  std::set<std::string> used_branches; 
+  used_branches.insert("Flavour"); 
+  used_branches.insert("JetPt"  ); 
+  used_branches.insert("JetEta" ); 
+  used_branches.insert("mass"   ); 
+
   int Flavour; 
   Double_t JetPt;
   Double_t JetEta;
@@ -182,6 +190,7 @@ int flatNtuple(SVector input_files,
   for (SVector::const_iterator name_itr = observers.double_variables.begin(); 
        name_itr != observers.double_variables.end(); 
        name_itr++){ 
+    if (used_branches.count(*name_itr)) continue; 
 
     // define buffers in which to store the vars
     double* the_buffer = new double; 
@@ -203,6 +212,7 @@ int flatNtuple(SVector input_files,
   for (SVector::const_iterator name_itr = observers.int_variables.begin(); 
        name_itr != observers.int_variables.end(); 
        name_itr++){ 
+    if (used_branches.count(*name_itr)) continue; 
 
     // define buffers in which to store the vars
     int* the_buffer = new int; 

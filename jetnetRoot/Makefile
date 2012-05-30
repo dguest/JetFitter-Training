@@ -49,7 +49,7 @@ LIBS += -L$(COMMON_LIBS) -Wl,-rpath,$(COMMON_LIBS)
 JETNET_OBJ := jetnet.o
 JETNET_SRC := jetnet_35.f
 
-T_OBJ := TNeuralDataSet.o TFlavorNetwork.o 
+T_OBJ := TNeuralDataSet.o TFlavorNetwork.o TTrainedNetwork.o
 T_DICTS := $(T_OBJ:.o=Dict.o)
 
 JETNET_CXX_OBJECTS := trainNN.o testNN.o 
@@ -63,7 +63,7 @@ TJETNET_OBJECTS := $(JETNET_OBJ)
 TJETNET_OBJECTS += $(JETNET_CXX_OBJECTS)
 
 
-CXX_OBJECTS := $(JETNET_CXX_OBJECTS) pynn.o UnitTests.o
+CXX_OBJECTS := $(JETNET_CXX_OBJECTS) pynn.o UnitTests.o convertNN.o
 
 # --------------------------------------------
 # -------- start here --------------
@@ -71,7 +71,7 @@ CXX_OBJECTS := $(JETNET_CXX_OBJECTS) pynn.o UnitTests.o
 
 ALL_LIBS := $(LIB)libTJetNet.so
 ALL_LIBS += $(LIB)pynn.so
-all: $(ALL_LIBS) UnitTests.exe # root_test.exe
+all: $(ALL_LIBS) UnitTests.exe convertNN.exe # root_test.exe
 
 
 # ---build rules

@@ -4,10 +4,13 @@
 class JetNet; 
 class TFlavorNetwork; 
 
+#include <string> 
+
 TFlavorNetwork* getTrainedNetwork(const JetNet&); 
 
 void setTrainedNetwork(JetNet&, const TFlavorNetwork* trainedNetwork); 
 
+TFlavorNetwork* getOldTrainedNetwork(std::string file_name); 
 
 template<class O, class I>
 O convert_node(const I& in) { 

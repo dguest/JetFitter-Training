@@ -5,11 +5,18 @@
 #include <iostream>
 
 int main(int narg, char* varg[]) { 
-  if (narg != 2) { 
+  if (narg < 2) { 
     std::cerr << "enter a file to convert\n"; 
     return -1; 
   }
+  std::string out_file = "new_nn.root"; 
+  if (narg == 3) { 
+    out_file = varg[2]; 
+  }
+  if (narg > 3) { 
+    std::cerr << "too many args\n"; 
+  }
   TFlavorNetwork* converted = getOldTrainedNetwork(varg[1]);
-  TFile output("new_nn.root","recreate"); 
+  TFile output(out_file.c_str(),"recreate"); 
   output.WriteTObject(converted); 
 }

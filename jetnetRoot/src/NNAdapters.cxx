@@ -172,13 +172,13 @@ TFlavorNetwork* getOldTrainedNetwork(std::string file_name) {
   TFile file(file_name.c_str()); 
   TTrainedNetwork* trained = dynamic_cast<TTrainedNetwork*>
     (file.Get("TTrainedNetwork")); 
-  assert(trained); 
-
+  if (!trained) throw std::runtime_error("missing trained network"); 
+  
   int n_input = trained->getnInput(); 
 
   TTree* normalization = dynamic_cast<TTree*>
     (file.Get("normalization_info")); 
-  assert(normalization); 
+  if (!trained) throw std::runtime_error("missing normalization info"); 
   assert(normalization->GetEntries() == n_input); 
 
   std::string* name_ptr = new std::string; 

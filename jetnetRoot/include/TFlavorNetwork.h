@@ -98,8 +98,8 @@ private:
 
   // in an ideal world these would be one object in a vector, but 
   // this is a ROOT world where persistence could never be that easy  
-  std::vector<double> m_input_node_offset; 
-  std::vector<double> m_input_node_scale; 
+  std::vector<Double_t> m_input_node_offset; 
+  std::vector<Double_t> m_input_node_scale; 
     
   std::map<std::string,int> inputStringToNode; 
 

@@ -168,10 +168,48 @@ void setTrainedNetwork(JetNet& jn, const TFlavorNetwork* trainedNetwork)
 // converter from old TTrainedNetwork
 
 TFlavorNetwork* getOldTrainedNetwork(std::string file_name) { 
+
   TFile file(file_name.c_str()); 
   TTrainedNetwork* trained = dynamic_cast<TTrainedNetwork*>
     (file.Get("TTrainedNetwork")); 
   assert(trained); 
+
+  int n_input = trained->getnInput(); 
+
+  TTree* normalization = dynamic_cast<TTree*>
+    (file.Get("normalization_info")); 
+  assert(normalization); 
+  assert(normalization->GetEntries() == n_input); 
+
+  std::string* name_ptr = new std::string; 
+  float offset; 
+  float scale; 
+
+  if (normalization->SetBranchAddress("name", &name_ptr) || 
+      normalization->SetBranchAddress("offset", &offset) || 
+      normalization->SetBranchAddress("scale", &scale) ) { 
+    throw std::runtime_error("missing branch"); 
+  }
+
+  std::vector<TFlavorNetwork::Input> flav_inputs; 
+  for (int n = 0; n < n_input; n++) { 
+    normalization->GetEntry(n); 
+    TFlavorNetwork::Input input; 
+    input.name = *name_ptr; 
+    input.offset = offset; 
+    input.scale = scale; 
+    flav_inputs.push_back(input); 
+  }
+
+  delete name_ptr; 
+
+  return convertOldToNew(trained, flav_inputs); 
+}
+
+TFlavorNetwork* 
+convertOldToNew(const TTrainedNetwork* trained, 
+		std::vector<TFlavorNetwork::Input> flav_inputs)
+{
   
   int n_input = trained->getnInput(); 
   int n_hidden = trained->getnHidden(); 
@@ -191,33 +229,6 @@ TFlavorNetwork* getOldTrainedNetwork(std::string file_name) {
       (dynamic_cast<TMatrixD*>(weight_matrices.at(i)->Clone())); 
   }
 
-  TTree* normalization = dynamic_cast<TTree*>
-    (file.Get("normalization_info")); 
-  assert(normalization); 
-  assert(normalization->GetEntries() == n_input); 
-
-  std::string* name_ptr = new std::string; 
-  float offset; 
-  float scale; 
-
-  if (normalization->SetBranchAddress("name", &name_ptr) || 
-      normalization->SetBranchAddress("offset", &offset) || 
-      normalization->SetBranchAddress("scale", &scale) ) { 
-    throw std::runtime_error("missing branch"); 
-  }
-  
-  std::vector<TFlavorNetwork::Input> flav_inputs; 
-  for (int n = 0; n < n_input; n++) { 
-    normalization->GetEntry(n); 
-    TFlavorNetwork::Input input; 
-    input.name = *name_ptr; 
-    input.offset = offset; 
-    input.scale = scale; 
-    flav_inputs.push_back(input); 
-  }
-
-  delete name_ptr; 
-
   
   TFlavorNetwork* flav_network = new TFlavorNetwork
     (flav_inputs, 
@@ -226,4 +237,35 @@ TFlavorNetwork* getOldTrainedNetwork(std::string file_name) {
      new_weight_matrices); 
   return flav_network; 
 
+}
+
+TTrainedNetwork* convertNewToOld(const TFlavorNetwork* trained) { 
+  int n_input = trained->getnInput(); 
+  int n_hidden = trained->getnHidden(); 
+  int n_output = trained->getnOutput(); 
+  std::vector<int> hidden_layer_sizes = trained->getnHiddenLayerSize(); 
+  std::vector<TVectorD*> threshold_vectors = trained->getThresholdVectors(); 
+  std::vector<TMatrixD*> weight_matrices = trained->weightMatrices(); 
+  int act_func = trained->getActivationFunction(); 
+
+  gROOT->cd(); 
+  std::vector<TVectorD*> new_threshold_vectors;
+  std::vector<TMatrixD*> new_weight_matrices;
+  assert(threshold_vectors.size() == weight_matrices.size()); 
+  for (int i = 0; i < threshold_vectors.size(); i++) { 
+    new_threshold_vectors.push_back
+      (dynamic_cast<TVectorD*>(threshold_vectors.at(i)->Clone())); 
+    new_weight_matrices.push_back
+      (dynamic_cast<TMatrixD*>(weight_matrices.at(i)->Clone())); 
+  }
+  
+  TTrainedNetwork* out_net = new TTrainedNetwork
+    (n_input, 
+     n_hidden, 
+     n_output, 
+     hidden_layer_sizes, 
+     threshold_vectors, 
+     weight_matrices, 
+     act_func); 
+  return out_net; 
 }

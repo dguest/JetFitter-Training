@@ -3,7 +3,9 @@
 #include <iostream>
 #include <stdexcept> 
 #include <cstdlib>
+#include <ctime> 
 #include "TFlavorNetwork.h"
+#include "TTrainedNetwork.h"
 #include "NNAdapters.hh"
 #include "JetNet.hh"
 
@@ -12,11 +14,19 @@ int main(int narg, char* varg[]) {
   return 0; 
 }
 
+float get_rand(float range, float offset) { 
+  float rand_base = float(rand()) / float(RAND_MAX); 
+  rand_base += offset - 0.5; 
+  rand_base *= range; 
+  return rand_base; 
+}
+
 bool test_trained() { 
+  srand(time(0)); 
   std::vector<TFlavorNetwork::Input> inputs; 
-  TFlavorNetwork::Input cat = {"cat",1,1}; 
-  TFlavorNetwork::Input dog = {"dog",2,2}; 
-  TFlavorNetwork::Input horse = {"horse",3,3}; 
+  TFlavorNetwork::Input cat = {"cat",get_rand(),get_rand()}; 
+  TFlavorNetwork::Input dog = {"dog",get_rand(),get_rand()}; 
+  TFlavorNetwork::Input horse = {"horse",get_rand(),get_rand()}; 
   inputs.push_back(cat); 
   inputs.push_back(dog); 
   inputs.push_back(horse); 
@@ -74,7 +84,7 @@ bool test_trained() {
   std::map<std::string,double> input_map; 
   std::vector<double> input_vector; 
   for (int i = 0; i < inputs.size(); i++){ 
-    double value = i + 4; 
+    double value = float(rand()) / float(RAND_MAX) - 0.5; 
     double normed_value = 
       (value + inputs.at(i).offset ) * inputs.at(i).scale; 
 
@@ -100,6 +110,13 @@ bool test_trained() {
       input_map.size() << std::endl; 
     throw; 
   }
+  TTrainedNetwork* old_style_nn = convertNewToOld(jn_trained_out); 
+  std::vector<double> old_style_out = old_style_nn->calculateOutputValues
+    (input_vector); 
+  TFlavorNetwork* new_style_nn = convertOldToNew(old_style_nn,inputs); 
+  std::vector<double> new_style_out = 
+    new_style_nn->calculateWithNormalization(input_map); 
+  
   std::cout << "reading back...\n"; 
   int v_out_size = ttrained_vector_out.size();  
   int m_out_size = ttrained_map_out.size(); 
@@ -110,6 +127,8 @@ bool test_trained() {
     std::cout << "output " << i << " -- JN: " << jn->GetOutput(i) 
 	      << ", TFlavorNetwork map: " << ttrained_map_out.at(i) 
 	      << ", TFlavorNetwork vec: " << ttrained_vector_out.at(i) 
+	      << ", TTrainedNetwork vec: " << old_style_out.at(i) 
+	      << ", TFlavorNetwork from old: " << new_style_out.at(i) 
 	      << std::endl;
   }
   

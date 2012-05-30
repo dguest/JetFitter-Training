@@ -6,6 +6,8 @@
 
 bool test_trained(); 
 
+float get_rand(float range = 1, float offset = 0); 
+
 template<class T>
 void print_node_info(T container) { 
   for (typename T::const_iterator itr = 

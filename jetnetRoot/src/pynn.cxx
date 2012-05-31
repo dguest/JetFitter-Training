@@ -275,6 +275,7 @@ PyObject* py_augment_tree(PyObject *self,
   const char* output_file = ""; 
   PyObject* int_leaves = 0; 
   PyObject* double_leaves = 0; 
+  const char* extension = "Aug"; 
   int max_entries = -1; 
   const char* kwlist[] = {
     "in_file",
@@ -283,12 +284,13 @@ PyObject* py_augment_tree(PyObject *self,
     "out_file", 
     "ints", 
     "doubles", 
+    "extension", 
     "max_entries",
     NULL};
     
   bool ok = PyArg_ParseTupleAndKeywords
     (args, keywds, 
-     "ss|ssOOi", 
+     "ss|ssOOsi", 
      // I think python people argue about whether this should be 
      // a const char** or a char**
      const_cast<char**>(kwlist),
@@ -298,6 +300,7 @@ PyObject* py_augment_tree(PyObject *self,
      &output_file, 
      &int_leaves, 
      &double_leaves, 
+     &extension, 
      &max_entries); 
 
   if (!ok) return NULL;
@@ -316,6 +319,7 @@ PyObject* py_augment_tree(PyObject *self,
        output_file, 
        int_vec, 
        double_vec, 
+       extension, 
        max_entries); 
   }
   catch (const std::runtime_error& e) { 

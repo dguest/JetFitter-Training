@@ -4,10 +4,13 @@
 #include <set> 
 #include <cmath> // log
 #include <utility> // pair
+#include <cstdlib> // rand, srand
+// #include <iostream> // for debugging
 #include "TFlavorNetwork.h"
 #include <boost/shared_ptr.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <boost/ptr_container/ptr_vector.hpp>
+// #include <boost/lexical_cast.hpp>
 #include <boost/format.hpp>
 
 #include "TFile.h"
@@ -20,20 +23,16 @@ int augment_tree(std::string file_name,
 		 std::string output_file, 
 		 std::vector<std::string> int_vec, 
 		 std::vector<std::string> double_vec, 
+		 std::string extension, 
 		 int max_entries) 
 { 
   typedef std::vector<std::string> SVec;
+  srand(0); 
 
   std::string out_tree_name = tree_name; 
-  std::string file_open_opt = ""; 
   if (output_file.size() == 0) { 
-    out_tree_name.append("Aug"); 
-    file_open_opt = "UPDATE"; 
-  }
-  TFile file(file_name.c_str(), file_open_opt.c_str()); 
-  if (file.IsZombie() || !file.IsOpen() ) { 
-    std::string err = " cannot be opened"; 
-    throw std::runtime_error(file.GetName() + err); 
+    std::string output_file_ext = extension.size() ? extension : "_aug"; 
+    output_file = file_name + output_file_ext; 
   }
 
   boost::shared_ptr<TFlavorNetwork> nn(get_nn(nn_file)); 
@@ -45,7 +44,11 @@ int augment_tree(std::string file_name,
     input_name_set.insert(itr->name); 
   }
 
-  // hopefully this is owned by file
+  TFile file(file_name.c_str()); 
+  if (file.IsZombie() || !file.IsOpen() ) { 
+    std::string err = " cannot be opened"; 
+    throw std::runtime_error(file.GetName() + err); 
+  }
   TTree* tree = dynamic_cast<TTree*> (file.Get(tree_name.c_str())); 
   if (!tree) { 
     std::string err = "%s in %s cannot be opened"; 
@@ -54,6 +57,13 @@ int augment_tree(std::string file_name,
     throw std::runtime_error( (boost::format(err) % t % f).str()); 
   }
   tree->SetBranchStatus("*",0); 
+  
+  TFile out_file(output_file.c_str(), "recreate"); 
+
+  // hopefully this is owned by file
+  boost::scoped_ptr<TTree> out_tree
+    (new TTree(out_tree_name.c_str(), out_tree_name.c_str())); 
+
 
   boost::ptr_vector<double> double_buffer; 
   boost::ptr_vector<int> int_buffer; 
@@ -61,10 +71,6 @@ int augment_tree(std::string file_name,
   NNInputAddresses nn_input_addresses; 
   typedef std::vector<std::pair<int* , double*> > NNConverters; 
   NNConverters nn_converters; 
-
-  file.cd(); 			// create the tree in the same file
-  boost::scoped_ptr<TTree> out_tree
-    (new TTree(out_tree_name.c_str(), out_tree_name.c_str())); 
 
   // set the branches
   for (SVec::const_iterator itr = int_vec.begin(); 
@@ -99,13 +105,13 @@ int augment_tree(std::string file_name,
 
   // the output nodes 
   double b_val, c_val, l_val; 
-  out_tree->Branch("Likelihood_b", &b_val); 
-  out_tree->Branch("Likelihood_c", &c_val); 
-  out_tree->Branch("Likelihood_l", &l_val); 
+  out_tree->Branch(("Likelihood_b" + extension).c_str(), &b_val); 
+  out_tree->Branch(("Likelihood_c" + extension).c_str(), &c_val); 
+  out_tree->Branch(("Likelihood_l" + extension).c_str(), &l_val); 
   
   double log_cb, log_cu; 
-  out_tree->Branch("logCb", &log_cb); 
-  out_tree->Branch("logCu", &log_cu); 
+  out_tree->Branch(("logCb" + extension).c_str(), &log_cb); 
+  out_tree->Branch(("logCu" + extension).c_str(), &log_cu); 
 
   int n_entries = tree->GetEntries(); 
   if (max_entries < 0) max_entries = n_entries; 
@@ -142,13 +148,7 @@ int augment_tree(std::string file_name,
   }
   
   // save tree 
-  if (output_file.size() > 0) { 
-    TFile out_file(output_file.c_str(), "recreate"); 
-    out_file.WriteTObject(out_tree.get()); 
-  }
-  else { 
-    file.WriteTObject(out_tree.get()); 
-  }
+  out_file.WriteTObject(out_tree.get()); 
 
   return 0; 
 

@@ -2,6 +2,7 @@
 // Author: Daniel Guest (dguest@cern.ch)
 #include <Python.h>
 #include <string> 
+#include <set> 
 #include <iostream>
 #include <stdexcept>
 #include "trainNN.hh"
@@ -275,6 +276,7 @@ PyObject* py_augment_tree(PyObject *self,
   const char* output_file = ""; 
   PyObject* int_leaves = 0; 
   PyObject* double_leaves = 0; 
+  PyObject* py_subset = 0; 
   const char* extension = "Aug"; 
   int max_entries = -1; 
   const char* kwlist[] = {
@@ -284,13 +286,14 @@ PyObject* py_augment_tree(PyObject *self,
     "out_file", 
     "ints", 
     "doubles", 
+    "subset", 
     "extension", 
     "max_entries",
     NULL};
     
   bool ok = PyArg_ParseTupleAndKeywords
     (args, keywds, 
-     "ss|ssOOsi", 
+     "ss|ssOOOsi", 
      // I think python people argue about whether this should be 
      // a const char** or a char**
      const_cast<char**>(kwlist),
@@ -300,6 +303,7 @@ PyObject* py_augment_tree(PyObject *self,
      &output_file, 
      &int_leaves, 
      &double_leaves, 
+     &py_subset, 
      &extension, 
      &max_entries); 
 
@@ -309,6 +313,10 @@ PyObject* py_augment_tree(PyObject *self,
   if (PyErr_Occurred()) return NULL; 
   std::vector<std::string> double_vec = parse_string_list(double_leaves); 
   if (PyErr_Occurred()) return NULL; 
+  std::vector<std::string> subset_vec = parse_string_list(py_subset); 
+  if (PyErr_Occurred()) return NULL; 
+
+  std::set<std::string> subset(subset_vec.begin(), subset_vec.end()); 
 
   int ret_code = 0; 
   try { 
@@ -319,6 +327,7 @@ PyObject* py_augment_tree(PyObject *self,
        output_file, 
        int_vec, 
        double_vec, 
+       subset, 
        extension, 
        max_entries); 
   }

@@ -28,6 +28,5 @@ if __name__ == '__main__':
         out_file = output_file, 
         ints = all_vars_in_tree['Int_t'] , 
         doubles = all_vars_in_tree['Double_t'] , 
-        # max_entries = 500, 
         )
     

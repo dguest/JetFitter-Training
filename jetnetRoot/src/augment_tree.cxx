@@ -23,9 +23,11 @@ int augment_tree(std::string file_name,
 		 std::string output_file, 
 		 std::vector<std::string> int_vec, 
 		 std::vector<std::string> double_vec, 
+		 std::set<std::string> subset, 
 		 std::string extension, 
 		 int max_entries) 
 { 
+
   typedef std::vector<std::string> SVec;
   srand(0); 
 
@@ -80,8 +82,10 @@ int augment_tree(std::string file_name,
     tree->SetBranchStatus(itr->c_str(), 1); 
     if (tree->SetBranchAddress(itr->c_str(), the_int))
       throw std::runtime_error("could not find " + *itr); 
-    
-    out_tree->Branch(itr->c_str(), the_int); 
+
+    if (subset.size() == 0 || subset.count(*itr)){
+      out_tree->Branch(itr->c_str(), the_int); 
+    }
     if (input_name_set.count(*itr) ) { 
       double* converted_int = new double; 
       double_buffer.push_back(converted_int); 
@@ -97,7 +101,9 @@ int augment_tree(std::string file_name,
     if (tree->SetBranchAddress(itr->c_str(), the_double))
       throw std::runtime_error("could not find " + *itr); 
 
-    out_tree->Branch(itr->c_str(), the_double); 
+    if (subset.size() == 0 || subset.count(*itr)) { 
+      out_tree->Branch(itr->c_str(), the_double); 
+    }
     if (input_name_set.count(*itr) ) { 
       nn_input_addresses.push_back(std::make_pair(*itr,the_double) ); 
     }

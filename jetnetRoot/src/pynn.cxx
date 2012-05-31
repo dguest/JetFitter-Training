@@ -6,6 +6,7 @@
 #include <stdexcept>
 #include "trainNN.hh"
 #include "testNN.hh"
+#include "augment_tree.hh"
 #include "nnExceptions.hh"
 #include "pyparse.hh"
 #include "makeTestNtuple.hh"
@@ -264,6 +265,71 @@ extern "C" PyObject* test_py(PyObject *self,
   return Py_None;
 }
 
+PyObject* py_augment_tree(PyObject *self, 
+			  PyObject *args, 
+			  PyObject *keywds)
+{
+  const char* file_name; 
+  const char* nn_file; 
+  const char* tree_name = "SVTree"; 
+  const char* output_file = ""; 
+  PyObject* int_leaves = 0; 
+  PyObject* double_leaves = 0; 
+  int max_entries = -1; 
+  const char* kwlist[] = {
+    "in_file",
+    "nn_file", 
+    "tree", 
+    "out_file", 
+    "ints", 
+    "doubles", 
+    "max_entries",
+    NULL};
+    
+  bool ok = PyArg_ParseTupleAndKeywords
+    (args, keywds, 
+     "ss|ssOOi", 
+     // I think python people argue about whether this should be 
+     // a const char** or a char**
+     const_cast<char**>(kwlist),
+     &file_name,
+     &nn_file, 
+     &tree_name, 
+     &output_file, 
+     &int_leaves, 
+     &double_leaves, 
+     &max_entries); 
+
+  if (!ok) return NULL;
+
+  std::vector<std::string> int_vec = parse_string_list(int_leaves); 
+  if (PyErr_Occurred()) return NULL; 
+  std::vector<std::string> double_vec = parse_string_list(double_leaves); 
+  if (PyErr_Occurred()) return NULL; 
+
+  int ret_code = 0; 
+  try { 
+    ret_code = augment_tree
+      (file_name, 
+       nn_file, 
+       tree_name, 
+       output_file, 
+       int_vec, 
+       double_vec, 
+       max_entries); 
+  }
+  catch (const std::runtime_error& e) { 
+    PyErr_SetString(PyExc_IOError,e.what()); 
+    return 0; 
+  }
+  
+  return Py_BuildValue("i",ret_code); 
+
+  // --- make sure you call INCREF if you return Py_None
+  // Py_INCREF(Py_None);
+  // return Py_None;
+}
+
 
 extern "C" PyObject* make_test_ntuple(PyObject *self, 
 				      PyObject *args, 
@@ -356,6 +422,9 @@ static PyMethodDef keywdarg_methods[] = {
   {"makeNtuple", (PyCFunction)make_test_ntuple, 
    METH_VARARGS | METH_KEYWORDS,
    ntuple_doc_string},
+  {"augment_tree", (PyCFunction)py_augment_tree, 
+   METH_VARARGS | METH_KEYWORDS,
+   "augments a tree (duh)"},
   {NULL, NULL, 0, NULL}   /* sentinel */
 };
 

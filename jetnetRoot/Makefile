@@ -53,7 +53,7 @@ T_OBJ := TNeuralDataSet.o TFlavorNetwork.o TTrainedNetwork.o
 T_DICTS := $(T_OBJ:.o=Dict.o)
 
 JETNET_CXX_OBJECTS := trainNN.o testNN.o 
-JETNET_CXX_OBJECTS += makeTestNtuple.o 
+JETNET_CXX_OBJECTS += makeTestNtuple.o augment_tree.o
 JETNET_CXX_OBJECTS += normedInput.o nnExceptions.o
 JETNET_CXX_OBJECTS += JetNet.o NNAdapters.o
 # JETNET_CXX_OBJECTS += NetworkToHistoTool.o 

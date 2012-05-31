@@ -247,7 +247,7 @@ PyObject* make_flat_ntuple(PyObject *self,
     NULL};
     
   bool ok = PyArg_ParseTupleAndKeywords
-    (args, keywds, "O|OOOsssb", 
+    (args, keywds, "O|OOOOsssb", 
      // this function should take a const, and 
      // may be changed. until then we'll cast
      const_cast<char**>(kwlist),

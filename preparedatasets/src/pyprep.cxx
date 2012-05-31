@@ -228,7 +228,9 @@ PyObject* make_flat_ntuple(PyObject *self,
   PyObject* int_variables = 0; 
   PyObject* double_variables = 0; 
   PyObject* observer_discriminators = 0; 
+  PyObject* pt_divisions = 0; 
   const char* jet_collection_name = "AntiKt4TopoEMJetsReTagged"; 
+  const char* jet_tagger = "JetFitterCharm";
   const char* output_file_name = "nothing.root"; 
   bool debug = false; 
 
@@ -237,13 +239,15 @@ PyObject* make_flat_ntuple(PyObject *self,
     "int_variables", 
     "double_variables", 
     "observer_discriminators",
+    "pt_divisions", 
     "jet_collection", 
+    "jet_tagger", 
     "output_file", 
     "debug", 
     NULL};
     
   bool ok = PyArg_ParseTupleAndKeywords
-    (args, keywds, "O|OOOssb", 
+    (args, keywds, "O|OOOsssb", 
      // this function should take a const, and 
      // may be changed. until then we'll cast
      const_cast<char**>(kwlist),
@@ -251,7 +255,9 @@ PyObject* make_flat_ntuple(PyObject *self,
      &int_variables, 
      &double_variables, 
      &observer_discriminators, 
+     &pt_divisions, 
      &jet_collection_name, 
+     &jet_tagger, 
      &output_file_name, 
      &debug); 
 
@@ -265,6 +271,11 @@ PyObject* make_flat_ntuple(PyObject *self,
   observers.int_variables = parse_string_list(int_variables); 
   observers.double_variables = parse_string_list(double_variables); 
   if (PyErr_Occurred()) return 0; 
+
+  std::vector<double> pt_cat_vec = parse_double_list(pt_divisions); 
+  if (PyErr_Occurred()) return 0; 
+
+  
 
   if (debug){ 
     std::cout << "files: " << std::endl;
@@ -287,7 +298,9 @@ PyObject* make_flat_ntuple(PyObject *self,
     try { 
       flatNtuple(files, 
 		 observers, 
+		 pt_cat_vec, 
 		 jet_collection_name, 
+		 jet_tagger, 
 		 output_file_name); 
     }
     catch (const std::runtime_error& e) { 

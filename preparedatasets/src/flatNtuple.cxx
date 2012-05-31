@@ -3,7 +3,7 @@
 #include <TTree.h>
 #include <iostream>
 #include "flatNtuple.hh"
-// #include "BinTool.hh"
+#include "BinTool.hh"
 #include <cmath>
 // #include <cstdlib> // for rand, srand
 // #include <ctime> 
@@ -18,35 +18,21 @@
 #include <stdexcept>
 #include <set> 
 
-//using namespace std;
-
 
 int flatNtuple(SVector input_files, 
 	       Observers observers, 
+	       std::vector<double> pt_cat_vec, 
 	       std::string jetCollection,
 	       std::string output_file_name, 
+	       std::string jet_tagger, 
 	       const unsigned flags) 
 {
-  // using namespace std;
-  // srand(time(0)); 
+  BinTool pt_categories(pt_cat_vec); 
 
-  // --- setup pt / eta categories
-  // BinTool pt_categories(pt_cat_vec); 
-
-  // std::vector<double> eta_cat_vec; 
-  // eta_cat_vec.push_back(0.7); 
-  // eta_cat_vec.push_back(1.5); 
-  // BinTool abs_eta_categories(eta_cat_vec); 
-
-  // --- setup observer variables (if they aren't given)
-  // bool built_observers = observers.build_default_values(); 
-  // if (built_observers){ 
-  //   throw std::runtime_error("no observers given"); 
-  // }
-
-
-  // run output 
-  // std::ofstream out_stream("output.out", ios_base::out | ios_base::trunc); 
+  std::vector<double> eta_cat_vec; 
+  eta_cat_vec.push_back(0.7); 
+  eta_cat_vec.push_back(1.5); 
+  BinTool abs_eta_categories(eta_cat_vec); 
 
   std::cout << " opening input files: \n"; 
   for (SVector::const_iterator itr = input_files.begin(); 
@@ -120,7 +106,7 @@ int flatNtuple(SVector input_files,
 
 
   // --- load jetfitter chain 
-  std::string suffixJF("_JetFitterCharm/PerfTreeAll");
+  std::string suffixJF("_" + jet_tagger + "/PerfTreeAll");
   std::cout << "instantiating " << jetCollection << suffixJF << std::endl;
   boost::scoped_ptr<TChain> treeJF
     (new TChain((jetCollection+suffixJF).c_str()));
@@ -171,14 +157,15 @@ int flatNtuple(SVector input_files,
 
 
   // --- varaibles set in slimming 
-  Int_t cat_flavour;
-  Int_t bottom;
-  Int_t charm;
-  Int_t light;
-  // Double_t weight;
-  // Int_t cat_pT;
-  // Int_t cat_eta;
+  Int_t cat_flavour = 0;
+  Int_t bottom      = 0;
+  Int_t charm       = 0;
+  Int_t light       = 0;
+  Int_t cat_pT      = 0;
+  Int_t cat_eta     = 0;
 
+  output_tree.Branch("cat_pT",&cat_pT,"cat_pT/I");
+  output_tree.Branch("cat_eta",&cat_eta,"cat_eta/I");
 
   output_tree.Branch("bottom",&bottom,"bottom/I");
   output_tree.Branch("charm",&charm,"charm/I");
@@ -255,6 +242,8 @@ int flatNtuple(SVector input_files,
 	mass > -100) {
 
       cat_flavour = abs(Flavour);
+      cat_pT=pt_categories.get_bin(JetPt);
+      cat_eta=abs_eta_categories.get_bin(fabs(JetEta)); 
 
       bottom=0;
       charm=0;

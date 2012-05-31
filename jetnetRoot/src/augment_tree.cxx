@@ -2,6 +2,7 @@
 #include <string> 
 #include <vector> 
 #include <set> 
+#include <cmath> // log
 #include <utility> // pair
 #include "TFlavorNetwork.h"
 #include <boost/shared_ptr.hpp>
@@ -21,8 +22,15 @@ int augment_tree(std::string file_name,
 		 std::vector<std::string> double_vec, 
 		 int max_entries) 
 { 
-  typedef std::vector<std::string> SVec; 
-  TFile file(file_name.c_str()); 
+  typedef std::vector<std::string> SVec;
+
+  std::string out_tree_name = tree_name; 
+  std::string file_open_opt = ""; 
+  if (output_file.size() == 0) { 
+    out_tree_name.append("Aug"); 
+    file_open_opt = "UPDATE"; 
+  }
+  TFile file(file_name.c_str(), file_open_opt.c_str()); 
   if (file.IsZombie() || !file.IsOpen() ) { 
     std::string err = " cannot be opened"; 
     throw std::runtime_error(file.GetName() + err); 
@@ -55,9 +63,8 @@ int augment_tree(std::string file_name,
   NNConverters nn_converters; 
 
   file.cd(); 			// create the tree in the same file
-  std::string out_name = "SVTreeAug"; 
   boost::scoped_ptr<TTree> out_tree
-    (new TTree(out_name.c_str(), out_name.c_str())); 
+    (new TTree(out_tree_name.c_str(), out_tree_name.c_str())); 
 
   // set the branches
   for (SVec::const_iterator itr = int_vec.begin(); 
@@ -96,6 +103,9 @@ int augment_tree(std::string file_name,
   out_tree->Branch("Likelihood_c", &c_val); 
   out_tree->Branch("Likelihood_l", &l_val); 
   
+  double log_cb, log_cu; 
+  out_tree->Branch("logCb", &log_cb); 
+  out_tree->Branch("logCu", &log_cu); 
 
   int n_entries = tree->GetEntries(); 
   if (max_entries < 0) max_entries = n_entries; 
@@ -123,6 +133,9 @@ int augment_tree(std::string file_name,
     b_val = nn_out.at(0); 
     c_val = nn_out.at(1); 
     l_val = nn_out.at(2); 
+
+    log_cb = log(c_val / b_val); 
+    log_cu = log(c_val / l_val); 
 
     // fill tree 
     out_tree->Fill(); 

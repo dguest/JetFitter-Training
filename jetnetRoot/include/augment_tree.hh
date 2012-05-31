@@ -17,20 +17,4 @@ int augment_tree(std::string file_name,
 
 boost::shared_ptr<TFlavorNetwork> get_nn(std::string file_name); 
 
-// class IValueConverter
-// {
-// public: 
-//   IValueConverter() = 0; 
-//   virtual ~IValueConverter() {}
-//   virtual void convert() = 0; 
-// private: 
-// }; 
-// class IntConverter : public IValueConverter
-// { 
-// public: 
-//   IntConverter(int* int_ptr); 
-//   void convert(); 
-  
-// }
-
 #endif // AUGMENT_TREE_H

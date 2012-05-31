@@ -31,8 +31,8 @@ int flatNtuple(SVector input_files,
 	       Observers observers, 
 	       std::vector<double> pt_cat_vec, 
 	       std::string jetCollection = defopt::JCN, 
-	       std::string output_file_name = "nothing.root", 
 	       std::string jet_tagger = "JetFitterCharm", 
+	       std::string output_file_name = "nothing.root", 
 	       const unsigned flags = bf::default_save);
 
 class WtRatioCtr : public std::vector<WtRatio> 

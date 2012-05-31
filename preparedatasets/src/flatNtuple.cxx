@@ -23,8 +23,8 @@ int flatNtuple(SVector input_files,
 	       Observers observers, 
 	       std::vector<double> pt_cat_vec, 
 	       std::string jetCollection,
-	       std::string output_file_name, 
 	       std::string jet_tagger, 
+	       std::string output_file_name, 
 	       const unsigned flags) 
 {
   BinTool pt_categories(pt_cat_vec); 

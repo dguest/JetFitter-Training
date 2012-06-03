@@ -170,6 +170,9 @@ boost::shared_ptr<TFlavorNetwork> get_nn(std::string file_name) {
   TFlavorNetwork* the_network = dynamic_cast<TFlavorNetwork*>
     (file.Get("TFlavorNetwork")); 
 
+  if (!the_network) 
+    throw std::runtime_error("no TFlavorNetwork in " + file_name); 
+
   // take ownership
   gROOT->cd(); 
   boost::shared_ptr<TFlavorNetwork> export_net

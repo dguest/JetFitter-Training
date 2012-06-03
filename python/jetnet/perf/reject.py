@@ -32,8 +32,10 @@ def plots_to_xy(signal, background, y_function = rejection, rev_itr = True):
             total_background.Add(other_background)
         background = total_background
         
-    total_signal = signal.GetEntries() 
-    total_background = background.GetEntries() 
+    # total_signal = signal.ComputeIntegral() 
+    # total_background = background.ComputeIntegral() 
+    # print 'sig integral: %f, num entries: %f' % (total_signal, 
+    #                                              signal.GetEntries())
 
     sum_background = 0
     sum_signal = 0
@@ -47,6 +49,8 @@ def plots_to_xy(signal, background, y_function = rejection, rev_itr = True):
         itr_func = bin_fwd_iter
 
     bin_values = zip(itr_func(signal), itr_func(background))
+    total_signal = sum(itr_func(signal))
+    total_background = sum(itr_func(background))
     for sig_val, bkg_val in bin_values: 
         sum_signal += sig_val
         sum_background += bkg_val

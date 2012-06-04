@@ -320,7 +320,7 @@ void WtRatioCtr::add(std::string base, TChain* the_chain, TTree& out_tree) {
     the_chain->SetBranchStatus(name.c_str(), 1); 
     int ec = the_chain->SetBranchAddress(name.c_str(), buffer); 
     if (ec) throw std::runtime_error("could not set " + name); 
-    likelihood_buffers[name] = buffer; 
+    likelihood_buffers[*itr] = buffer; 
   }
   SVec ratios; 
   ratios.push_back("Bc"); 

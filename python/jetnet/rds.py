@@ -1,18 +1,24 @@
 from jetnet import utils
-def get_allowed_rds_variables(input_files, jet_collection, 
-                              full_dir_name = None, 
-                              whitelist = None): 
+def get_allowed_rds_variables(
+    input_files, 
+    jet_collection = 'AntiKt4TopoEMJetsReTagged', 
+    full_dir_name = None, 
+    whitelist = None): 
     """
-    return a tuple of double_variables, int_variables, checking the 
-    first of input_files for matches
+    return a tuple of (double_variables, int_variables), checking the 
+    first of input_files for matches. If full_dir_name is given jet_collection
+    is ignored. 
     """
-
 
     from ROOT import TFile
 
     sample_root_file = TFile(input_files[0])
-    input_tree_name = ( 
-        'BTag_%s_JetFitterTagNN/PerfTreeAll' % (jet_collection + 'AOD') )
+
+    if full_dir_name: 
+        input_tree_name = full_dir_name + '/PerfTreeAll'
+    else: 
+        input_tree_name = ( 
+            'BTag_%s_JetFitterTagNN/PerfTreeAll' % (jet_collection + 'AOD') )
 
     sample_tree = sample_root_file.Get(input_tree_name)
 

@@ -115,9 +115,11 @@ int augment_tree(std::string file_name,
   out_tree->Branch(("Likelihood_c" + extension).c_str(), &c_val); 
   out_tree->Branch(("Likelihood_l" + extension).c_str(), &l_val); 
   
-  double log_cb, log_cu; 
+  double log_cb, log_cu, log_bc, log_bu; 
   out_tree->Branch(("logCb" + extension).c_str(), &log_cb); 
   out_tree->Branch(("logCu" + extension).c_str(), &log_cu); 
+  out_tree->Branch(("logBc" + extension).c_str(), &log_bc); 
+  out_tree->Branch(("logBu" + extension).c_str(), &log_bu); 
 
   int n_entries = tree->GetEntries(); 
   if (max_entries < 0) max_entries = n_entries; 
@@ -148,6 +150,8 @@ int augment_tree(std::string file_name,
 
     log_cb = log(c_val / b_val); 
     log_cu = log(c_val / l_val); 
+    log_bc = log(b_val / c_val); 
+    log_bu = log(b_val / l_val); 
 
     // fill tree 
     out_tree->Fill(); 

@@ -13,8 +13,20 @@
 #include "pyparse.hh"
 #include "ntuple_defaults.hh"
   
-static const char* doc_string = 
-  "inputs: TBA\n"; 
+static char prep_ntuple_doc[MAX_DOC_STRING_LENGTH]; 
+
+const char *prep_ntuple_kwlist[] = {
+  "input_files",
+  "int_variables", 
+  "double_variables", 
+  "observer_discriminators",
+  "pt_divisions", 
+  "jet_collection", 
+  "output_file", 
+  "for_nn", 
+  "randomize", 
+  "debug", 
+  NULL};
 
 PyObject* prep_ntuple(PyObject *self, 
 		      PyObject *args, 
@@ -30,25 +42,12 @@ PyObject* prep_ntuple(PyObject *self,
   bool for_nn = true; 
   bool randomize = false; 
   bool debug = false; 
-
-  const char *kwlist[] = {
-    "input_files",
-    "int_variables", 
-    "double_variables", 
-    "observer_discriminators",
-    "pt_divisions", 
-    "jet_collection", 
-    "output_file", 
-    "for_nn", 
-    "randomize", 
-    "debug", 
-    NULL};
     
   bool ok = PyArg_ParseTupleAndKeywords
     (args, keywds, "O|OOOOssbbb", 
      // this function should take a const, and 
      // may be changed. until then we'll cast
-     const_cast<char**>(kwlist),
+     const_cast<char**>(prep_ntuple_kwlist),
      &input_file_list,
      &int_variables, 
      &double_variables, 
@@ -118,6 +117,18 @@ PyObject* prep_ntuple(PyObject *self,
   return Py_None;
 }
 
+static const char *make_ntuple_kwlist[] = {
+  "input_files",
+  "int_variables", 
+  "double_variables", 
+  "observer_discriminators",
+  "pt_divisions", 
+  "jet_collection", 
+  "output_dir", 
+  "suffix", 
+  "debug", 
+  NULL};
+static char make_ntuple_doc[MAX_DOC_STRING_LENGTH]; 
 
 PyObject* make_ntuples_ptcat(PyObject *self, 
 			     PyObject *args, 
@@ -133,23 +144,12 @@ PyObject* make_ntuples_ptcat(PyObject *self,
   const char* suffix = "AOD"; 
   bool debug = false; 
 
-  const char *kwlist[] = {
-    "input_files",
-    "int_variables", 
-    "double_variables", 
-    "observer_discriminators",
-    "pt_divisions", 
-    "jet_collection", 
-    "output_dir", 
-    "suffix", 
-    "debug", 
-    NULL};
     
   bool ok = PyArg_ParseTupleAndKeywords
     (args, keywds, "O|OOOOsssb", 
      // this function should take a const, and 
      // may be changed. until then we'll cast
-     const_cast<char**>(kwlist),
+     const_cast<char**>(make_ntuple_kwlist),
      &input_file_list,
      &int_variables, 
      &double_variables, 
@@ -219,6 +219,18 @@ PyObject* make_ntuples_ptcat(PyObject *self,
   return Py_None;
 }
 
+static const char *flat_ntuple_kwlist[] = {
+  "input_files",
+  "int_variables", 
+  "double_variables", 
+  "observer_discriminators",
+  "pt_divisions", 
+  "jet_collection", 
+  "jet_tagger", 
+  "output_file", 
+  "debug", 
+  NULL};
+static char flat_ntuple_doc[MAX_DOC_STRING_LENGTH]; 
 
 PyObject* make_flat_ntuple(PyObject *self, 
 			   PyObject *args, 
@@ -234,23 +246,12 @@ PyObject* make_flat_ntuple(PyObject *self,
   const char* output_file_name = "nothing.root"; 
   bool debug = false; 
 
-  const char *kwlist[] = {
-    "input_files",
-    "int_variables", 
-    "double_variables", 
-    "observer_discriminators",
-    "pt_divisions", 
-    "jet_collection", 
-    "jet_tagger", 
-    "output_file", 
-    "debug", 
-    NULL};
     
   bool ok = PyArg_ParseTupleAndKeywords
     (args, keywds, "O|OOOOsssb", 
      // this function should take a const, and 
      // may be changed. until then we'll cast
-     const_cast<char**>(kwlist),
+     const_cast<char**>(flat_ntuple_kwlist),
      &input_file_list,
      &int_variables, 
      &double_variables, 
@@ -321,13 +322,13 @@ static PyMethodDef keywdarg_methods[] = {
   // three.
   {"prep_ntuple", (PyCFunction)prep_ntuple, 
    METH_VARARGS | METH_KEYWORDS,
-   doc_string},
+   prep_ntuple_doc},
   {"make_ntuples_ptcat", (PyCFunction)make_ntuples_ptcat, 
    METH_VARARGS | METH_KEYWORDS,
-   doc_string},
+   make_ntuple_doc},
   {"make_flat_ntuple", (PyCFunction)make_flat_ntuple, 
    METH_VARARGS | METH_KEYWORDS,
-   doc_string},
+   flat_ntuple_doc},
   {NULL, NULL, 0, NULL}   /* sentinel */
 };
 
@@ -336,7 +337,21 @@ extern "C" {
 
   PyMODINIT_FUNC initpyprep(void)
   {
+    build_doc(prep_ntuple_doc, prep_ntuple_kwlist); 
+    build_doc(make_ntuple_doc, make_ntuple_kwlist); 
+    build_doc(flat_ntuple_doc, flat_ntuple_kwlist); 
+    
     Py_InitModule("pyprep", keywdarg_methods);
   }
 
+}
+
+void build_doc(char* doc_array, const char** input_kwds){ 
+  for (int n = 0; n < 20; n++) { 
+    const char* this_str = input_kwds[n]; 
+    if (! this_str) break; 
+    strcat(doc_array, this_str); 
+    strcat(doc_array,"\n"); 
+    assert(strlen(doc_array) < MAX_DOC_STRING_LENGTH); 
+  }
 }

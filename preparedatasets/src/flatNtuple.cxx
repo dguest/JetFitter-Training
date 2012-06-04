@@ -15,6 +15,7 @@
 #include <boost/ptr_container/ptr_vector.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/algorithm/string.hpp>
 #include <stdexcept>
 #include <set> 
 
@@ -238,8 +239,7 @@ int flatNtuple(SVector input_files,
     treeJF->GetEntry(i);
 
     if (fabs(JetEta) < magic::max_jet_eta && 
-	JetPt > magic::min_jet_pt_gev &&
-	mass > -100) {
+	JetPt > magic::min_jet_pt_gev ) {
 
       cat_flavour = abs(Flavour);
       cat_pT=pt_categories.get_bin(JetPt);
@@ -304,31 +304,46 @@ void WtRatio::update() {
 
 
 void WtRatioCtr::add(std::string base, TChain* the_chain, TTree& out_tree) { 
-  double* num_buffer = new double; 
-  m_doubles.push_back(num_buffer); 
-  the_chain->SetBranchStatus("Likelihood_c", 1); 
-  int ec = the_chain->SetBranchAddress("Likelihood_c", num_buffer); 
-  if (ec) { 
-    throw std::runtime_error("could not set Likelihood_c"); 
+
+  const unsigned n_flav = 3; 
+  std::string flavors[n_flav] = {"b","c","u"};
+  
+  typedef std::vector<std::string> SVec; 
+  SVec flavor_tags(flavors, flavors + n_flav); 
+  
+  std::map<std::string,double*> likelihood_buffers; 
+  for (SVec::const_iterator itr = flavor_tags.begin(); 
+       itr != flavor_tags.end(); itr++) { 
+    double* buffer = new double; 
+    m_doubles.push_back(buffer); 
+    std::string name = "Likelihood_" + *itr; 
+    the_chain->SetBranchStatus(name.c_str(), 1); 
+    int ec = the_chain->SetBranchAddress(name.c_str(), buffer); 
+    if (ec) throw std::runtime_error("could not set " + name); 
+    likelihood_buffers[name] = buffer; 
   }
-  std::vector<std::string> denom_tags; 
-  denom_tags.push_back("b"); 
-  denom_tags.push_back("u"); 
-  for (size_t i = 0; i < denom_tags.size(); i++) { 
-    std::string tag_str = denom_tags.at(i); 
-    double* denom_buffer = new double; 
-    m_doubles.push_back(denom_buffer); 
-    std::string this_tag = "Likelihood_" + tag_str; 
-    the_chain->SetBranchStatus(this_tag.c_str(),1); 
-    ec = the_chain->SetBranchAddress(this_tag.c_str(), denom_buffer); 
-    if (ec) throw std::runtime_error("could not set" + this_tag); 
-    
-    std::string out_br_name = "logC" + tag_str + base; 
+  SVec ratios; 
+  ratios.push_back("Bc"); 
+  ratios.push_back("Bu"); 
+  ratios.push_back("Cb"); 
+  ratios.push_back("Cu"); 
+  for (SVec::const_iterator itr = ratios.begin(); 
+       itr != ratios.end(); itr++){
+    std::string out_br_name = "log" + *itr + base; 
     double* prod_buffer = new double; 
     m_doubles.push_back(prod_buffer); 
     out_tree.Branch(out_br_name.c_str(), prod_buffer); 
+
+    std::string lower_ratio_name = *itr; 
+    boost::to_lower(lower_ratio_name); 
+    std::string num_str = lower_ratio_name.substr(0,1); 
+    std::string denom_str = lower_ratio_name.substr(1,1); 
+    assert(likelihood_buffers.count(num_str)); 
+    assert(likelihood_buffers.count(denom_str)); 
     
-    WtRatio the_ratio(num_buffer, denom_buffer, prod_buffer); 
+    WtRatio the_ratio(likelihood_buffers[num_str], 
+		      likelihood_buffers[denom_str], 
+		      prod_buffer); 
     push_back(the_ratio); 
   }
 

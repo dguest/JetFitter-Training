@@ -50,12 +50,10 @@ std::vector<int> parse_int_tuple(PyObject* py_list){
   int n_items = PyTuple_Size(py_list); 
   for (int i = 0; i < n_items; i++){ 
     PyObject* the_ob = PyTuple_GetItem(py_list, i); 
-    if (!PyInt_Check(the_ob)){ 
-      PyErr_SetString(PyExc_TypeError,"expected an int in this tuple"); 
+    int the_int = PyInt_AsLong(the_ob); 
+    if (PyErr_Occurred()) { 
       return ints; 
     }
-
-    int the_int = PyInt_AsLong(the_ob); 
     ints.push_back(the_int); 
   }
   return ints; 
@@ -77,12 +75,11 @@ std::vector<double> parse_double_list(PyObject* py_list){
   int n_items = PyList_Size(py_list); 
   for (int i = 0; i < n_items; i++){ 
     PyObject* the_ob = PyList_GetItem(py_list, i); 
-    if (!PyNumber_Check(the_ob)){ 
+    double the_value = PyFloat_AsDouble(the_ob); 
+    if (PyErr_Occurred()){ 
       PyErr_SetString(PyExc_TypeError,"expected a list of numbers"); 
       return out_vals; 
     }
-
-    double the_value = PyFloat_AsDouble(the_ob); 
     out_vals.push_back(the_value); 
   }
   return out_vals; 
@@ -107,16 +104,16 @@ std::map<std::string,double> parse_double_dict(PyObject* in_dict)
   PyObject* value = 0; 
   Py_ssize_t pos = 0; 
   while (PyDict_Next(in_dict, &pos, &key, &value) ) { 
-    bool ok_key = PyString_Check(key); 
-    bool ok_float = PyNumber_Check(value); 
+    std::string the_key = PyString_AsString(key); 
+    bool ok_key = !PyErr_Occurred(); 
+    double the_double = PyFloat_AsDouble(value); 
+    bool ok_float = !PyErr_Occurred(); 
     if (!ok_key || !ok_float ) {
       PyErr_SetString(PyExc_TypeError,"expected a dict, "
 		      "key = varname, value = (offset, scale)"); 
       return double_map; 
     }
-
-    std::string the_key = PyString_AsString(key); 
-    double_map[the_key] = PyFloat_AsDouble(value); 
+    double_map[the_key] = the_double; 
   }
   return double_map; 
 

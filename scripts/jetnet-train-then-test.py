@@ -55,7 +55,7 @@ def train_and_test(input_files, testing_dataset,
         working_dir = jet_collection
 
     if not os.path.isfile(testing_dataset): 
-        raise IOError('{} not found'.format(test_dataset))
+        raise IOError('{} not found'.format(testing_dataset))
 
     if not os.path.isdir(working_dir): 
         os.mkdir(working_dir)

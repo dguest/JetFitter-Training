@@ -132,7 +132,7 @@ if __name__ == '__main__':
     if os.path.isfile(config_file_name): 
         config = SafeConfigParser()
         config.read(config_file_name)
-        flavor_weights = dict( config.items('weights') )
+        flavor_weights = { k : float(w) for k, w in config.items('weights') }
         pt_divisions = map(
             float,config.get('preprocessing','pt_divisions').split() )
         jet_tagger = config.get('preprocessing','jet_tagger')

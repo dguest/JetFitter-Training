@@ -70,19 +70,19 @@ std::vector<double> parse_double_list(PyObject* py_list){
 
   bool ok = PyList_Check(py_list); 
   if (!ok) {
-    PyErr_SetString(PyExc_TypeError,"expected a list of floats"); 
+    PyErr_SetString(PyExc_TypeError,"expected a list"); 
     return out_vals; 
   }
 
   int n_items = PyList_Size(py_list); 
   for (int i = 0; i < n_items; i++){ 
     PyObject* the_ob = PyList_GetItem(py_list, i); 
-    if (!PyFloat_Check(the_ob)){ 
-      PyErr_SetString(PyExc_TypeError,"expected a list of floats"); 
+    if (!PyNumber_Check(the_ob)){ 
+      PyErr_SetString(PyExc_TypeError,"expected a list of numbers"); 
       return out_vals; 
     }
 
-    float the_value = PyFloat_AsDouble(the_ob); 
+    double the_value = PyFloat_AsDouble(the_ob); 
     out_vals.push_back(the_value); 
   }
   return out_vals; 
@@ -108,7 +108,7 @@ std::map<std::string,double> parse_double_dict(PyObject* in_dict)
   Py_ssize_t pos = 0; 
   while (PyDict_Next(in_dict, &pos, &key, &value) ) { 
     bool ok_key = PyString_Check(key); 
-    bool ok_float = PyFloat_Check(value); 
+    bool ok_float = PyNumber_Check(value); 
     if (!ok_key || !ok_float ) {
       PyErr_SetString(PyExc_TypeError,"expected a dict, "
 		      "key = varname, value = (offset, scale)"); 

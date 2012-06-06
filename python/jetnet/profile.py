@@ -196,7 +196,7 @@ def make_profile_file(reduced_dataset, profile_file = None,
                 bad_ranges.append((type_name,var))
 
     for type_name, var in bad_ranges: 
-        print 'removing', var
+        print 'removing {}, nan found'.format(var)
         del range_dict[type_name][var]
 
     tags = ['charm','bottom','light']

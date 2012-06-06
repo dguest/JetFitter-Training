@@ -34,9 +34,9 @@ def _get_pt_eta_categories(file_name):
 
 def run_training(reduced_dataset, 
                  output_directory,
-                 normalization = {}, 
+                 flavor_weights, 
+                 normalization, 
                  nodes = None, 
-                 flavor_weights = {}, 
                  debug = False): 
 
     if not os.path.isdir(output_directory): 
@@ -46,7 +46,6 @@ def run_training(reduced_dataset,
 
     if nodes is None:
         nodes = (20, 10)
-
 
     pynn.trainNN(reduced_dataset = reduced_dataset, 
                  output_directory = output_directory, 

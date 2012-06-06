@@ -1,4 +1,4 @@
-import os, random, array, re
+import os, random, array, re, math
 
 def find_leaf_ranges_by_type(rds_file, tree_name = 'SVTree', 
                              max_entries = False): 
@@ -190,10 +190,9 @@ def make_profile_file(reduced_dataset, profile_file = None,
 
     # hack to deal with empty leafs, could be dangerous
     bad_ranges = []
-    mv_finder = re.compile('C[ub]MV[0-9]')
     for type_name, type_dict in range_dict.iteritems(): 
         for var, var_range in type_dict.iteritems(): 
-            if var_range[0] == var_range[1] or mv_finder.search(var): 
+            if any(math.isnan(x) for x in var_range): 
                 bad_ranges.append((type_name,var))
 
     for type_name, var in bad_ranges: 

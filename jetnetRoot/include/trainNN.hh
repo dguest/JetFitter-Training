@@ -22,6 +22,8 @@ struct FlavorWeights
 namespace train { 
   const unsigned push_min_to_xtest    = 1u << 0; 
   const unsigned req_training_lt_min  = 1u << 1; 
+  const unsigned verbose              = 1u << 2; 
+  const unsigned write_out_to_file    = 1u << 3; 
 
   const unsigned giacintos = push_min_to_xtest | req_training_lt_min;
 }
@@ -83,7 +85,6 @@ void trainNN(std::string inputfile,
 	     std::vector<InputVariableInfo> = train_nn::INPUT_VARS, 
 	     FlavorWeights flavor_weights = train_nn::FLAVOR_WEIGHTS,  
 	     int n_training_events_target = -1, 
-	     bool debug = true, 
 	     const unsigned bit_flags = train::giacintos);
 
 

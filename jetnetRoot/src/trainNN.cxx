@@ -24,6 +24,8 @@
 
 #include <iostream>
 #include <ostream> 
+#include <fstream>
+#include <streambuf>
 
 #include "TMatrixD.h"
 #include "TVectorD.h"
@@ -40,14 +42,38 @@ void trainNN(std::string inputfile,
 	     std::vector<InputVariableInfo> input_variables, 
 	     FlavorWeights flavor_weights, 
 	     int n_training_events_target, 
-	     bool debug, 
 	     const unsigned bit_flags) {
 
   srand(time(0)); 
-  printf("--- starting trainNN ----\n"); 
+
+  std::string output_textfile_name = out_dir + "/run_info.txt"; 
+  std::ofstream output_textfile; 
+  std::streambuf* textfile_buffer; 
+  bool do_file_output = 
+    bit_flags & train::write_out_to_file ||
+    !(bit_flags & train::verbose) ; 
+
+  if (do_file_output) { 
+    output_textfile.open(output_textfile_name.c_str()); 
+    textfile_buffer = output_textfile.rdbuf(); 
+  }
+  else { 
+    textfile_buffer = std::cout.rdbuf(); 
+  }
+  std::streambuf* normal_output; 
+  if (bit_flags & train::write_out_to_file) { 
+    normal_output = textfile_buffer; 
+  }
+  else { 
+    normal_output = std::cout.rdbuf(); 
+  }
+  std::ostream textout(normal_output); 
+  std::ostream verboseout(textfile_buffer); 
+
+  textout << "--- starting trainNN ----\n"; 
 
   if (n_hidden_layer_nodes.size() == 0){
-    std::cout << "WARNING: setting hidden layers to default sizes\n"; 
+    textout << "WARNING: setting hidden layers to default sizes\n"; 
     n_hidden_layer_nodes.push_back(15); 
     n_hidden_layer_nodes.push_back(8); 
   }
@@ -58,11 +84,11 @@ void trainNN(std::string inputfile,
   gROOT->ProcessLine("#include <TTree.h>"); 
   gROOT->ProcessLine("#include <TFile.h>"); 
   
-  std::cout << "starting with settings: " << std::endl;
-  std::cout << " nIterations: " << nIterations << std::endl;
-  std::cout << " dilutionFactor: " << dilutionFactor << std::endl;
-  std::cout << " nodesFirstLayer: " << nodesFirstLayer << std::endl;
-  std::cout << " nodesSecondLayer: " << nodesSecondLayer << std::endl;
+  verboseout << "starting with settings: " << std::endl;
+  verboseout << " nIterations: " << nIterations << std::endl;
+  verboseout << " dilutionFactor: " << dilutionFactor << std::endl;
+  verboseout << " nodesFirstLayer: " << nodesFirstLayer << std::endl;
+  verboseout << " nodesSecondLayer: " << nodesSecondLayer << std::endl;
   
   
   TFile* input_file = new TFile(inputfile.c_str());
@@ -73,7 +99,7 @@ void trainNN(std::string inputfile,
 
   InputVariableContainer in_var; 
   if (input_variables.size() == 0) { 
-    std::cout << "WARNING: no input variables given, using defaults\n"; 
+    textout << "WARNING: no input variables given, using defaults\n"; 
     in_var.set_hardcoded_defaults(in_tree); 
   }
   else { 
@@ -85,24 +111,28 @@ void trainNN(std::string inputfile,
     }
   }
 
-  if (debug){ 
-    std::cout << "input variables: \n"; 
+  if (bit_flags & train::verbose){ 
+    textout << "input variables: \n"; 
     for (InputVariableContainer::const_iterator itr = in_var.begin(); 
 	 itr != in_var.end(); itr++){ 
-      std::cout << " " << *itr << std::endl;
+      textout << " " << *itr << std::endl;
     }
   }
 
   // training variables
   TeachingVariables teach; 
   
-  if (in_tree->SetBranchAddress("weight",&teach.weight) ||
-      in_tree->SetBranchAddress("bottom",&teach.bottom) ||
+  if (in_tree->SetBranchAddress("weight",&teach.weight) ) { 
+    textout << "WARNING: no weight branch found, setting all weights to 1"
+	      << std::endl; 
+    teach.weight = 1; 
+  }
+
+  if (in_tree->SetBranchAddress("bottom",&teach.bottom) ||
       in_tree->SetBranchAddress("charm", &teach.charm) ||
       in_tree->SetBranchAddress("light", &teach.light) ) 
     throw std::runtime_error("SVTree in " + inputfile + 
-			     " missing one of: weight, bottom, charm,"
-			     " light"); 
+			     " missing one of: bottom, charm, light"); 
 
   int* nneurons;
 
@@ -138,10 +168,10 @@ void trainNN(std::string inputfile,
   
   //setting learning parameters
 
-  std::cout << " now providing training events " << std::endl;
+  textout << " now providing training events " << std::endl;
 
   int n_entries = in_tree->GetEntries(); 
-  std::cout << n_entries << " entries in chain\n"; 
+  textout << n_entries << " entries in chain\n"; 
 
   TrainingSettings settings; 
   settings.dilution_factor = dilutionFactor; 
@@ -149,8 +179,12 @@ void trainNN(std::string inputfile,
   settings.n_testing_events = 0; 
 
   if (n_training_events_target > 0) { 
-    int target_entries = min(n_training_events_target, 
-			     n_entries / dilutionFactor); 
+    int target_entries = n_training_events_target; 
+    if (target_entries > n_entries / dilutionFactor) 
+      throw std::runtime_error
+	( (boost::format("asked for %i entries, only have %i")
+	   % (target_entries * dilutionFactor) 
+	   % n_entries).str() ); 
     settings.n_training_events = target_entries; 
     settings.n_testing_events = target_entries; 
   }
@@ -158,7 +192,7 @@ void trainNN(std::string inputfile,
     for (Int_t i = 0; i < n_entries; i++) {
 
       if (i % 100000 == 0 ) {
-	std::cout << " Counting training / testing events in sample."
+	textout << " Counting training / testing events in sample."
 	  " Looping over event " << i << std::endl;
       }
     
@@ -168,7 +202,7 @@ void trainNN(std::string inputfile,
     }
   }
   
-  std::cout << " N. training events: " << settings.n_training_events << 
+  textout << " N. training events: " << settings.n_training_events << 
     " N. testing events: " << settings.n_testing_events << endl;
 
  
@@ -177,7 +211,7 @@ void trainNN(std::string inputfile,
 			     nlayer, 
 			     nneurons );
 
-  std::cout <<  " setting up JetNet... " << endl;
+  textout <<  " setting up JetNet... " << endl;
   jn->SetUpdatesPerEpoch( int(std::floor(float(settings.n_training_events)/
 					 float(N_PATTERNS_PER_UPDATE) )));
   setup_jetnet(jn); 
@@ -190,14 +224,15 @@ void trainNN(std::string inputfile,
     jn_input_info.push_back(convert_node<JetNet::InputNode>(*itr));
   }
   jn->setInputNodes(jn_input_info); 
-  
-  std::cout << " copying over training events " << std::endl;
-  copy_training_events(std::cout, jn, in_var, teach, in_tree, 
+
+
+  textout << " copying over training events " << std::endl;
+  copy_training_events(verboseout, jn, in_var, teach, in_tree, 
 		       settings, flavor_weights); 
   
   
-  std::cout << " copying over testing events " << std::endl;
-  copy_testing_events(std::cout, jn, in_var, teach, in_tree, 
+  textout << " copying over testing events " << std::endl;
+  copy_testing_events(verboseout, jn, in_var, teach, in_tree, 
 		      settings, flavor_weights); 
 
   //normalize inputvariables?
@@ -280,7 +315,7 @@ void trainNN(std::string inputfile,
 	// Sat May 12 17:06:06 CEST 2012 --- commented this out 
 	if (trainingError < minimumError || 
 	    !(bit_flags & train::req_training_lt_min) ) { 
-	  std::cout << " End of training. Minimum already on epoch: " 
+	  textout << " End of training. Minimum already on epoch: " 
 		    << epochWithMinimum << endl;
 	  cronology << " End of training. Minimum already on epoch: " 
 		    << epochWithMinimum << endl;
@@ -292,7 +327,7 @@ void trainNN(std::string inputfile,
 	"] Error: " << trainingError << 
 	" Test: " << testError << endl;
 
-      std::cout << "Epoch: [" << epoch <<
+      textout << "Epoch: [" << epoch <<
 	"] Error: " << trainingError << 
 	" Test: " << testError << endl;
 
@@ -353,7 +388,7 @@ void trainNN(std::string inputfile,
     TFlavorNetwork* trainedNetwork = 
       dynamic_cast<TFlavorNetwork*>(min_file.Get("TFlavorNetwork"));
     
-    // std::cout << " Reading back network with minimum" << endl;
+    // textout << " Reading back network with minimum" << endl;
     // setTrainedNetwork(*jn,trainedNetwork);
 
     std::string min_weights_name = out_dir + "/weightMinimum.root"; 
@@ -364,7 +399,7 @@ void trainNN(std::string inputfile,
 
   } 
   else {
-    std::cout << " using network at last iteration (minimum not reached)" 
+    textout << " using network at last iteration (minimum not reached)" 
 	      << endl;
   }
   
@@ -375,7 +410,6 @@ void trainNN(std::string inputfile,
   // histoFile->Write();
   histoFile->Close();
   delete histoFile;
-
 
 }
 
@@ -486,8 +520,8 @@ int copy_training_events(std::ostream& stream, JetNet* jn,
   for (Int_t i = 0; i < n_entries; i++) {
     
     if (i % 100000 == 0 ) {
-      std::cout << " Copying over training events. Looping over event " 
-		<< i << std::endl;
+      stream << " Copying over training events. Looping over event " 
+	     << i << std::endl;
     }
 
     if (i % s.dilution_factor != 0) continue;

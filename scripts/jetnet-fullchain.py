@@ -73,7 +73,7 @@ def run_full_chain(input_files, working_dir = None, output_path = None,
                            double_variables = double_variables, 
                            int_variables = int_variables, 
                            observer_discriminators = observer_discriminators, 
-                           pt_divisions = map(float,pt_divisions), 
+                           pt_divisions = pt_divisions, 
                            jet_collection = jet_collection, 
                            output_file = rds_path, 
                            debug = do_test)

@@ -100,7 +100,8 @@ int flatNtuple(SVector input_files,
       throw std::runtime_error
 	("could not find Discriminator in " + location); 
     }
-    if (flags & bf::save_weight_ratios) { 
+    bool is_jf = (name_itr->find("JetFitter") != std::string::npos); 
+    if (flags & bf::save_weight_ratios && is_jf) { 
       ratios.add(*name_itr, the_chain, output_tree); 
     }
   }

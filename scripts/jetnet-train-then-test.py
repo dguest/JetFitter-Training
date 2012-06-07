@@ -29,21 +29,16 @@ _default_flav_weights = {
     'bottom':1, 
     }
 
-_default_observers = [ 
-    'JetFitterCOMBNN', 
-    'MV1', 
-    'MV2', 
-    ]
 
 def train_and_test(input_files, testing_dataset, 
                    pt_divisions, training_variables, 
+                   observer_discriminators, 
                    jet_collection = 'BTag_AntiKt4TopoEMJetsReTagged', 
                    jet_tagger = 'JetFitterCharm', 
                    flavor_weights = _default_flav_weights, 
                    working_dir = None, 
                    output_path = None, 
                    rds_name = 'reduced_dataset.root', 
-                   observer_discriminators = _default_observers, 
                    do_test = False, 
                    ): 
 
@@ -137,6 +132,9 @@ if __name__ == '__main__':
             float,config.get('preprocessing','pt_divisions').split() )
         jet_tagger = config.get('preprocessing','jet_tagger')
         testing_dataset = config.get('testing', 'testing_dataset')
+        observer_discriminators = config.get(
+            'preprocessing','observer_discriminators').split()
+
     else: 
         sys.exit('could not find config file %s' % config_file_name)
 
@@ -154,4 +152,5 @@ if __name__ == '__main__':
         training_variables = training_variables, 
         flavor_weights = flavor_weights, 
         jet_tagger = jet_tagger, 
-        pt_divisions = pt_divisions)
+        pt_divisions = pt_divisions, 
+        observer_discriminators = observer_discriminators)

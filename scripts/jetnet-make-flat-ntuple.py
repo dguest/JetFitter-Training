@@ -47,6 +47,11 @@ def make_flat_ntuple(
         jet_collection = jet_collection)
 
     # --- rds part
+
+    rds_dir, rds_file = os.path.split(rds_path)
+    if rds_dir and not os.path.isdir(rds_dir): 
+        os.mkdir(rds_dir)
+
     if os.path.isfile(rds_path): 
         raise IOError(
             "{} already exists, refusing to overwrite".format(rds_path) )
@@ -85,6 +90,8 @@ if __name__ == '__main__':
 
     do_test = options.test
 
+    rds_path = 'reduced_dataset.root'
+
     config_file_name = options.config
     flavor_weights = {}
     if os.path.isfile(config_file_name): 
@@ -95,6 +102,12 @@ if __name__ == '__main__':
 
         observer_discriminators = config.get(
             'preprocessing','observer_discriminators').split()
+        jet_tagger = config.get('preprocessing','jet_tagger')
+        print jet_tagger
+        if 'ARRAYID' in jet_tagger: 
+            the_array_id = os.environ['PBS_ARRAYID']
+            jet_tagger = jet_tagger.replace('ARRAYID',the_array_id)
+            rds_path = os.path.join(jet_tagger,rds_path)
     else: 
         sys.exit('could not find config file %s' % config_file_name)
 
@@ -109,4 +122,6 @@ if __name__ == '__main__':
         input_files, 
         do_test = do_test, 
         observer_discriminators = observer_discriminators, 
+        jet_tagger = jet_tagger, 
+        rds_path = rds_path, 
         pt_divisions = pt_divisions)

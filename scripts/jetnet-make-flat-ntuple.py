@@ -90,7 +90,7 @@ if __name__ == '__main__':
 
     do_test = options.test
 
-    rds_path = 'reduced_dataset.root'
+    rds_path = 'flat_dataset.root'
 
     config_file_name = options.config
     flavor_weights = {}
@@ -103,7 +103,6 @@ if __name__ == '__main__':
         observer_discriminators = config.get(
             'preprocessing','observer_discriminators').split()
         jet_tagger = config.get('preprocessing','jet_tagger')
-        print jet_tagger
         if 'ARRAYID' in jet_tagger: 
             the_array_id = os.environ['PBS_ARRAYID']
             jet_tagger = jet_tagger.replace('ARRAYID',the_array_id)

@@ -114,6 +114,7 @@ if __name__ == '__main__':
     options = parser.parse_args(sys.argv[1:])
 
     do_test = options.test
+    working_dir = None
 
     training_variables = []
     with open(options.wt) as white_file: 
@@ -135,6 +136,12 @@ if __name__ == '__main__':
         observer_discriminators = config.get(
             'preprocessing','observer_discriminators').split()
 
+        if 'ARRAYID' in jet_tagger: 
+            the_array_id = os.environ['PBS_ARRAYID']
+            jet_tagger = jet_tagger.replace('ARRAYID',the_array_id)
+            working_dir = jet_tagger
+            testing_dataset = os.path.join(working_dir,testing_dataset)
+
     else: 
         sys.exit('could not find config file %s' % config_file_name)
 
@@ -153,4 +160,5 @@ if __name__ == '__main__':
         flavor_weights = flavor_weights, 
         jet_tagger = jet_tagger, 
         pt_divisions = pt_divisions, 
+        working_dir = working_dir, 
         observer_discriminators = observer_discriminators)

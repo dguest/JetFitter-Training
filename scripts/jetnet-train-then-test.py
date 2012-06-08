@@ -137,7 +137,7 @@ if __name__ == '__main__':
             'preprocessing','observer_discriminators').split()
 
         if 'ARRAYID' in jet_tagger: 
-            the_array_id = os.environ['PBS_ARRAYID']
+            the_array_id = os.environ['PBS_ARRAYID'].rjust(2,'0')
             jet_tagger = jet_tagger.replace('ARRAYID',the_array_id)
             working_dir = jet_tagger
             testing_dataset = os.path.join(working_dir,testing_dataset)

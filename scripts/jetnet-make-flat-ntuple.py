@@ -80,6 +80,8 @@ if __name__ == '__main__':
         )
 
     parser.add_argument('input_files', nargs = 1)
+    parser.add_argument('output_file', default = 'flat_dataset.root', 
+                        help = 'default: %(default)s', nargs = '?')
     parser.add_argument('--test', action = 'store_true')
     parser.add_argument('--config', 
                         help = 'use this configuration file'
@@ -90,7 +92,7 @@ if __name__ == '__main__':
 
     do_test = options.test
 
-    rds_path = 'flat_dataset.root'
+    rds_path = options.output_file
 
     config_file_name = options.config
     flavor_weights = {}

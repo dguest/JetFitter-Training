@@ -44,7 +44,7 @@ def make_flat_ntuple(
 
     double_variables, int_variables = rds.get_allowed_rds_variables(
         input_files = input_files, 
-        jet_collection = jet_collection)
+        full_dir_name = '_'.join([jet_collection,jet_tagger]))
 
     # --- rds part
 
@@ -103,6 +103,7 @@ if __name__ == '__main__':
         observer_discriminators = config.get(
             'preprocessing','observer_discriminators').split()
         jet_tagger = config.get('preprocessing','jet_tagger')
+        jet_collection = config.get('preprocessing','jet_collection')
         if 'ARRAYID' in jet_tagger: 
             the_array_id = os.environ['PBS_ARRAYID'].rjust(2,'0')
             jet_tagger = jet_tagger.replace('ARRAYID',the_array_id)
@@ -121,6 +122,7 @@ if __name__ == '__main__':
         input_files, 
         do_test = do_test, 
         observer_discriminators = observer_discriminators, 
+        jet_collection = jet_collection, 
         jet_tagger = jet_tagger, 
         rds_path = rds_path, 
         pt_divisions = pt_divisions)

@@ -233,8 +233,9 @@ int flatNtuple(SVector input_files,
   
   for (Int_t i = 0; i < num_entries; i++) {
 
-    if (i % 500000 == 0 ) {
-      std::cout << " processing event number " << i << std::endl;
+    if (i % 50000 == 0 ) {
+      std::cout << "\rprocessing event number " << i;
+      std::cout.flush(); 
     }
     
     treeJF->GetEntry(i);
@@ -282,7 +283,7 @@ int flatNtuple(SVector input_files,
     }
     
   }
-
+  std::cout << "\n"; 		// the event counter doesn't add newlines
 
   // --- save configuration in tree 
   std::cout << "done!\n";

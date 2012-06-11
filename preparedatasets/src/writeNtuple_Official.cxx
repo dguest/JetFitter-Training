@@ -334,10 +334,10 @@ int writeNtuple_Official(SVector input_files,
     }
     
 
-    if (counter % 500000 == 0 ) {
-      std::cout << " processing event number " << 
-	counter << " data event: " << i << " which was event n. " 
-		<< std::endl;
+    if (counter % 50000 == 0 ) {
+      std::cout << "\r" << " processing event number " << 
+	counter << " data event: " << i << " which was event n. ";
+      std::cout.flush(); 
     }
     
     counter += 1;
@@ -443,6 +443,8 @@ int writeNtuple_Official(SVector input_files,
     }
     
   }
+  // event counter doesn't add newline
+  std::cout << "\n"; 
 
 
   file->WriteTObject(output_tree.get()); 

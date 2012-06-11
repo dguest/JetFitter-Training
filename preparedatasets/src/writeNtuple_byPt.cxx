@@ -289,8 +289,9 @@ int writeNtuple_byPt(SVector input_files,
 
   for (Int_t i = 0; i < num_entries; i++) {
 
-    if (i % 500000 == 0 ) {
-      std::cout << " processing event number " << i << std::endl;
+    if (i % 50000 == 0 ) {
+      std::cout << "\rprocessing event number " << i ;
+      std::cout.flush(); 
     }
     
     treeJF->GetEntry(i);
@@ -344,7 +345,7 @@ int writeNtuple_byPt(SVector input_files,
     }
     
   }
-
+  std::cout << "\n"; 
 
   // --- save configuration in tree 
   typedef std::vector<double>::const_iterator DVecItr; 

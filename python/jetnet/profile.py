@@ -1,5 +1,7 @@
 import os, random, array, re, math
 
+profile_check_range = 20000
+
 def find_leaf_ranges_by_type(rds_file, tree_name = 'SVTree', 
                              max_entries = False): 
     """
@@ -27,7 +29,7 @@ def find_leaf_ranges_by_type(rds_file, tree_name = 'SVTree',
         leaf_types[name] = leaf.GetTypeName()
 
     # find ranges
-    if not max_entries: max_entries = 20000
+    if not max_entries: max_entries = profile_check_range
     for n, entry in enumerate(sv_tree): 
         if n > max_entries : break 
         for leaf in leaf_values.keys(): 
@@ -188,7 +190,6 @@ def make_profile_file(reduced_dataset, profile_file = None,
     from cxxprofile import profile_fast
     range_dict = find_leaf_ranges_by_type(reduced_dataset, tree_name = tree)
 
-    # hack to deal with empty leafs, could be dangerous
     bad_ranges = []
     for type_name, type_dict in range_dict.iteritems(): 
         for var, var_range in type_dict.iteritems(): 

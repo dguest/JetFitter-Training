@@ -2,7 +2,10 @@
 # Author: Daniel Guest (dguest@cern.ch)
 
 """
-make profile hists for files in <reduced dataset> 
+make profile hists for files in <reduced dataset>. 
+
+profiles all leafs in <reduced dataset>. Currently finds range by 
+checking first 20000 entries in each leaf. 
 """
 
 # hide this godawful abomination of a framework

@@ -132,28 +132,23 @@ int flatNtuple(SVector input_files,
   used_branches.insert("Flavour"); 
   used_branches.insert("JetPt"  ); 
   used_branches.insert("JetEta" ); 
-  used_branches.insert("mass"   ); 
 
   int Flavour; 
   Double_t JetPt;
   Double_t JetEta;
-  double mass; 
 
   treeJF->SetBranchStatus("*",0); 
   treeJF->SetBranchStatus("Flavour",1); 
   treeJF->SetBranchStatus("JetPt",1); 
   treeJF->SetBranchStatus("JetEta",1); 
-  treeJF->SetBranchStatus("mass",1); 
 
   if (treeJF->SetBranchAddress("Flavour",&Flavour) ||
       treeJF->SetBranchAddress("JetPt"  ,&JetPt) ||
-      treeJF->SetBranchAddress("JetEta" ,&JetEta) ||
-      treeJF->SetBranchAddress("mass"   ,&mass) ) { 
+      treeJF->SetBranchAddress("JetEta" ,&JetEta) ) { 
     throw std::runtime_error("missing essential leaf"); 
   }
 
   // mass, pt, and eta all pass through 
-  output_tree.Branch("mass",&mass); 
   output_tree.Branch("JetPt",&JetPt,"JetPt/D");
   output_tree.Branch("JetEta",&JetEta,"JetEta/D");
 
@@ -234,7 +229,8 @@ int flatNtuple(SVector input_files,
   for (Int_t i = 0; i < num_entries; i++) {
 
     if (i % 50000 == 0 ) {
-      std::cout << "\rprocessing event number " << i;
+      std::cout << "\rprocessing event number " << i 
+		<< " (" << (i*100) / num_entries << "%)";
       std::cout.flush(); 
     }
     

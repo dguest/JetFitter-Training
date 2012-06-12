@@ -64,9 +64,11 @@ def get_allowed_rds_variables(
         int_variables.remove('Flavour')
         double_variables = leaves_dict['Double_t']
         double_variables.remove('Discriminator')
-        for flav in 'buc': 
-            double_variables.remove('Likelihood_' + flav)
-        for slimvar in ['JetPt','JetEta','mass']: 
-            double_variables.remove(slimvar)
+        warn("no whitelist given, will return all vars", stacklevel = 2)
+        
+        # for flav in 'buc': 
+        #     double_variables.remove('Likelihood_' + flav)
+        # for slimvar in ['JetPt','JetEta','mass']: 
+        #     double_variables.remove(slimvar)
 
     return double_variables, int_variables

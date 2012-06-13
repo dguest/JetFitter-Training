@@ -230,7 +230,7 @@ int flatNtuple(SVector input_files,
 
     if (i % 50000 == 0 ) {
       std::cout << "\rprocessing event number " << i 
-		<< " (" << (i*100) / num_entries << "%)";
+		<< " (" << float(i*100) / float(num_entries) << "%)";
       std::cout.flush(); 
     }
     

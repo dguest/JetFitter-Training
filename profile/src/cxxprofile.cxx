@@ -10,7 +10,8 @@
   
 static const char* doc_string = 
   "profile_fast"
-  "(in_file, tree, out_file, ints, doubles, tags, max_entries) "
+  "(in_file, tree, out_file, ints, doubles, tags, "
+  "max_entries, show_progress) "
   "--> n_passed, n_failed\n"
   "Builds file 'output'.\n"
   "'ints' and 'doubles' take a list of tuples (name, n_bins, min, max).\n"
@@ -28,6 +29,7 @@ PyObject* py_profile_fast(PyObject *self,
   PyObject* double_leaves = 0; 
   PyObject* tag_leaves = 0; 
   int max_entries = -1; 
+  bool show_progress = false; 
   const char* kwlist[] = {
     "in_file",
     "tree", 
@@ -36,11 +38,12 @@ PyObject* py_profile_fast(PyObject *self,
     "doubles", 
     "tags",
     "max_entries",
+    "show_progress", 
     NULL};
     
   bool ok = PyArg_ParseTupleAndKeywords
     (args, keywds, 
-     "sss|OOOi", 
+     "sss|OOOib", 
      // I think python people argue about whether this should be 
      // a const char** or a char**
      const_cast<char**>(kwlist),
@@ -50,7 +53,8 @@ PyObject* py_profile_fast(PyObject *self,
      &int_leaves, 
      &double_leaves, 
      &tag_leaves, 
-     &max_entries); 
+     &max_entries, 
+     &show_progress); 
 
   if (!ok) return NULL;
 
@@ -61,12 +65,16 @@ PyObject* py_profile_fast(PyObject *self,
   std::vector<std::string> tag_leaves_vec = build_string_vec(tag_leaves); 
   if (PyErr_Occurred()) return NULL; 
 
+  unsigned options = opt::def_opt; 
+  if (show_progress) options |= opt::show_progress; 
+
   std::pair<int,int> n_pass_fail(std::make_pair(0,0)); 
   try { 
     n_pass_fail = profile_fast(file_name, tree_name, 
 			       int_leaf_vec, double_leaf_vec, tag_leaves_vec, 
 			       output_file, 
-			       max_entries); 
+			       max_entries, 
+			       options); 
   }
   catch (const std::runtime_error& e) { 
     PyErr_SetString(PyExc_IOError,e.what()); 

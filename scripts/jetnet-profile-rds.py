@@ -49,6 +49,8 @@ if __name__ == '__main__':
     if not os.path.exists(profile_path): 
         profile.make_profile_file(reduced_dataset, 
                                   profile_file = profile_path)
+    else: 
+        sys.exit('{} exists, refusing to overwrite'.format(profile_path))
 
     profile_hists = profile.read_back_profile_file(profile_path)
     mean_rms_dict = profile.get_mean_rms_values(profile_hists)

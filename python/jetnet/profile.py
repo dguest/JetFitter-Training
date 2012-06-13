@@ -226,7 +226,8 @@ def make_profile_file(reduced_dataset, profile_file = None,
     n_pass, n_fail = profile_fast(
         in_file = reduced_dataset, tree = tree, out_file = profile_file, 
         ints = ints, doubles = doubles, tags = tags, 
-        max_entries = max_entries)
+        max_entries = max_entries, 
+        show_progress = True)
     
     return n_pass, n_fail
 

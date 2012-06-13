@@ -8,6 +8,7 @@
 #include <cmath> // for rand
 #include <utility> // pair
 #include <algorithm>
+#include <iostream>
 
 #include "TFile.h"
 #include "TTree.h"
@@ -18,7 +19,8 @@ std::pair<int,int> profile_fast(std::string file_name,
 				std::vector<LeafInfo> double_leaves, 
 				std::vector<std::string> tag_leaves, 
 				std::string output_file_name, 
-				int max_entries) { 
+				int max_entries, 
+				const unsigned options) { 
   
   TFile file(file_name.c_str()); 
   if (file.IsZombie() || !file.IsOpen() ) { 
@@ -134,10 +136,20 @@ std::pair<int,int> profile_fast(std::string file_name,
   int n_to_convert = int_buffer.size(); 
   assert(n_to_convert == int(converted_doubles.size())); 
 
-  int n_cut = 0; 
+  bool show_progress = options & opt::show_progress; 
+  int one_percent = n_entries / 100; 
 
+  int n_cut = 0; 
   for (int entry_n = 0; entry_n < max_entries; entry_n++){ 
     if (max_entries >= 0 && int(entry_n) > max_entries) break; 
+    if (show_progress && 
+	(entry_n % one_percent == 0 || entry_n + 1 == n_entries)) { 
+      std::cout << boost::format
+	("\r%.1fM of %.1fM entries processed (%.0f%%)") 
+	% (float(entry_n) / 1e6 ) % (float(max_entries) / 1e6 ) 
+	% (float(entry_n) * 100 / float(max_entries) ); 
+      std::cout.flush(); 
+    }
     tree->GetEntry(entry_n); 
     for (int i = 0; i < n_to_convert; i++){ 
       converted_doubles[i] = int_buffer[i]; 
@@ -152,6 +164,7 @@ std::pair<int,int> profile_fast(std::string file_name,
       itr->second->fill(); 
     }
   }
+  if (show_progress) std::cout << "\n"; 
 
   TFile out_file(output_file_name.c_str(),"recreate"); 
 

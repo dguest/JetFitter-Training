@@ -15,8 +15,8 @@
 #include "TTree.h"
 
 
-std::pair<int,int> pro_2d(std::string file, 
-			  std::string tree, 
+std::pair<int,int> pro_2d(std::string file_name, 
+			  std::string tree_name, 
 			  LeafInfoPairs plots, 
 			  std::vector<std::string> tag_leaves, 
 			  std::string output_file_name, 
@@ -61,10 +61,10 @@ std::pair<int,int> pro_2d(std::string file,
 
   for (LeafInfoPairs::const_iterator itr = plots.begin(); 
        itr != plots.end(); itr++){ 
-    if (!double_buffer.count(itr->first) )
-      double_buffer[itr->first] = new double; 
-    if (!double_buffer.count(itr->second) )
-      double_buffer[itr->second] = new double; 
+    if (!double_buffer.count(itr->first.name) )
+      double_buffer[itr->first.name] = new double; 
+    if (!double_buffer.count(itr->second.name) )
+      double_buffer[itr->second.name] = new double; 
   }
   for (DoubleBufferMap::const_iterator itr = 
 	 double_buffer.begin(); 
@@ -86,12 +86,14 @@ std::pair<int,int> pro_2d(std::string file,
 
   Hists2D hists; 
 
-  for (LeafInfoPairs leaf_itr = plots.begin(); 
+  for (LeafInfoPairs::const_iterator leaf_itr = plots.begin(); 
        leaf_itr != plots.end(); 
        leaf_itr++){ 
 
     int x_bins = leaf_itr->first.n_bins; 
     int y_bins = leaf_itr->second.n_bins; 
+    if (x_bins < 0) x_bins = magic::DEF_2D_BINS; 
+    if (y_bins < 0) y_bins = magic::DEF_2D_BINS; 
 
     std::string hist_name = leaf_itr->first.name + "_vs_" + 
       leaf_itr->second.name; 

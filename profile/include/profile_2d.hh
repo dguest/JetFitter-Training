@@ -1,5 +1,5 @@
-#ifndef PROFILE_FAST_H
-#define PROFILE_FAST_H
+#ifndef PROFILE_2D_H
+#define PROFILE_2D_H
 
 #include <string> 
 #include <vector>
@@ -8,6 +8,11 @@
 #include "TH2D.h"
 #include "profile_constants.hh"
 #include "profile_common.hh"
+
+namespace magic { 
+  const int DEF_2D_BINS = 200; 
+} 
+
 
 class TChain; 
 
@@ -40,7 +45,8 @@ public:
   ~DoubleBufferMap(); 
 };
 
-typedef std::vector<std::pair<LeafInfo,LeafInfo> > LeafInfoPairs; 
+// typedef std::vector<std::pair<LeafInfo,LeafInfo> > LeafInfoPairs; 
+class LeafInfoPairs: public std::vector<std::pair<LeafInfo,LeafInfo> > {}; 
 
 std::pair<int,int> pro_2d(std::string file, 
 			  std::string tree, 
@@ -50,4 +56,4 @@ std::pair<int,int> pro_2d(std::string file,
 			  int max_entries = -1, 
 			  const unsigned options = opt::def_opt); 
 
-#endif // PROFILE_FAST_H
+#endif // PROFILE_2D_H

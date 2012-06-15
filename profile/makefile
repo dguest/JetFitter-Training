@@ -46,6 +46,7 @@ PY_LDFLAGS += -shared
 # ---- define objects
 # - not-python 
 GEN_OBJ     := profile_fast.o profile_common.o
+GEN_OBJ     += profile_2d.o
 
 # - python interface
 PY_OBJ       := cxxprofile.o

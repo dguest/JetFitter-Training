@@ -7,6 +7,7 @@
 
 #include "cxxprofile.hh"
 #include "profile_fast.hh"
+#include "profile_2d.hh"
   
 static const char* doc_string = 
   "profile_fast"
@@ -58,9 +59,9 @@ PyObject* py_profile_fast(PyObject *self,
 
   if (!ok) return NULL;
 
-  std::vector<LeafInfo> int_leaf_vec = build_leaf_info(int_leaves); 
+  std::vector<LeafInfo> int_leaf_vec = build_leaf_info_vec(int_leaves); 
   if (PyErr_Occurred()) return NULL; 
-  std::vector<LeafInfo> double_leaf_vec = build_leaf_info(double_leaves); 
+  std::vector<LeafInfo> double_leaf_vec = build_leaf_info_vec(double_leaves); 
   if (PyErr_Occurred()) return NULL; 
   std::vector<std::string> tag_leaves_vec = build_string_vec(tag_leaves); 
   if (PyErr_Occurred()) return NULL; 
@@ -132,7 +133,7 @@ std::vector<std::string> build_string_vec(PyObject* list)
   return out; 
 }
 
-std::vector<LeafInfo> build_leaf_info(PyObject* list)
+std::vector<LeafInfo> build_leaf_info_vec(PyObject* list)
 {
   std::vector<LeafInfo> info; 
   if (!list) { 
@@ -146,62 +147,100 @@ std::vector<LeafInfo> build_leaf_info(PyObject* list)
   for (int list_index = 0; list_index < n_obj; list_index++){ 
     PyObject* info_tuple = PyList_GetItem(list,list_index); 
     if (!PyTuple_Check(info_tuple)) { 
-      PyErr_SetString(PyExc_IOError,"leaf info takes a tuple list"); 
+      PyErr_SetString(PyExc_IOError,"leaf info takes a tuple"); 
       return info; 
     }
-    int tup_size = PyTuple_Size(info_tuple); 
-    if (tup_size < 3 || tup_size > 4) { 
-      PyErr_SetString(PyExc_IOError,"leaf tuple must have 3 or 4 values:"
-		      "(name, n_bin, min, max) or (name, min, max)"); 
-      return info; 
-    }
-
-    LeafInfo i; 
-    PyObject* name = PyTuple_GetItem(info_tuple, 0); 
-    if (!PyString_Check(name)){
-      PyErr_SetString(PyExc_IOError,
-		      "first leaf tuple values must be a string"); 
-      return info; 
-    }
-    i.name = PyString_AsString(name); 
-
-    for (int n = 1; n < tup_size; n++){ 
-      PyObject* number = PyTuple_GetItem(info_tuple,n); 
-      if (!PyNumber_Check(number)) { 
-	PyErr_SetString(PyExc_IOError,"leaf tuple values must be numbers"); 
-	return info; 
-      }
-    }
-
-    PyObject* min = 0; 
-    PyObject* max = 0; 
-    if (tup_size == 4) { 
-      PyObject* n_bins = PyTuple_GetItem(info_tuple, 1); 
-      if (!PyInt_Check(n_bins) || PyInt_AsLong(n_bins) < 1 ){ 
-	PyErr_SetString(PyExc_IOError,"n_bins must be an int > 1"); 
-	return info; 
-      }
-      i.n_bins = PyInt_AsLong(n_bins); 
-      min = PyTuple_GetItem(info_tuple,2); 
-      max = PyTuple_GetItem(info_tuple,3); 
-    }
-    else { 
-      min = PyTuple_GetItem(info_tuple,1); 
-      max = PyTuple_GetItem(info_tuple,2); 
-      if (PyInt_Check(min) && PyInt_Check(max) ) { 
-	i.n_bins = -2; 		// -2 = calculate from range
-      }
-      else { 
-	i.n_bins = -1; 		// -1 = calculate from entries
-      }
-    }
-
-    i.min = PyFloat_AsDouble(min); 
-    i.max = PyFloat_AsDouble(max); 
+    LeafInfo i = build_leaf_info(info_tuple); 
+    if (PyErr_Occurred() ) return info; 
     info.push_back(i); 
   }
   return info; 
 } 
+
+LeafInfoPairs build_plot2d_vec(PyObject* list) 
+{ 
+  LeafInfoPairs info_pairs_vec; 
+  if (!list) return info_pairs_vec; 
+  int n_obj = PyList_Size(list); 
+  if (PyErr_Occurred()) {
+    PyErr_SetString(PyExc_IOError,"leaf info takes a tuple pair list"); 
+    return info_pairs_vec; 
+  }
+  for (int list_index = 0; list_index < n_obj; list_index++){ 
+    PyObject* info_pair = PyList_GetItem(list,list_index); 
+    int n_infos = PySequence_Size(info_pair); 
+    if (PyErr_Occurred() || n_infos != 2 ) { 
+      PyErr_SetString(PyExc_IOError,"leaf info list value takes "
+		      "a tuple pair"); 
+      return info_pairs_vec; 
+    }
+
+    PyObject* first_info = PySequence_GetItem(info_pair,0); 
+    LeafInfo i = build_leaf_info(first_info); 
+    if (PyErr_Occurred() ) return info_pairs_vec; 
+
+    PyObject* second_info = PySequence_GetItem(info_pair,1); 
+    LeafInfo j = build_leaf_info(second_info); 
+    if (PyErr_Occurred() ) return info_pairs_vec; 
+    info_pairs_vec.push_back(std::make_pair(i,j)); 
+  }
+  return info_pairs_vec;  
+  
+}
+
+
+LeafInfo build_leaf_info(PyObject* info_tuple) { 
+  LeafInfo i; 
+  int tup_size = PyTuple_Size(info_tuple); 
+  if (tup_size < 3 || tup_size > 4) { 
+    PyErr_SetString(PyExc_IOError,"leaf tuple must have 3 or 4 values:"
+		    "(name, n_bin, min, max) or (name, min, max)"); 
+    return i; 
+  }
+
+  PyObject* name = PyTuple_GetItem(info_tuple, 0); 
+  if (!PyString_Check(name)){
+    PyErr_SetString(PyExc_IOError,
+		    "first leaf tuple values must be a string"); 
+    return i; 
+  }
+  i.name = PyString_AsString(name); 
+
+  for (int n = 1; n < tup_size; n++){ 
+    PyObject* number = PyTuple_GetItem(info_tuple,n); 
+    if (!PyNumber_Check(number)) { 
+      PyErr_SetString(PyExc_IOError,"leaf tuple values must be numbers"); 
+      return i; 
+    }
+  }
+
+  PyObject* min = 0; 
+  PyObject* max = 0; 
+  if (tup_size == 4) { 
+    PyObject* n_bins = PyTuple_GetItem(info_tuple, 1); 
+    if (!PyInt_Check(n_bins) || PyInt_AsLong(n_bins) < 1 ){ 
+      PyErr_SetString(PyExc_IOError,"n_bins must be an int > 1"); 
+      return i; 
+    }
+    i.n_bins = PyInt_AsLong(n_bins); 
+    min = PyTuple_GetItem(info_tuple,2); 
+    max = PyTuple_GetItem(info_tuple,3); 
+  }
+  else { 
+    min = PyTuple_GetItem(info_tuple,1); 
+    max = PyTuple_GetItem(info_tuple,2); 
+    if (PyInt_Check(min) && PyInt_Check(max) ) { 
+      i.n_bins = -2; 		// -2 = calculate from range
+    }
+    else { 
+      i.n_bins = -1; 		// -1 = calculate from entries
+    }
+  }
+
+  i.min = PyFloat_AsDouble(min); 
+  i.max = PyFloat_AsDouble(max); 
+  return i; 
+}
 
 // void dummy() { 
 //   FilterHist(1,0,1,new double, new int); 

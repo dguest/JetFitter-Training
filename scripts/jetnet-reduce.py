@@ -12,31 +12,31 @@ ROOT.PyConfig.IgnoreCommandLineOptions = True
 from jetnet import pyprep
 import os, sys
 from warnings import warn
-from optparse import OptionParser, OptionGroup
+from argparse import ArgumentParser
 
 
 if __name__ == '__main__': 
 
-    usage = 'usage: %prog <file list> [options]'
+    sys.exit('this is probably broken')
+
     description = __doc__
+    epilog = 'authon: Dan Guest <dguest@cern.ch>'
 
-    parser = OptionParser(usage = usage, description = description)
-    parser.set_defaults(
-        test = False
-        )
+    parser = ArgumentParser(description = description, epilog = epilog)
 
+    parser.add_option('input_files')
     parser.add_option('--test', action = 'store_true')
     parser.add_option('-o', dest = 'output_file', 
                       default = None, 
                       help = 'name of output file, defaults to '
                       '<file list>.root')
 
-    (options, args) = parser.parse_args(sys.argv[1:])
+    options = parser.parse_args(sys.argv[1:])
     
     if len(args) != 1: 
         sys.exit(parser.get_usage())
 
-    input_file_list = args[0]
+    input_file_list = parser.input_files
     input_files = []
     with open(input_file_list) as file_list: 
         for line in file_list: 

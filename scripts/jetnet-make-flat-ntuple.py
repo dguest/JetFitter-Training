@@ -5,7 +5,6 @@ runs full chain on <file list>
 
 options set in 'jetnet.cfg'
 
-Author: Daniel Guest (dguest@cern.ch)
 """
 
 # hide this godawful abomination of a framework
@@ -40,6 +39,7 @@ def make_flat_ntuple(
     rds_path = 'reduced_dataset.root', 
     observer_discriminators = _default_observers, 
     do_test = False, 
+    skim_function = pyprep.make_flat_ntuple, 
     ): 
 
     double_variables, int_variables = rds.get_allowed_rds_variables(
@@ -56,7 +56,7 @@ def make_flat_ntuple(
         raise IOError(
             "{} already exists, refusing to overwrite".format(rds_path) )
     else: 
-        pyprep.make_flat_ntuple(
+        skim_function(
             input_files = input_files, 
             double_variables = double_variables, 
             int_variables = int_variables, 
@@ -73,8 +73,10 @@ def make_flat_ntuple(
 if __name__ == '__main__': 
 
     description = __doc__
+    epilog = 'Author: Daniel Guest (dguest@cern.ch)'
 
-    parser = ArgumentParser(description = description)
+    parser = ArgumentParser(description = description, 
+                            epilog = epilog)
     parser.set_defaults(
         test = False, 
         )
@@ -83,6 +85,9 @@ if __name__ == '__main__':
     parser.add_argument('output_file', default = 'flat_dataset.root', 
                         help = 'default: %(default)s', nargs = '?')
     parser.add_argument('--test', action = 'store_true')
+    parser.add_argument(
+        '--binned', action = 'store_true', 
+        help = 'make ntuple binned in pt and eta')
     parser.add_argument('--config', 
                         help = 'use this configuration file'
                         ' (default: %(default)s)', 
@@ -91,6 +96,11 @@ if __name__ == '__main__':
     options = parser.parse_args(sys.argv[1:])
 
     do_test = options.test
+
+    if options.binned: 
+        skim_function = pyprep.prep_ntuple
+    else: 
+        skim_function = pyprep.make_flat_ntuple
 
     rds_path = options.output_file
 
@@ -127,4 +137,5 @@ if __name__ == '__main__':
         jet_collection = jet_collection, 
         jet_tagger = jet_tagger, 
         rds_path = rds_path, 
-        pt_divisions = pt_divisions)
+        pt_divisions = pt_divisions, 
+        skim_function = skim_function)

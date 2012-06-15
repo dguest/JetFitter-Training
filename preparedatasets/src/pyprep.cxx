@@ -22,6 +22,7 @@ const char *prep_ntuple_kwlist[] = {
   "observer_discriminators",
   "pt_divisions", 
   "jet_collection", 
+  "jet_tagger", 
   "output_file", 
   "for_nn", 
   "randomize", 
@@ -38,6 +39,7 @@ PyObject* prep_ntuple(PyObject *self,
   PyObject* observer_discriminators = 0; 
   PyObject* pt_divisions = 0; 
   const char* jet_collection_name = "AntiKt4TopoEMJets"; 
+  const char* jet_tagger = "JetFitterCharm";
   const char* output_file_name = "reduced.root"; 
   bool for_nn = true; 
   bool randomize = false; 
@@ -54,6 +56,7 @@ PyObject* prep_ntuple(PyObject *self,
      &observer_discriminators, 
      &pt_divisions, 
      &jet_collection_name, 
+     &jet_tagger, 
      &output_file_name, 
      &for_nn, 
      &randomize, 
@@ -102,6 +105,7 @@ PyObject* prep_ntuple(PyObject *self,
 			   observers, 
 			   pt_cat_vec, 
 			   jet_collection_name, 
+			   jet_tagger, 
 			   output_file_name, 
 			   for_nn);
     } 

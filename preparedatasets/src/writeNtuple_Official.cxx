@@ -8,12 +8,14 @@
 #include "TRandom.h" // next on list of things to kill
 #include <cmath>
 #include <vector>
+#include <set>
 #include <string>
 #include <algorithm>
 #include <fstream>
 #include <stdexcept>
 #include <boost/ptr_container/ptr_vector.hpp>
 #include <boost/scoped_ptr.hpp>
+#include <boost/format.hpp>
 
 //using namespace std;
 
@@ -22,8 +24,9 @@ int writeNtuple_Official(SVector input_files,
 			 Observers observers, 
 			 std::vector<double> pt_cat_vec, 
 			 std::string jetCollection,
+			 std::string jet_tagger, 
 			 std::string output_file, 
-			 bool forNN) 
+			 bool /*forNN*/) 
 {
 
 
@@ -99,8 +102,8 @@ int writeNtuple_Official(SVector input_files,
 
 
   // --- load jetfitter chain 
-  std::string suffixJF("_JetFitterCharm/PerfTreeAll");
-  std::cout << "instantiating JetFitterCharm " << endl;
+  std::string suffixJF("_" + jet_tagger + "/PerfTreeAll");
+  std::cout << "instantiating " << suffixJF << endl;
   boost::scoped_ptr<TChain> treeJF
     (new TChain((jetCollection+suffixJF).c_str()));
 
@@ -119,16 +122,24 @@ int writeNtuple_Official(SVector input_files,
   Double_t JetEta;
   double mass; 
 
+  std::set<std::string> used_branches; 
+  used_branches.insert("Flavour"); 
+  used_branches.insert("JetPt"  ); 
+  used_branches.insert("JetEta" ); 
+  used_branches.insert("mass" ); 
+
   treeJF->SetBranchStatus("*",0); 
   treeJF->SetBranchStatus("Flavour",1); 
   treeJF->SetBranchStatus("JetPt",1); 
   treeJF->SetBranchStatus("JetEta",1); 
   treeJF->SetBranchStatus("mass",1); 
 
-  treeJF->SetBranchAddress("Flavour",&Flavour); 
-  treeJF->SetBranchAddress("JetPt"  ,&JetPt); 
-  treeJF->SetBranchAddress("JetEta" ,&JetEta); 
-  treeJF->SetBranchAddress("mass"   ,&mass); 
+  if (treeJF->SetBranchAddress("Flavour",&Flavour) ||
+      treeJF->SetBranchAddress("JetPt"  ,&JetPt) ||
+      treeJF->SetBranchAddress("JetEta" ,&JetEta) ||
+      treeJF->SetBranchAddress("mass"   ,&mass) ) { 
+    throw std::runtime_error("missing essential leaf"); 
+  }
 
   // mass, pt, and eta all pass through 
   output_tree->Branch("mass",&mass); 
@@ -144,15 +155,14 @@ int writeNtuple_Official(SVector input_files,
   Int_t cat_pT;
   Int_t cat_eta;
 
-  if (forNN){
-    output_tree->Branch("cat_pT",&cat_pT,"cat_pT/I");
-    output_tree->Branch("cat_eta",&cat_eta,"cat_eta/I");
-    output_tree->Branch("weight",&weight,"weight/D");
+  output_tree->Branch("cat_pT",&cat_pT,"cat_pT/I");
+  output_tree->Branch("cat_eta",&cat_eta,"cat_eta/I");
+  output_tree->Branch("weight",&weight,"weight/D");
 
-    output_tree->Branch("bottom",&bottom,"bottom/I");
-    output_tree->Branch("charm",&charm,"charm/I");
-    output_tree->Branch("light",&light,"light/I");
-  }
+  output_tree->Branch("bottom",&bottom,"bottom/I");
+  output_tree->Branch("charm",&charm,"charm/I");
+  output_tree->Branch("light",&light,"light/I");
+
 
   output_tree->Branch("cat_flavour",&cat_flavour,"cat_flavour/I");  
 
@@ -161,6 +171,7 @@ int writeNtuple_Official(SVector input_files,
   for (SVector::const_iterator name_itr = observers.double_variables.begin(); 
        name_itr != observers.double_variables.end(); 
        name_itr++){ 
+    if (used_branches.count(*name_itr)) continue; 
 
     // define buffers in which to store the vars
     double* the_buffer = new double; 
@@ -177,6 +188,7 @@ int writeNtuple_Official(SVector input_files,
   for (SVector::const_iterator name_itr = observers.int_variables.begin(); 
        name_itr != observers.int_variables.end(); 
        name_itr++){ 
+    if (used_branches.count(*name_itr)) continue; 
 
     // define buffers in which to store the vars
     int* the_buffer = new int; 
@@ -203,22 +215,19 @@ int writeNtuple_Official(SVector input_files,
   int numberc=0;
   int numberl=0;
 
-  if (forNN) {
+  for (Long64_t i=0;i<num_entries;i++) {
 
-    for (Long64_t i=0;i<num_entries;i++) {
-
-      treeJF->GetEntry(i);
+    treeJF->GetEntry(i);
       
-      if (mass > -100){
-	if (abs(Flavour)==5){
-	  numberb+=1;
-	}
-	if (abs(Flavour)==4){
-	  numberc+=1;
-	}
-	if (abs(Flavour==1)){
-	  numberl+=1;
-	}
+    if (mass > -100){
+      if (abs(Flavour)==5){
+	numberb+=1;
+      }
+      if (abs(Flavour)==4){
+	numberc+=1;
+      }
+      if (abs(Flavour==1)){
+	numberl+=1;
       }
     }
   }
@@ -236,14 +245,6 @@ int writeNtuple_Official(SVector input_files,
   int numPtBins = pt_categories.size() + 1; 
   int numEtaBins = abs_eta_categories.size() + 1; 
 
-  Double_t* weightsb=0;
-  Double_t* weightsl=0;
-  Double_t* weightsc=0;
-
-  Double_t* countb=0;
-  Double_t* countl=0;
-  Double_t* countc=0;
-
   Double_t toleranceb=4;
   Double_t tolerancec=4;
   Double_t tolerancel=1;
@@ -254,97 +255,81 @@ int writeNtuple_Official(SVector input_files,
   Double_t maxweightl=0;
   Double_t maxweightc=0;
   
-  
-  if (forNN) {
-    
-    weightsb=new Double_t[numPtBins*numEtaBins];
-    weightsl=new Double_t[numPtBins*numEtaBins];
-    weightsc=new Double_t[numPtBins*numEtaBins];
+  int n_total_bins = numPtBins * numEtaBins; 
+  std::vector<double> weightsb(n_total_bins);
+  std::vector<double> weightsl(n_total_bins);
+  std::vector<double> weightsc(n_total_bins);
 
-    countb=new Double_t[numPtBins*numEtaBins];
-    countl=new Double_t[numPtBins*numEtaBins];
-    countc=new Double_t[numPtBins*numEtaBins];
+  std::vector<double> countb(n_total_bins);
+  std::vector<double> countl(n_total_bins);
+  std::vector<double> countc(n_total_bins);
 
-    for (int i=0;i<numPtBins*numEtaBins;i++){
-      weightsb[i]=0;
-      weightsl[i]=0;
-      weightsc[i]=0;
-      countb[i]=0;
-      countl[i]=0;
-      countc[i]=0;
-    }
-    
-    for (Long64_t i=0;i<num_entries;i++) {
-      
-      treeJF->GetEntry(i);
-      
-      if (mass < -100) continue;
-      
-      if (fabs(JetEta) > 2.5 || JetPt <= magic::min_jet_pt_gev)  
-	continue;
-
-      int actualpT = pt_categories.get_bin(JetPt); 
-      int actualeta = abs_eta_categories.get_bin(fabs(JetEta));
-      
-      int flavour=abs(Flavour);
-      
-      switch (flavour){
-      case 5:
-	countb[actualpT+numPtBins*actualeta] += 1; 
-	break;
-      case 4:
-	countc[actualpT+numPtBins*actualeta] += 1; 
-	break;
-      case 1:
-	countl[actualpT+numPtBins*actualeta] += 1;
-	break;
-      }
-
-    }
-    
-      
-    for (int i=0;i<numPtBins*numEtaBins;i++){
-      weightsb[i]= (Double_t)numberb / (Double_t)countb[i] ;
-      weightsl[i]= (Double_t)numberl / (Double_t)countl[i] ;
-      weightsc[i]= (Double_t)numberc / (Double_t)countc[i];
-
-      if (weightsb[i]>maxweightb) maxweightb=weightsb[i];
-      if (weightsl[i]>maxweightl) maxweightl=weightsl[i];
-      if (weightsc[i]>maxweightc) maxweightc=weightsc[i];
-
-    }
-  
+  for (int i=0;i<numPtBins*numEtaBins;i++){
+    weightsb[i]=0;
+    weightsl[i]=0;
+    weightsc[i]=0;
+    countb[i]=0;
+    countl[i]=0;
+    countc[i]=0;
   }
+    
+  for (Long64_t i=0;i<num_entries;i++) {
+      
+    treeJF->GetEntry(i);
+      
+    if (mass < -100) continue;
+      
+    if (fabs(JetEta) > 2.5 || JetPt <= magic::min_jet_pt_gev)  
+      continue;
+
+    int actualpT = pt_categories.get_bin(JetPt); 
+    int actualeta = abs_eta_categories.get_bin(fabs(JetEta));
+      
+    int flavour=abs(Flavour);
+      
+    switch (flavour){
+    case 5:
+      countb[actualpT+numPtBins*actualeta] += 1; 
+      break;
+    case 4:
+      countc[actualpT+numPtBins*actualeta] += 1; 
+      break;
+    case 1:
+      countl[actualpT+numPtBins*actualeta] += 1;
+      break;
+    }
+
+  }
+    
+      
+  for (int i=0;i<numPtBins*numEtaBins;i++){
+    weightsb[i]= (Double_t)numberb / (Double_t)countb[i] ;
+    weightsl[i]= (Double_t)numberl / (Double_t)countl[i] ;
+    weightsc[i]= (Double_t)numberc / (Double_t)countc[i];
+
+    if (weightsb[i]>maxweightb) maxweightb=weightsb[i];
+    if (weightsl[i]>maxweightl) maxweightl=weightsl[i];
+    if (weightsc[i]>maxweightc) maxweightc=weightsc[i];
+
+  }
+  
+
   
 
   std::cout << " maxweightb: " << maxweightb << " maxweightc: " << maxweightc 
 	    << " maxweightl: " << maxweightl << endl;
 
   std::cout << "Total entries are: " << num_entries << endl;
-
-  Int_t counter=0;
+  
   for (Int_t i = 0; i < num_entries; i++) {
 
-    //take only every fifth data point
-    if (!forNN){
-      if (counter%5 != 0){
-	counter+=1;
-	continue;
-      }
-    }
-    
-
-    if (counter % 50000 == 0 ) {
-      std::cout << "\r" << " processing event number " << 
-	counter << " data event: " << i << " which was event n. ";
+    if (i % 50000 == 0 ) {
+      std::cout << boost::format("\rprocessing event number %i (%.0f%%)")
+	% i % (float(i)*100 / float(num_entries));
       std::cout.flush(); 
     }
     
-    counter += 1;
-     
-    
     treeJF->GetEntry(i);
-
 
     if (fabs(JetEta) < 2.5 &&
 	JetPt > magic::min_jet_pt_gev &&
@@ -354,84 +339,67 @@ int writeNtuple_Official(SVector input_files,
       cat_eta=abs_eta_categories.get_bin(fabs(JetEta)); 
       
       cat_flavour=abs(Flavour);
-      if (forNN){
-	bottom=0;
-	charm=0;
-	light=0;
 
-	bool throwevent(false);
+      bottom=0;
+      charm=0;
+      light=0;
 
-	switch (cat_flavour){
-	case 5:
-	  bottom=1;
-	  weight=weightsb[cat_pT+numPtBins*cat_eta];
+      bool throwevent(false);
 
-	  if (forNN){
+      switch (cat_flavour){
+      case 5:
+	bottom=1;
+	weight=weightsb[cat_pT+numPtBins*cat_eta];
             
-	    if (weight<maxweightb/toleranceb){
-	      if (random.Uniform()>weight*toleranceb/maxweightb){
-		throwevent=true;
-	      }
-	      weight=1.;//maxweightb/toleranceb;
-	    }
-	    else{
-	      weight/=(maxweightb/toleranceb);
-	    }
-	  } 
-            
-          
-	  break;
-	case 4:
-	  charm=1;
-	  weight=weightsc[cat_pT+numPtBins*cat_eta];
-
-	  if (forNN){
-	    if (weight<maxweightc/tolerancec){
-	      if (random.Uniform()>weight*tolerancec/maxweightc){
-		throwevent=true;
-	      }
-	      weight=1.;//maxweightc/tolerancec;
-	    }
-	    else{
-	      weight/=(maxweightc/tolerancec);
-	    }
+	if (weight<maxweightb/toleranceb){
+	  if (random.Uniform()>weight*toleranceb/maxweightb){
+	    throwevent=true;
 	  }
-          
-
-
-	  break;
-	case 1:
-	  light=1;
-	  weight=weightsl[cat_pT+numPtBins*cat_eta];
-
-	  if (forNN){
-            
-	    if (weight<maxweightl/tolerancel){
-	      if (random.Uniform()>weight*tolerancel/maxweightl){
-		throwevent=true;
-	      }
-	      weight=1.;//maxweightl/tolerancel;
-	    }
-	    else {
-	      weight/=(maxweightl/tolerancel);
-	    }
-            
-	  }
-          
-	  break;
-
-	default:
-	  throwevent=true;
-	  break;
-          
-        
+	  weight=1.;//maxweightb/toleranceb;
 	}
+	else{
+	  weight/=(maxweightb/toleranceb);
+	}
+
+	break;
+      case 4:
+	charm=1;
+	weight=weightsc[cat_pT+numPtBins*cat_eta];
+
+	if (weight<maxweightc/tolerancec){
+	  if (random.Uniform()>weight*tolerancec/maxweightc){
+	    throwevent=true;
+	  }
+	  weight=1.;//maxweightc/tolerancec;
+	}
+	else{
+	  weight/=(maxweightc/tolerancec);
+	}
+
+	break;
+      case 1:
+	light=1;
+	weight=weightsl[cat_pT+numPtBins*cat_eta];
+            
+	if (weight<maxweightl/tolerancel){
+	  if (random.Uniform()>weight*tolerancel/maxweightl){
+	    throwevent=true;
+	  }
+	  weight=1.;//maxweightl/tolerancel;
+	}
+	else {
+	  weight/=(maxweightl/tolerancel);
+	}
+          
+	break;
+
+      default:
+	throwevent=true;
+	break;
         
-
-	if (throwevent) continue;
-
       }
-      
+
+      if (throwevent) continue;
 
       //read the others only on demand (faster)
       for (unsigned short j = 0; j < observer_chains.size(); j++){ 

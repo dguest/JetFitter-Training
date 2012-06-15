@@ -48,12 +48,7 @@ int writeNtuple_Official(SVector input_files,
   // run output 
   // std::ofstream out_stream("output.out", ios_base::out | ios_base::trunc); 
 
-  std::cout << " opening input files: \n"; 
-  for (SVector::const_iterator itr = input_files.begin(); 
-       itr != input_files.end(); 
-       itr++){ 
-    std::cout << *itr << "\n"; 
-  }
+  std::cout << " opening input " << input_files.size() << " files\n"; 
   std::cout << " processing to obtain: " << jetCollection 
        << " root file "  << endl;
   
@@ -103,7 +98,7 @@ int writeNtuple_Official(SVector input_files,
 
   // --- load jetfitter chain 
   std::string suffixJF("_" + jet_tagger + "/PerfTreeAll");
-  std::cout << "instantiating " << suffixJF << endl;
+  std::cout << "instantiating " << jetCollection << suffixJF << endl;
   boost::scoped_ptr<TChain> treeJF
     (new TChain((jetCollection+suffixJF).c_str()));
 

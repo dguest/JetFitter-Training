@@ -46,7 +46,7 @@ PyObject* prep_ntuple(PyObject *self,
   bool debug = false; 
     
   bool ok = PyArg_ParseTupleAndKeywords
-    (args, keywds, "O|OOOOssbbb", 
+    (args, keywds, "O|OOOOsssbbb", 
      // this function should take a const, and 
      // may be changed. until then we'll cast
      const_cast<char**>(prep_ntuple_kwlist),

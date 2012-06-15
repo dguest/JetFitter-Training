@@ -15,6 +15,7 @@
 #include <boost/ptr_container/ptr_vector.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/format.hpp>
 #include <boost/algorithm/string.hpp>
 #include <stdexcept>
 #include <set> 
@@ -35,12 +36,7 @@ int flatNtuple(SVector input_files,
   eta_cat_vec.push_back(1.5); 
   BinTool abs_eta_categories(eta_cat_vec); 
 
-  std::cout << " opening input files: \n"; 
-  for (SVector::const_iterator itr = input_files.begin(); 
-       itr != input_files.end(); 
-       itr++){ 
-    std::cout << *itr << "\n"; 
-  }
+  std::cout << " opening " << input_files.size() << " input files\n"; 
   std::cout << " processing to obtain: " << jetCollection
 	    << " root file "  << std::endl;
   
@@ -229,8 +225,8 @@ int flatNtuple(SVector input_files,
   for (Int_t i = 0; i < num_entries; i++) {
 
     if (i % 50000 == 0 ) {
-      std::cout << "\rprocessing event number " << i 
-		<< " (" << float(i*100) / float(num_entries) << "%)";
+      std::cout << boost::format("\rprocessing event number %i (%.0f%%)")
+	% i % (float(i)*100 / float(num_entries));
       std::cout.flush(); 
     }
     

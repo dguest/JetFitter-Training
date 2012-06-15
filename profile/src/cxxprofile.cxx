@@ -89,6 +89,83 @@ PyObject* py_profile_fast(PyObject *self,
   // return Py_None;
 }
 
+static const char* doc_2d = 
+  "profile_fast"
+  "(in_file, tree, out_file, ints, doubles, tags, "
+  "max_entries, show_progress) "
+  "--> n_passed, n_failed\n"
+  "Builds file 'output'.\n"
+  "'ints' and 'doubles' take a list of tuples (name, n_bins, min, max).\n"
+  "If not given, n_bins defaults to (max - min + 1) for int, "
+  "(n_entries / 100) for doubles";
+
+PyObject* py_pro2d(PyObject *self, 
+		   PyObject *args, 
+		   PyObject *keywds)
+{
+  const char* file_name; 
+  const char* tree_name; 
+  PyObject* plots = 0; 
+  PyObject* tag_leaves = 0; 
+  const char* output_file; 
+  int max_entries = -1; 
+  bool show_progress = false; 
+  const char* kwlist[] = {
+    "in_file",
+    "tree", 
+    "out_file", 
+    "plots", 
+    "tags",
+    "max_entries",
+    "show_progress", 
+    NULL};
+    
+  bool ok = PyArg_ParseTupleAndKeywords
+    (args, keywds, 
+     "sssO|Oib", 
+     // I think python people argue about whether this should be 
+     // a const char** or a char**
+     const_cast<char**>(kwlist),
+     &file_name,
+     &tree_name, 
+     &output_file, 
+     &plots, 
+     &tag_leaves, 
+     &max_entries, 
+     &show_progress); 
+
+  if (!ok) return NULL;
+
+  LeafInfoPairs leaf_info_pairs = build_plot2d_vec(plots); 
+  if (PyErr_Occurred()) return NULL; 
+  std::vector<std::string> tag_leaves_vec = build_string_vec(tag_leaves); 
+  if (PyErr_Occurred()) return NULL; 
+
+  unsigned options = opt::def_opt; 
+  if (show_progress) options |= opt::show_progress; 
+
+  std::pair<int,int> n_pass_fail(std::make_pair(0,0)); 
+  try { 
+    n_pass_fail = pro_2d(file_name, 
+			 tree_name, 
+			 leaf_info_pairs, 
+			 tag_leaves_vec, 
+			 output_file, 
+			 max_entries, 
+			 options); 
+  }
+  catch (const std::runtime_error& e) { 
+    PyErr_SetString(PyExc_IOError,e.what()); 
+    return 0; 
+  }
+  
+  return Py_BuildValue("ii",n_pass_fail.first, n_pass_fail.second); 
+
+  // --- make sure you call INCREF if you return Py_None
+  // Py_INCREF(Py_None);
+  // return Py_None;
+}
+
 
 
 static PyMethodDef keywdarg_methods[] = {
@@ -98,6 +175,9 @@ static PyMethodDef keywdarg_methods[] = {
   {"profile_fast", (PyCFunction)py_profile_fast, 
    METH_VARARGS | METH_KEYWORDS,
    doc_string},
+  {"pro2d", (PyCFunction)py_pro2d, 
+   METH_VARARGS | METH_KEYWORDS,
+   doc_2d},
   {NULL, NULL, 0, NULL}   /* sentinel */
 };
 

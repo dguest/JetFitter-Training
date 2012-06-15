@@ -138,7 +138,7 @@ std::pair<int,int> profile_fast(std::string file_name,
   assert(n_to_convert == int(converted_doubles.size())); 
 
   bool show_progress = options & opt::show_progress; 
-  int one_percent = n_entries / 100; 
+  int one_percent = max_entries / 100; 
 
   int n_cut = 0; 
   for (int entry_n = 0; entry_n < max_entries; entry_n++){ 

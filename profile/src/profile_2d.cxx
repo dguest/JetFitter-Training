@@ -95,8 +95,8 @@ std::pair<int,int> pro_2d(std::string file_name,
     if (x_bins < 0) x_bins = magic::DEF_2D_BINS; 
     if (y_bins < 0) y_bins = magic::DEF_2D_BINS; 
 
-    std::string hist_name = leaf_itr->first.name + "_vs_" + 
-      leaf_itr->second.name; 
+    std::string hist_name = leaf_itr->second.name + "_vs_" + 
+      leaf_itr->first.name; 
     double* x_ptr = double_buffer[leaf_itr->first.name]; 
     double* y_ptr = double_buffer[leaf_itr->second.name]; 
     
@@ -105,8 +105,8 @@ std::pair<int,int> pro_2d(std::string file_name,
        y_bins, leaf_itr->second.min, leaf_itr->second.max, y_ptr); 
     for (CheckBuffer::const_iterator check_itr = check_buffer.begin(); 
 	 check_itr != check_buffer.end(); check_itr++){ 
-      std::string filt_hist_name = leaf_itr->first.name + "_vs_" + 
-      leaf_itr->second.name + "_" + check_itr->first; 
+      std::string filt_hist_name = leaf_itr->second.name + "_vs_" + 
+      leaf_itr->first.name + "_" + check_itr->first; 
       hists[filt_hist_name] = new FilterHist2D
 	(x_bins, leaf_itr->first.min, leaf_itr->first.max, x_ptr, 
 	 y_bins, leaf_itr->second.min, leaf_itr->second.max, y_ptr, 
@@ -116,7 +116,7 @@ std::pair<int,int> pro_2d(std::string file_name,
 
 
   bool show_progress = options & opt::show_progress; 
-  int one_percent = n_entries / 100; 
+  int one_percent = max_entries / 100; 
 
   int n_cut = 0; 
   for (int entry_n = 0; entry_n < max_entries; entry_n++){ 

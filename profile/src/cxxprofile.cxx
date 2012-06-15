@@ -90,14 +90,12 @@ PyObject* py_profile_fast(PyObject *self,
 }
 
 static const char* doc_2d = 
-  "profile_fast"
-  "(in_file, tree, out_file, ints, doubles, tags, "
+  "pro2d"
+  "(in_file, tree, out_file, plots, tags, "
   "max_entries, show_progress) "
   "--> n_passed, n_failed\n"
   "Builds file 'output'.\n"
-  "'ints' and 'doubles' take a list of tuples (name, n_bins, min, max).\n"
-  "If not given, n_bins defaults to (max - min + 1) for int, "
-  "(n_entries / 100) for doubles";
+  "'plots' takes a list of pairs of tuples (name, n_bins, min, max).\n"; 
 
 PyObject* py_pro2d(PyObject *self, 
 		   PyObject *args, 

@@ -1,4 +1,5 @@
 #include "profile_fast.hh"
+#include "profile_common.hh"
 #include <string> 
 #include <stdexcept>
 #include <cassert>
@@ -183,11 +184,6 @@ Hists::~Hists() {
   }
 }
 
-CheckBuffer::~CheckBuffer() { 
-  for (iterator itr = begin(); itr != end(); itr++){ 
-    delete itr->second; 
-  }
-}
 
 FilterHist::FilterHist(int n_bins, double min, double max, 
 		       double* in_buffer, int* check_buffer): 
@@ -221,27 +217,3 @@ int FilterHist::fill()
   return 1; 
 }
 
-RangeCut::RangeCut(double* value, double lower, double upper): 
-  m_value(value), 
-  m_lower(lower), 
-  m_upper(upper) 
-{
-}
-
-bool RangeCut::in_range() const 
-{
-  bool above = *m_value >= m_lower; 
-  bool below = *m_value <= m_upper; 
-  return above && below; 
-}
-
-bool is_in_range(const std::vector<RangeCut>& cuts)
-{
-  for (std::vector<RangeCut>::const_iterator itr = cuts.begin(); 
-	 itr != cuts.end(); itr++){ 
-    if (!itr->in_range()) { 
-      return false; 
-    }
-  }
-  return true; 
-}

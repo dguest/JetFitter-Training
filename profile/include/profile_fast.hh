@@ -6,26 +6,10 @@
 #include <utility> // pair
 #include <map>
 #include "TH1D.h"
+#include "profile_constants.hh"
+#include "profile_common.hh"
 
 class TChain; 
-
-namespace opt { 
-  const unsigned show_progress = 1u << 0; 
-
-  const unsigned def_opt       = 0; 
-}
-
-struct LeafInfo
-{
-  std::string name; 
-  double max; 
-  double min; 
-  int n_bins; 
-};
-
-namespace magic { 
-  const int MAX_AUTO_BINS = 100000; 
-} 
 
 class FilterHist: public TH1D
 {
@@ -41,15 +25,6 @@ private:
   int* m_check_buffer; 
 };
 
-class RangeCut { 
-public: 
-  RangeCut(double* value, double lower, double upper); 
-  bool in_range() const; 
-private: 
-  double* m_value; 
-  double m_lower; 
-  double m_upper; 
-}; 
 
 class Hists : public std::map<std::string,FilterHist*>
 {
@@ -57,14 +32,8 @@ public:
   ~Hists(); 
 }; 
 
-class CheckBuffer: public std::map<std::string,int*> 
-{
-public: 
-  ~CheckBuffer(); 
-};
 
 
-bool is_in_range(const std::vector<RangeCut>&); 
 
 std::pair<int,int> profile_fast(std::string file, 
 				std::string tree, 

@@ -42,9 +42,10 @@ def train_and_test(input_files, testing_dataset,
                    do_test = False, 
                    ): 
 
+
     double_variables, int_variables = rds.get_allowed_rds_variables(
         input_files = input_files, 
-        jet_collection = jet_collection)
+        full_dir_name = jet_collection + '_' + jet_tagger)
 
     if working_dir is None: 
         working_dir = jet_collection

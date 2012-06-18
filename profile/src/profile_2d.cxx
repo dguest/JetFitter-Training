@@ -61,11 +61,20 @@ std::pair<int,int> pro_2d(std::string file_name,
 
   for (LeafInfoPairs::const_iterator itr = plots.begin(); 
        itr != plots.end(); itr++){ 
+    // reserve buffers for value leafs
     if (!double_buffer.count(itr->first.name) )
       double_buffer[itr->first.name] = new double; 
     if (!double_buffer.count(itr->second.name) )
       double_buffer[itr->second.name] = new double; 
+    
+    // and for wt leafs 
+    if (!double_buffer.count(itr->first.wt_name) )
+      double_buffer[itr->first.name] = new double; 
+    if (!double_buffer.count(itr->second.wt_name) )
+      double_buffer[itr->second.name] = new double; 
   }
+
+  // set all (double) branches
   for (DoubleBufferMap::const_iterator itr = 
 	 double_buffer.begin(); 
        itr != double_buffer.end(); 
@@ -86,6 +95,8 @@ std::pair<int,int> pro_2d(std::string file_name,
 
   Hists2D hists; 
 
+  // TODO: this could be simplified if I made the FilterHist2D constructor 
+  //       accept two copies of LeafInfo
   for (LeafInfoPairs::const_iterator leaf_itr = plots.begin(); 
        leaf_itr != plots.end(); 
        leaf_itr++){ 
@@ -99,6 +110,15 @@ std::pair<int,int> pro_2d(std::string file_name,
       leaf_itr->first.name; 
     double* x_ptr = double_buffer[leaf_itr->first.name]; 
     double* y_ptr = double_buffer[leaf_itr->second.name]; 
+    
+    double* x_wt_ptr = 0; 
+    double* y_wt_ptr = 0; 
+    if (leaf_itr->first.wt_name.size() != 0) { 
+      x_wt_ptr = double_buffer[leaf_itr->first.wt_name]; 
+    }
+    if (leaf_itr->second.wt_name.size() != 0) { 
+      y_wt_ptr = double_buffer[leaf_itr->second.wt_name]; 
+    }
     
     hists[hist_name] = new FilterHist2D
       (x_bins, leaf_itr->first.min, leaf_itr->first.max, x_ptr, 
@@ -154,17 +174,46 @@ Hists2D::~Hists2D() {
   }
 }
 
+FilterHist2D::FilterHist2D(const LeafInfo& x, const LeafInfo& y, 
+			   const DoubleBufferMap& buffer_locations, 
+			   int* check_buffer): 
+  TH2D(boost::lexical_cast<std::string>(rand()).c_str(),"",
+       x.n_bins, x.min, x.max, y.n_bins, y.min, y.max), 
+  m_check_buffer(check_buffer), 
+  m_x_wt_buffer(0), 
+  m_y_wt_buffer(0)
+{
+  assert(buffer_locations.count(x.name)); 
+  assert(buffer_locations.count(y.name)); 
+  assert(x.wt_name.size() == 0 || buffer_locations.count(x.wt_name)); 
+  assert(y.wt_name.size() == 0 || buffer_locations.count(y.wt_name)); 
+
+  m_x_buffer = buffer_locations.find(x.name)->second; 
+  m_y_buffer = buffer_locations.find(y.name)->second; 
+
+  if (x.wt_name.size() != 0) { 
+    m_x_wt_buffer = buffer_locations.find(x.wt_name)->second; 
+  }
+  if (y.wt_name.size() != 0) { 
+    m_y_wt_buffer = buffer_locations.find(y.wt_name)->second; 
+  }
+
+}
 
 FilterHist2D::FilterHist2D(int x_bins, double x_min, double x_max, 
 			   double* x_buffer,
 			   int y_bins, double y_min, double y_max, 
 			   double* y_buffer, 
-			   int* check_buffer):  
+			   int* check_buffer, 
+			   double* x_wt_buffer, 
+			   double* y_wt_buffer):  
   TH2D(boost::lexical_cast<std::string>(rand()).c_str(),"",
        x_bins,x_min, x_max, y_bins, y_min, y_max), 
   m_x_buffer(x_buffer), 
   m_y_buffer(y_buffer), 
-  m_check_buffer(check_buffer)
+  m_check_buffer(check_buffer), 
+  m_x_wt_buffer(x_wt_buffer), 
+  m_y_wt_buffer(y_wt_buffer)
 {
 }
 
@@ -185,10 +234,20 @@ int FilterHist2D::fill()
   if (m_check_buffer) { 
     pass_check = *m_check_buffer; 
   }
-  if (!pass_check) return 0; 
+  if (!pass_check) return 0;
 
+  // if there are weights, use this
+  if (m_x_wt_buffer || m_y_wt_buffer) { 
+    double x_wt = m_x_wt_buffer ? *m_x_wt_buffer : 1.0; 
+    double y_wt = m_y_wt_buffer ? *m_y_wt_buffer : 1.0; 
+    double wt = x_wt * y_wt; 
+    Fill(*m_x_buffer,*m_y_buffer, wt); 
+    return 0; 
+  }
+
+  // unweighted way to do things
   Fill(*m_x_buffer,*m_y_buffer); 
-  return 1; 
+  return 0; 
 }
 
 DoubleBufferMap::~DoubleBufferMap() { 

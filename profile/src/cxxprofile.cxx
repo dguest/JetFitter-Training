@@ -324,17 +324,22 @@ LeafInfo build_leaf_info(PyObject* info_tuple) {
   PyObject* max = 0; 
   if (tup_size - tuple_index == 3) { 
     PyObject* n_bins = PyTuple_GetItem(info_tuple, tuple_index); 
+    tuple_index++; 
     if (!PyInt_Check(n_bins) || PyInt_AsLong(n_bins) < 1 ){ 
       PyErr_SetString(PyExc_IOError,"n_bins must be an int > 1"); 
       return i; 
     }
     i.n_bins = PyInt_AsLong(n_bins); 
-    min = PyTuple_GetItem(info_tuple, tuple_index + 1); 
-    max = PyTuple_GetItem(info_tuple, tuple_index + 2); 
+    min = PyTuple_GetItem(info_tuple, tuple_index); 
+    tuple_index++; 
+    max = PyTuple_GetItem(info_tuple, tuple_index); 
   }
   else { 
-    min = PyTuple_GetItem(info_tuple, tuple_index + 1); 
-    max = PyTuple_GetItem(info_tuple, tuple_index + 2); 
+    assert(tup_size - tuple_index == 2); 
+    min = PyTuple_GetItem(info_tuple, tuple_index); 
+    tuple_index++; 
+    max = PyTuple_GetItem(info_tuple, tuple_index); 
+    tuple_index++; 
     if (PyInt_Check(min) && PyInt_Check(max) ) { 
       i.n_bins = -2; 		// -2 = calculate from range
     }

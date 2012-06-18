@@ -15,6 +15,7 @@ ROOT.PyConfig.IgnoreCommandLineOptions = True
 from jetnet import training, pyprep, profile, rds, process
 from jetnet.perf import rejection, performance
 import os, sys
+from math import log, exp
 from warnings import warn
 
 from argparse import ArgumentParser
@@ -68,6 +69,10 @@ def make_flat_ntuple(
                     jet_tagger = jet_tagger, 
                     output_file = small_rds_path)
             
+        pt_low, pt_high = (15.0, 250.0)
+        log_span = log(pt_high) - log(pt_low)
+        log_range = [log(pt_low) + i * log_span / 10 for i in xrange(11)]
+        pt_bins = [exp(x) for x in log_range]
 
         from jetnet import cxxprofile
         cxxprofile.pro2d(

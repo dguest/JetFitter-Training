@@ -8,6 +8,7 @@
 struct LeafInfo
 {
   std::string name; 
+  std::string wt_name; 
   double max; 
   double min; 
   int n_bins; 

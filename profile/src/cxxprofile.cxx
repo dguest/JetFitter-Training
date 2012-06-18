@@ -270,21 +270,34 @@ LeafInfoPairs build_plot2d_vec(PyObject* list)
 LeafInfo build_leaf_info(PyObject* info_tuple) { 
   LeafInfo i; 
   int tup_size = PyTuple_Size(info_tuple); 
-  if (tup_size < 3 || tup_size > 4) { 
+  if (tup_size < 3 || tup_size > 5) { 
     PyErr_SetString(PyExc_IOError,"leaf tuple must have 3 or 4 values:"
-		    "(name, n_bin, min, max) or (name, min, max)"); 
+		    "(name, [weight_name, n_bins,] min, max)"); 
     return i; 
   }
 
-  PyObject* name = PyTuple_GetItem(info_tuple, 0); 
+  int tuple_index = 0; 
+
+  PyObject* name = PyTuple_GetItem(info_tuple, tuple_index); 
   if (!PyString_Check(name)){
     PyErr_SetString(PyExc_IOError,
 		    "first leaf tuple values must be a string"); 
     return i; 
   }
   i.name = PyString_AsString(name); 
+  tuple_index++; 
 
-  for (int n = 1; n < tup_size; n++){ 
+  PyObject* wt_name = PyTuple_GetItem(info_tuple, tuple_index); 
+  if (PyString_Check(wt_name) ) { 
+    i.wt_name = PyString_AsString(wt_name); 
+    tuple_index++; 
+  }
+  else { 
+    i.wt_name = ""; 
+  }
+
+  // make sure everything else is a number 
+  for (int n = tuple_index; n < tup_size; n++){ 
     PyObject* number = PyTuple_GetItem(info_tuple,n); 
     if (!PyNumber_Check(number)) { 
       PyErr_SetString(PyExc_IOError,"leaf tuple values must be numbers"); 
@@ -294,19 +307,19 @@ LeafInfo build_leaf_info(PyObject* info_tuple) {
 
   PyObject* min = 0; 
   PyObject* max = 0; 
-  if (tup_size == 4) { 
-    PyObject* n_bins = PyTuple_GetItem(info_tuple, 1); 
+  if (tup_size - tuple_index == 3) { 
+    PyObject* n_bins = PyTuple_GetItem(info_tuple, tuple_index); 
     if (!PyInt_Check(n_bins) || PyInt_AsLong(n_bins) < 1 ){ 
       PyErr_SetString(PyExc_IOError,"n_bins must be an int > 1"); 
       return i; 
     }
     i.n_bins = PyInt_AsLong(n_bins); 
-    min = PyTuple_GetItem(info_tuple,2); 
-    max = PyTuple_GetItem(info_tuple,3); 
+    min = PyTuple_GetItem(info_tuple, tuple_index + 1); 
+    max = PyTuple_GetItem(info_tuple, tuple_index + 2); 
   }
   else { 
-    min = PyTuple_GetItem(info_tuple,1); 
-    max = PyTuple_GetItem(info_tuple,2); 
+    min = PyTuple_GetItem(info_tuple, tuple_index + 1); 
+    max = PyTuple_GetItem(info_tuple, tuple_index + 2); 
     if (PyInt_Check(min) && PyInt_Check(max) ) { 
       i.n_bins = -2; 		// -2 = calculate from range
     }

@@ -270,9 +270,10 @@ LeafInfoPairs build_plot2d_vec(PyObject* list)
 LeafInfo build_leaf_info(PyObject* info_tuple) { 
   LeafInfo i; 
   int tup_size = PyTuple_Size(info_tuple); 
-  if (tup_size < 3 || tup_size > 5) { 
-    PyErr_SetString(PyExc_IOError,"leaf tuple must have 3 or 4 values:"
-		    "(name, [weight_name, n_bins,] min, max)"); 
+  if (tup_size < 2 || tup_size > 5) { 
+    PyErr_SetString(PyExc_IOError,"leaf tuple must be of form:"
+		    "(name, [weight_name, n_bins,] min, max)"
+		    "or (name, [weight_name,] bin_div_list)"); 
     return i; 
   }
 
@@ -294,6 +295,18 @@ LeafInfo build_leaf_info(PyObject* info_tuple) {
   }
   else { 
     i.wt_name = ""; 
+  }
+
+  if (PyList_Check(PyTuple_GetItem(info_tuple, tuple_index))) { 
+    if (tup_size != tuple_index) { 
+      PyErr_SetString(PyExc_IOError,"found list as non-terminal entry in "
+		      "leaf info tuple"); 
+      return i; 
+    }
+    PyObject* bins_list = PyTuple_GetItem(info_tuple,tuple_index); 
+    i.bin_bounds = build_double_vec(bins_list); 
+    i.n_bins = i.bin_bounds.size() + 1; 
+    return i; 
   }
 
   // make sure everything else is a number 
@@ -331,6 +344,20 @@ LeafInfo build_leaf_info(PyObject* info_tuple) {
   i.min = PyFloat_AsDouble(min); 
   i.max = PyFloat_AsDouble(max); 
   return i; 
+}
+
+std::vector<double> build_double_vec(PyObject* list) { 
+  std::vector<double> vec; 
+  int n_entries = PyList_Size(list); 
+  for (int n = 0; n < n_entries; n++) { 
+    PyObject* py_double = PyList_GetItem(list, n); 
+    double the_double = PyFloat_AsDouble(py_double); 
+    if (PyErr_Occurred()) { 
+      return vec; 
+    }
+    vec.push_back(the_double); 
+  }
+  return vec; 
 }
 
 // void dummy() { 

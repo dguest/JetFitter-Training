@@ -200,6 +200,41 @@ FilterHist2D::FilterHist2D(const LeafInfo& x, const LeafInfo& y,
   }
   if (y.wt_name.size() != 0) { 
     m_y_wt_buffer = buffer_locations.find(y.wt_name)->second; 
+  } 
+
+  // rebinning for variable bin sizes
+  // written while ROOT documentation was down 
+  if (x.bin_bounds.size() != 0 || y.bin_bounds.size() != 0) { 
+    assert(x.bin_bounds.size() == unsigned(x.n_bins + 1) || 
+	   x.bin_bounds.size() == 0); 
+    assert(y.bin_bounds.size() == unsigned(y.n_bins + 1) || 
+	   y.bin_bounds.size() == 0); 
+    double* x_bins = new double[x.n_bins + 1]; 
+    double* y_bins = new double[y.n_bins + 1]; 
+    for (int iii = 0; iii < x.n_bins; iii++) { 
+      if (x.bin_bounds.size() > 0) { 
+	x_bins[iii] = x.bin_bounds.at(iii); 
+      }
+      else { 
+	double inc = (x.max - x.min) / x.n_bins; 
+	x_bins[iii] = x.min + inc * iii; 
+      }
+    }
+
+    for (int iii = 0; iii < y.n_bins; iii++) { 
+      if (y.bin_bounds.size() > 0) { 
+	y_bins[iii] = y.bin_bounds.at(iii); 
+      }
+      else { 
+	double inc = (y.max - y.min) / y.n_bins; 
+	y_bins[iii] = y.min + inc * iii; 
+      }
+    }
+
+    SetBins(x.n_bins, x_bins, y.n_bins, y_bins); 
+
+    delete x_bins; 
+    delete y_bins; 
   }
 
 }

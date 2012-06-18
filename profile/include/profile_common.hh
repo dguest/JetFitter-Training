@@ -12,6 +12,7 @@ struct LeafInfo
   double max; 
   double min; 
   int n_bins; 
+  std::vector<double> bin_bounds; 
 };
 
 class RangeCut { 

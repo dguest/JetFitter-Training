@@ -225,6 +225,7 @@ PyObject* make_ntuples_ptcat(PyObject *self,
 
 static const char *flat_ntuple_kwlist[] = {
   "input_files",
+  "weight_file", 
   "int_variables", 
   "double_variables", 
   "observer_discriminators",
@@ -241,6 +242,7 @@ PyObject* make_flat_ntuple(PyObject *self,
 			   PyObject *keywds)
 {
   PyObject* input_file_list; 
+  const char* weight_file = ""; 
   PyObject* int_variables = 0; 
   PyObject* double_variables = 0; 
   PyObject* observer_discriminators = 0; 
@@ -252,11 +254,12 @@ PyObject* make_flat_ntuple(PyObject *self,
 
     
   bool ok = PyArg_ParseTupleAndKeywords
-    (args, keywds, "O|OOOOsssb", 
+    (args, keywds, "O|sOOOOsssb", 
      // this function should take a const, and 
      // may be changed. until then we'll cast
      const_cast<char**>(flat_ntuple_kwlist),
      &input_file_list,
+     &weight_file, 
      &int_variables, 
      &double_variables, 
      &observer_discriminators, 
@@ -306,7 +309,8 @@ PyObject* make_flat_ntuple(PyObject *self,
 		 pt_cat_vec, 
 		 jet_collection_name, 
 		 jet_tagger, 
-		 output_file_name); 
+		 output_file_name, 
+		 weight_file); 
     }
     catch (const std::runtime_error& e) { 
       PyErr_SetString(PyExc_IOError,e.what()); 

@@ -56,5 +56,15 @@ double WeightBuilder::lookup(int flavor, double x, double y) const {
   }
   TH2D* hist = the_hist->second; 
   int the_bin = hist->FindBin(x, y); 
+
+  int bin_x = hist->GetXaxis()->FindBin(x); 
+  if (bin_x == 0 || bin_x > hist->GetXaxis()->GetNbins() ) { 
+    return 0; 
+  }
+  int bin_y = hist->GetYaxis()->FindBin(y); 
+  if (bin_y == 0 || bin_y > hist->GetYaxis()->GetNbins() ) { 
+    return 0; 
+  }
+
   return hist->GetBinContent(the_bin); 
 }

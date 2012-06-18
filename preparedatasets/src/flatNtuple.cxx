@@ -4,6 +4,7 @@
 #include <iostream>
 #include "flatNtuple.hh"
 #include "BinTool.hh"
+#include "WeightBuilder.hh"
 #include <cmath>
 // #include <cstdlib> // for rand, srand
 // #include <ctime> 
@@ -27,6 +28,7 @@ int flatNtuple(SVector input_files,
 	       std::string jetCollection,
 	       std::string jet_tagger, 
 	       std::string output_file_name, 
+	       std::string weights_file, 
 	       const unsigned flags) 
 {
   BinTool pt_categories(pt_cat_vec); 
@@ -132,6 +134,7 @@ int flatNtuple(SVector input_files,
   used_branches.insert("bottom"); 
   used_branches.insert("charm"); 
   used_branches.insert("light"); 
+  used_branches.insert("weight"); 
   used_branches.insert("cat_pT"); 
   used_branches.insert("cat_eta"); 
   used_branches.insert("cat_flavour"); 
@@ -178,11 +181,20 @@ int flatNtuple(SVector input_files,
     truth_branches[itr->first] = truth_branch; 
   }
 
+  WeightBuilder* flav_wt_ptr = 0; 
+  if (weights_file.size() != 0) {  
+    std::string base = "JetEta_vs_JetPt"; 
+    flav_wt_ptr = new WeightBuilder(flavor_to_branch, weights_file, base); 
+  }
+  boost::scoped_ptr<WeightBuilder> flav_weights(flav_wt_ptr); 
+
   // --- varaibles set in slimming 
+  double weight = 1; 
   Int_t cat_flavour = 0;
   Int_t cat_pT      = 0;
   Int_t cat_eta     = 0;
 
+  output_tree.Branch("weight",&weight); 
   output_tree.Branch("cat_pT",&cat_pT,"cat_pT/I");
   output_tree.Branch("cat_eta",&cat_eta,"cat_eta/I");
   output_tree.Branch("cat_flavour",&cat_flavour,"cat_flavour/I");  
@@ -269,8 +281,11 @@ int flatNtuple(SVector input_files,
       cat_pT=pt_categories.get_bin(JetPt);
       cat_eta=abs_eta_categories.get_bin(fabs(JetEta)); 
 
+      
       // lookup weight 
-      // **************** work do here ***************
+      if (flav_weights) { 
+	weight = flav_weights->lookup(cat_flavour, JetPt, JetEta); 
+      }
 
       //read the others only on demand (faster)
       for (unsigned short j = 0; j < observer_chains.size(); j++){ 

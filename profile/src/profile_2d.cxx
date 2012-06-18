@@ -106,16 +106,32 @@ std::pair<int,int> pro_2d(std::string file_name,
     if (x_bins < 0) x_bins = magic::DEF_2D_BINS; 
     if (y_bins < 0) y_bins = magic::DEF_2D_BINS; 
 
-    std::string hist_name = leaf_itr->second.name + "_vs_" + 
-      leaf_itr->first.name; 
+    std::string x_var_name = leaf_itr->first.name; 
+    std::string y_var_name = leaf_itr->second.name; 
 
+    if (leaf_itr->first.wt_name.size() != 0) { 
+      x_var_name.append("_" + leaf_itr->first.wt_name); 
+    }
+    if (leaf_itr->second.wt_name.size() != 0) { 
+      y_var_name.append("_" + leaf_itr->second.wt_name); 
+    }
+
+    std::string hist_name = y_var_name + "_vs_" + x_var_name; 
+
+    if (hists.count(hist_name) ) { 
+      throw std::runtime_error("attempted to redefine" + hist_name); 
+    }
     hists[hist_name] = new FilterHist2D(leaf_itr->first, leaf_itr->second, 
 					double_buffer); 
 
     for (CheckBuffer::const_iterator check_itr = check_buffer.begin(); 
 	 check_itr != check_buffer.end(); check_itr++){ 
-      std::string filt_hist_name = leaf_itr->second.name + "_vs_" + 
-      leaf_itr->first.name + "_" + check_itr->first; 
+      std::string filt_hist_name = hist_name + "_" + check_itr->first; 
+
+      if (hists.count(filt_hist_name) ) { 
+	throw std::runtime_error("attempted to redefine" + filt_hist_name); 
+      }
+
       hists[filt_hist_name] = new FilterHist2D
 	(leaf_itr->first, leaf_itr->second, 
 	 double_buffer,check_itr->second); 

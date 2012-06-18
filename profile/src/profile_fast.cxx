@@ -74,6 +74,10 @@ std::pair<int,int> profile_fast(std::string file_name,
   for (LeafItr leaf_itr = int_leaves.begin(); 
        leaf_itr != int_leaves.end(); 
        leaf_itr++){ 
+
+    // TODO: not implemented, but should be
+    assert(leaf_itr->wt_name.size() == 0); 
+
     int* the_int = new int; 
     int_buffer.push_back(the_int); 
     tree->SetBranchStatus(leaf_itr->name.c_str(),1); 
@@ -111,6 +115,10 @@ std::pair<int,int> profile_fast(std::string file_name,
   for (LeafItr leaf_itr = double_leaves.begin(); 
        leaf_itr != double_leaves.end(); 
        leaf_itr++){ 
+
+    // TODO: not implemented, but should be
+    assert(leaf_itr->wt_name.size() == 0); 
+
     double* the_double = new double; 
     double_buffer.push_back(the_double); 
     tree->SetBranchStatus(leaf_itr->name.c_str(),1); 

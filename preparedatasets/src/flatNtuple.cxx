@@ -148,6 +148,8 @@ int flatNtuple(SVector input_files,
   output_tree.Branch("JetPt",&JetPt,"JetPt/D");
   output_tree.Branch("JetEta",&JetEta,"JetEta/D");
 
+  // flavors 
+  
 
   // --- varaibles set in slimming 
   Int_t cat_flavour = 0;

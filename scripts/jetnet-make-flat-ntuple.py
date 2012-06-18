@@ -33,6 +33,7 @@ _default_observers = [
 def make_flat_ntuple(
     input_files, 
     pt_divisions, 
+    weight_file = '', 
     jet_collection = 'BTag_AntiKt4TopoEMJetsReTagged', 
     jet_tagger = 'JetFitterCharm', 
     output_path = None, 
@@ -41,10 +42,42 @@ def make_flat_ntuple(
     do_test = False, 
     skim_function = pyprep.make_flat_ntuple, 
     ): 
+    args = locals()             # may be needed for recursive calls
 
     double_variables, int_variables = rds.get_allowed_rds_variables(
         input_files = input_files, 
         full_dir_name = '_'.join([jet_collection,jet_tagger]))
+
+    # --- make weights if a name is given 
+    if weight_file and not os.path.isfile(weight_file): 
+        
+        # build a light ntuple if one doesn't exist
+        if os.path.isfile(rds_path): 
+            small_rds_path = rds_path 
+
+        else: 
+            print 'making flat ntuple to build weight file'
+
+            rds_dir, rds_name = os.path.split(rds_path)
+            small_rds = '.'.join(rds_name.split('.')[:-1]) + '_small.root'
+            small_rds_path = os.path.join(rds_dir,small_rds)
+            if not os.path.isfile(small_rds_path): 
+                pyprep.make_flat_ntuple(
+                    input_files = input_files, 
+                    jet_collection = jet_collection, 
+                    jet_tagger = jet_tagger, 
+                    output_file = small_rds_path)
+            
+
+        from jetnet import cxxprofile
+        cxxprofile.pro2d(
+            in_file = small_rds_path, 
+            tree = 'SVTree', 
+            plots = [( ('JetPt', 30,15.0,200),
+                       ('JetEta',10,-2.5,2.5) )], 
+            tags = ['bottom','charm','light'], 
+            out_file = weight_file, 
+            show_progress = True)
 
     # --- rds part
 
@@ -58,6 +91,7 @@ def make_flat_ntuple(
     else: 
         skim_function(
             input_files = input_files, 
+            weight_file = weight_file, 
             double_variables = double_variables, 
             int_variables = int_variables, 
             observer_discriminators = observer_discriminators, 
@@ -68,6 +102,8 @@ def make_flat_ntuple(
             debug = do_test, 
             )
 
+            
+                         
 
     
 if __name__ == '__main__': 
@@ -107,7 +143,8 @@ if __name__ == '__main__':
     config_file_name = options.config
     flavor_weights = {}
     if os.path.isfile(config_file_name): 
-        config = SafeConfigParser()
+        config = SafeConfigParser(
+            {'flavor_wt_file':''})
         config.read(config_file_name)
         pt_divisions = map(
             float,config.get('preprocessing','pt_divisions').split())
@@ -116,6 +153,7 @@ if __name__ == '__main__':
             'preprocessing','observer_discriminators').split()
         jet_tagger = config.get('preprocessing','jet_tagger')
         jet_collection = config.get('preprocessing','jet_collection')
+        flavor_wt_file = config.get('caching','flavor_wt_file')
         if 'ARRAYID' in jet_tagger: 
             the_array_id = os.environ['PBS_ARRAYID'].rjust(2,'0')
             jet_tagger = jet_tagger.replace('ARRAYID',the_array_id)
@@ -132,6 +170,7 @@ if __name__ == '__main__':
     print 'making flat ntuple' 
     make_flat_ntuple(
         input_files, 
+        weight_file = flavor_wt_file, 
         do_test = do_test, 
         observer_discriminators = observer_discriminators, 
         jet_collection = jet_collection, 

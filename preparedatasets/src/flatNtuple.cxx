@@ -248,7 +248,6 @@ int flatNtuple(SVector input_files,
   //============ the real stuff starts here ============
   //=======================================================
 
-  std::cout << "counting entries, will take a while\n"; 
   Int_t num_entries = treeJF->GetEntries();
 
   std::cout << "Total entries are: " << num_entries << std::endl;

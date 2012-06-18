@@ -120,14 +120,21 @@ int flatNtuple(SVector input_files,
     throw std::runtime_error("could not load " + tree_name ); 
   }
 
-  // --- variables used in slimming
-  // TODO: these probably aren't used in the flat ntuple, 
-  //       get rid of the hardcoding 
-
+  // --- variables used in slimming get passed through, make sure they aren't 
+  //     set as observers
+  
   std::set<std::string> used_branches; 
   used_branches.insert("Flavour"); 
   used_branches.insert("JetPt"  ); 
   used_branches.insert("JetEta" ); 
+
+  // also ignore any variables we're already setting
+  used_branches.insert("bottom"); 
+  used_branches.insert("charm"); 
+  used_branches.insert("light"); 
+  used_branches.insert("cat_pT"); 
+  used_branches.insert("cat_eta"); 
+  used_branches.insert("cat_flavour"); 
 
   int Flavour; 
   Double_t JetPt;
@@ -148,23 +155,36 @@ int flatNtuple(SVector input_files,
   output_tree.Branch("JetPt",&JetPt,"JetPt/D");
   output_tree.Branch("JetEta",&JetEta,"JetEta/D");
 
+
   // flavors 
-  
+  // TODO: consider adding taus into this mix? 
+  std::map<int,std::string> flavor_to_branch; 
+  flavor_to_branch[5] = "bottom"; 
+  flavor_to_branch[4] = "charm"; 
+  flavor_to_branch[1] = "light";
+
+  std::map<int,int*> truth_branches;   
+
+  for (std::map<int,std::string>::const_iterator 
+	 itr = flavor_to_branch.begin(); 
+       itr != flavor_to_branch.end(); 
+       itr++) {
+    // create the output branch 
+    int* truth_branch = new int; 
+    int_observer_write_buffers.push_back(truth_branch); 
+    output_tree.Branch(itr->second.c_str(), truth_branch); 
+    
+    // save a pointer so we can zero the branch 
+    truth_branches[itr->first] = truth_branch; 
+  }
 
   // --- varaibles set in slimming 
   Int_t cat_flavour = 0;
-  Int_t bottom      = 0;
-  Int_t charm       = 0;
-  Int_t light       = 0;
   Int_t cat_pT      = 0;
   Int_t cat_eta     = 0;
 
   output_tree.Branch("cat_pT",&cat_pT,"cat_pT/I");
   output_tree.Branch("cat_eta",&cat_eta,"cat_eta/I");
-
-  output_tree.Branch("bottom",&bottom,"bottom/I");
-  output_tree.Branch("charm",&charm,"charm/I");
-  output_tree.Branch("light",&light,"light/I");
   output_tree.Branch("cat_flavour",&cat_flavour,"cat_flavour/I");  
 
 
@@ -215,9 +235,6 @@ int flatNtuple(SVector input_files,
   //=======================================================
   //============ the real stuff starts here ============
   //=======================================================
-  
-
-  //for the NN you need to get the number of b,c or light jets
 
   std::cout << "counting entries, will take a while\n"; 
   Int_t num_entries = treeJF->GetEntries();
@@ -238,33 +255,22 @@ int flatNtuple(SVector input_files,
 	JetPt > magic::min_jet_pt_gev ) {
 
       cat_flavour = abs(Flavour);
+
+      // for now I guess we skip the taus... 
+      if ( !truth_branches.count(cat_flavour) ) continue; 
+
+      // zero truth branches (maybe this structure should be a vector<pair>)
+      for (std::map<int,int*>::iterator tr_itr = truth_branches.begin(); 
+	   tr_itr != truth_branches.end(); tr_itr++) { 
+	*tr_itr->second = 0; 
+      }
+      *truth_branches[cat_flavour] = 1; 
+
       cat_pT=pt_categories.get_bin(JetPt);
       cat_eta=abs_eta_categories.get_bin(fabs(JetEta)); 
 
-      bottom=0;
-      charm=0;
-      light=0;
-
-      bool throwevent = false;
-
-      switch (cat_flavour){
-      case 5:
-	bottom = 1;
-	break;
-      case 4:
-	charm=1;
-	break;
-      case 1:
-	light=1;
-	break;
-
-      default:
-	throwevent=true;
-	break;
-          
-      } // end flavor switch 
-
-      if (throwevent) continue;
+      // lookup weight 
+      // **************** work do here ***************
 
       //read the others only on demand (faster)
       for (unsigned short j = 0; j < observer_chains.size(); j++){ 

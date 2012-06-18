@@ -108,29 +108,17 @@ std::pair<int,int> pro_2d(std::string file_name,
 
     std::string hist_name = leaf_itr->second.name + "_vs_" + 
       leaf_itr->first.name; 
-    double* x_ptr = double_buffer[leaf_itr->first.name]; 
-    double* y_ptr = double_buffer[leaf_itr->second.name]; 
-    
-    double* x_wt_ptr = 0; 
-    double* y_wt_ptr = 0; 
-    if (leaf_itr->first.wt_name.size() != 0) { 
-      x_wt_ptr = double_buffer[leaf_itr->first.wt_name]; 
-    }
-    if (leaf_itr->second.wt_name.size() != 0) { 
-      y_wt_ptr = double_buffer[leaf_itr->second.wt_name]; 
-    }
-    
-    hists[hist_name] = new FilterHist2D
-      (x_bins, leaf_itr->first.min, leaf_itr->first.max, x_ptr, 
-       y_bins, leaf_itr->second.min, leaf_itr->second.max, y_ptr); 
+
+    hists[hist_name] = new FilterHist2D(leaf_itr->first, leaf_itr->second, 
+					double_buffer); 
+
     for (CheckBuffer::const_iterator check_itr = check_buffer.begin(); 
 	 check_itr != check_buffer.end(); check_itr++){ 
       std::string filt_hist_name = leaf_itr->second.name + "_vs_" + 
       leaf_itr->first.name + "_" + check_itr->first; 
       hists[filt_hist_name] = new FilterHist2D
-	(x_bins, leaf_itr->first.min, leaf_itr->first.max, x_ptr, 
-	 y_bins, leaf_itr->second.min, leaf_itr->second.max, y_ptr, 
-	 check_itr->second); 
+	(leaf_itr->first, leaf_itr->second, 
+	 double_buffer,check_itr->second); 
     }
   }
 

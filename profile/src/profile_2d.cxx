@@ -68,10 +68,12 @@ std::pair<int,int> pro_2d(std::string file_name,
       double_buffer[itr->second.name] = new double; 
     
     // and for wt leafs 
-    if (!double_buffer.count(itr->first.wt_name) )
-      double_buffer[itr->first.name] = new double; 
-    if (!double_buffer.count(itr->second.wt_name) )
-      double_buffer[itr->second.name] = new double; 
+    if (!double_buffer.count(itr->first.wt_name) && 
+	itr->first.wt_name.size() != 0)
+      double_buffer[itr->first.wt_name] = new double; 
+    if (!double_buffer.count(itr->second.wt_name) &&
+	itr->second.wt_name.size() != 0)
+      double_buffer[itr->second.wt_name] = new double; 
   }
 
   // set all (double) branches
@@ -95,8 +97,6 @@ std::pair<int,int> pro_2d(std::string file_name,
 
   Hists2D hists; 
 
-  // TODO: this could be simplified if I made the FilterHist2D constructor 
-  //       accept two copies of LeafInfo
   for (LeafInfoPairs::const_iterator leaf_itr = plots.begin(); 
        leaf_itr != plots.end(); 
        leaf_itr++){ 

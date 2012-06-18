@@ -5,6 +5,7 @@
 #include <cstdlib> // rand
 #include <boost/lexical_cast.hpp>
 #include <stdexcept> 
+#include <cassert> 
 
 #include "TFile.h"
 #include "TH2D.h"
@@ -28,13 +29,15 @@ WeightBuilder::WeightBuilder(const std::map<int,std::string>& f2b,
     
     std::string hist_name = hist_base_name + "_" + itr->second; 
     std::string rand_name = boost::lexical_cast<std::string>(rand()); 
-    TH2D* loc_hist = dynamic_cast<TH2D*> 
-      (file.Get(hist_name.c_str())->Clone(rand_name.c_str())); 
-    if (!loc_hist) throw std::runtime_error("can't find " + hist_name); 
+    TH2D* num_hist = dynamic_cast<TH2D*>(base_hist->Clone(rand_name.c_str())); 
+    assert(num_hist); 
+
+    TH2D* denom_hist = dynamic_cast<TH2D*>(file.Get(hist_name.c_str())); 
+    if (!denom_hist) throw std::runtime_error("can't find " + hist_name); 
     
-    loc_hist->Divide(base_hist); 
+    num_hist->Divide(denom_hist); 
     
-    m_weight_hists[itr->first] = loc_hist; 
+    m_weight_hists[itr->first] = num_hist; 
   }
 }
 

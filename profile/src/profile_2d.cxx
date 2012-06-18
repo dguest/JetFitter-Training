@@ -211,7 +211,8 @@ FilterHist2D::FilterHist2D(const LeafInfo& x, const LeafInfo& y,
 	   y.bin_bounds.size() == 0); 
     double* x_bins = new double[x.n_bins + 1]; 
     double* y_bins = new double[y.n_bins + 1]; 
-    for (int iii = 0; iii < x.n_bins; iii++) { 
+
+    for (int iii = 0; iii < x.n_bins + 1; iii++) { 
       if (x.bin_bounds.size() > 0) { 
 	x_bins[iii] = x.bin_bounds.at(iii); 
       }
@@ -221,7 +222,7 @@ FilterHist2D::FilterHist2D(const LeafInfo& x, const LeafInfo& y,
       }
     }
 
-    for (int iii = 0; iii < y.n_bins; iii++) { 
+    for (int iii = 0; iii < y.n_bins + 1; iii++) { 
       if (y.bin_bounds.size() > 0) { 
 	y_bins[iii] = y.bin_bounds.at(iii); 
       }

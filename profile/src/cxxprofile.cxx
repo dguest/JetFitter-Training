@@ -4,6 +4,7 @@
 #include <string> 
 #include <vector>
 #include <stdexcept>
+#include <algorithm> // sort
 
 #include "cxxprofile.hh"
 #include "profile_fast.hh"
@@ -298,14 +299,15 @@ LeafInfo build_leaf_info(PyObject* info_tuple) {
   }
 
   if (PyList_Check(PyTuple_GetItem(info_tuple, tuple_index))) { 
-    if (tup_size != tuple_index) { 
+    if (tup_size != tuple_index + 1) { 
       PyErr_SetString(PyExc_IOError,"found list as non-terminal entry in "
 		      "leaf info tuple"); 
       return i; 
     }
     PyObject* bins_list = PyTuple_GetItem(info_tuple,tuple_index); 
     i.bin_bounds = build_double_vec(bins_list); 
-    i.n_bins = i.bin_bounds.size() + 1; 
+    std::sort(i.bin_bounds.begin(), i.bin_bounds.end()); 
+    i.n_bins = i.bin_bounds.size() - 1; 
     return i; 
   }
 

@@ -29,6 +29,7 @@ class RDSProcess(multiprocessing.Process):
         self._do_test = do_test
         self._flavor_weights = flavor_weights
         self._testing_ds = testing_dataset
+        self._do_more_diagnostics = do_more_diagnostics
 
     def run(self): 
 
@@ -112,7 +113,7 @@ class RDSProcess(multiprocessing.Process):
                                      print_and_exit = do_test) 
     
 
-        if not do_more_diagnostics: 
+        if not self._do_more_diagnostics: 
             return 
         
         if not self._testing_ds: 

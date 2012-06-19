@@ -31,6 +31,15 @@ namespace train {
   const unsigned defaults  = giacintos | throw_on_warn; 
 }
 
+struct TrainingInputs 
+{
+  std::string file; 
+  std::string output_dir; 
+  int n_iterations; 
+  int restart_training_from; 
+  int n_training_events; 
+}; 
+
 // --- for internal use
 struct TrainingSettings 
 {
@@ -47,6 +56,7 @@ struct TeachingVariables
 }; 
 
 const int N_PATTERNS_PER_UPDATE = 200;// || _2 = 200 (before 100) _3,_4=20
+const int DILUTION_FACTOR = 2; 
 
 bool is_flavor_tagged(const TeachingVariables&); 
 void copy_cat_trees(TFile& dest_file, const TFile& source_file); 
@@ -79,15 +89,10 @@ int copy_training_events(std::ostream& stream,
 void setup_jetnet(JetNet* jn); 
 
 
-void trainNN(std::string inputfile,
-	     std::string out_dir = "weights", 
-             int nIterations=10,
-             int dilutionFactor=2,
-	     int restartTrainingFrom = 0, 
+void trainNN(const TrainingInputs inputs, 
 	     std::vector<int> n_hidden_layer_nodes = train_nn::N_NODES, 
 	     std::vector<InputVariableInfo> = train_nn::INPUT_VARS, 
-	     FlavorWeights flavor_weights = train_nn::FLAVOR_WEIGHTS,  
-	     int n_training_events_target = -1, 
+	     const FlavorWeights flavor_weights = train_nn::FLAVOR_WEIGHTS,  
 	     const unsigned bit_flags = train::defaults);
 
 

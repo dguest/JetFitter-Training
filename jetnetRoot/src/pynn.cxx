@@ -30,22 +30,22 @@ extern "C" PyObject* train_py(PyObject *self,
 			      PyObject *args, 
 			      PyObject *keywds)
 {
+  TrainingInputs inputs; 
+
   const char* input_file; 
   const char* output_dir = "weights"; 
-  int n_iterations = 10; 
-  int dilution_factor = 2; 
+  inputs.n_iterations = 10; 
   PyObject* normalization = 0; 
   PyObject* nodes = 0; 
-  int restart_training_from = 0; 
+  inputs.restart_training_from = 0; 
   PyObject* flavor_weights = 0; 
-  int n_training_events_target = -1; 
+  inputs.n_training_events = -1; 
   bool debug = false; 
 
   const char *kwlist[] = {
     "reduced_dataset",
     "output_directory", 
     "n_iterations", 
-    "dilution_factor",
     "normalization", 
     "nodes", 
     "restart_training_from",
@@ -55,21 +55,23 @@ extern "C" PyObject* train_py(PyObject *self,
     NULL};
  
   if (!PyArg_ParseTupleAndKeywords
-      (args, keywds, "s|siiOOiOib", 
+      (args, keywds, "s|siOOiOib", 
        // this function should take a const, and 
        // may be changed, until then we'll cast
        const_cast<char**>(kwlist),
        &input_file, 
        &output_dir, 
-       &n_iterations, 
-       &dilution_factor, 
+       &inputs.n_iterations, 
        &normalization, 
        &nodes, 
-       &restart_training_from, 
+       &inputs.restart_training_from, 
        &flavor_weights, 
-       &n_training_events_target, 
+       &inputs.n_training_events, 
        &debug)
       ) return NULL;
+
+  inputs.file = input_file; 
+  inputs.output_dir = output_dir; 
 
   // --- parse input variables
   std::vector<InputVariableInfo> input_variable_info; 
@@ -126,7 +128,8 @@ extern "C" PyObject* train_py(PyObject *self,
   // --- dump debug info 
   if (debug){ 
     printf("in = %s, out dir = %s, itr = %i, rest from = %i, nodes: (", 
-  	   input_file, output_dir, n_iterations, restart_training_from); 
+  	   inputs.file.c_str(), inputs.output_dir.c_str(), 
+	   inputs.n_iterations, inputs.restart_training_from); 
     for (std::vector<int>::const_iterator itr = node_vec.begin(); 
 	 itr != node_vec.end(); 
 	 itr++){
@@ -153,15 +156,7 @@ extern "C" PyObject* train_py(PyObject *self,
     }
 
     try { 
-      trainNN(input_file, 
-	      output_dir, 
-	      n_iterations,
-	      dilution_factor,
-	      restart_training_from, 
-	      node_vec, 
-	      input_variable_info, 
-	      flavor_weights_struct, 
-	      n_training_events_target); 
+      trainNN(inputs, node_vec, input_variable_info, flavor_weights_struct); 
     }
     catch (const LoadReducedDSException& e){ 
       PyErr_SetString(PyExc_IOError,"could not load dataset"); 

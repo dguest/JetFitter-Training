@@ -279,6 +279,7 @@ PyObject* py_augment_tree(PyObject *self,
   PyObject* py_subset = 0; 
   const char* extension = "Aug"; 
   int max_entries = -1; 
+  bool show_progress = false; 
   const char* kwlist[] = {
     "in_file",
     "nn_file", 
@@ -289,11 +290,12 @@ PyObject* py_augment_tree(PyObject *self,
     "subset", 
     "extension", 
     "max_entries",
+    "show_progress", 
     NULL};
     
   bool ok = PyArg_ParseTupleAndKeywords
     (args, keywds, 
-     "ss|ssOOOsi", 
+     "ss|ssOOOsib", 
      // I think python people argue about whether this should be 
      // a const char** or a char**
      const_cast<char**>(kwlist),
@@ -305,7 +307,8 @@ PyObject* py_augment_tree(PyObject *self,
      &double_leaves, 
      &py_subset, 
      &extension, 
-     &max_entries); 
+     &max_entries, 
+     &show_progress); 
 
   if (!ok) return NULL;
 
@@ -318,6 +321,11 @@ PyObject* py_augment_tree(PyObject *self,
 
   std::set<std::string> subset(subset_vec.begin(), subset_vec.end()); 
 
+  unsigned options = 0; 
+  if (show_progress) { 
+    options |= augment::show_progress; 
+  }
+
   int ret_code = 0; 
   try { 
     ret_code = augment_tree
@@ -329,7 +337,8 @@ PyObject* py_augment_tree(PyObject *self,
        double_vec, 
        subset, 
        extension, 
-       max_entries); 
+       max_entries, 
+       options); 
   }
   catch (const std::runtime_error& e) { 
     PyErr_SetString(PyExc_IOError,e.what()); 

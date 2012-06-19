@@ -5,7 +5,7 @@
 #include <cmath> // log
 #include <utility> // pair
 #include <cstdlib> // rand, srand
-// #include <iostream> // for debugging
+#include <iostream> // for debugging
 #include "TFlavorNetwork.h"
 #include <boost/shared_ptr.hpp>
 #include <boost/scoped_ptr.hpp>
@@ -25,7 +25,8 @@ int augment_tree(std::string file_name,
 		 std::vector<std::string> double_vec, 
 		 std::set<std::string> subset, 
 		 std::string extension, 
-		 int max_entries) 
+		 int max_entries, 
+		 const unsigned options) 
 { 
 
   typedef std::vector<std::string> SVec;
@@ -125,7 +126,18 @@ int augment_tree(std::string file_name,
   if (max_entries < 0) max_entries = n_entries; 
   else max_entries = std::min(max_entries, n_entries); 
 
+  int one_percent = max_entries / 100; 
+
   for (int entry_n = 0; entry_n < max_entries; entry_n++) { 
+
+    if (options & augment::show_progress && 
+	(entry_n % one_percent == 0 || entry_n + 1 == max_entries) ) {
+      std::cout << boost::format
+	("\r%.1fM of %.1fM entries processed (%.0f%%)") 
+	% (float(entry_n) / 1e6) % (float(max_entries) / 1e6) 
+	% (float(entry_n) * 100 / float(max_entries) ); 
+      std::cout.flush(); 
+    }
     tree->GetEntry(entry_n); 
     
     // do the int conversion 
@@ -156,6 +168,11 @@ int augment_tree(std::string file_name,
     // fill tree 
     out_tree->Fill(); 
   }
+
+  if (options & augment::show_progress ) { 
+    std::cout << "\n"; 
+  }
+
   
   // save tree 
   out_file.WriteTObject(out_tree.get()); 

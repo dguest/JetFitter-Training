@@ -5,7 +5,7 @@ import ROOT
 ROOT.PyConfig.IgnoreCommandLineOptions = True
 ROOT.gROOT.SetBatch()           # don't draw (crashes subprocess)
 
-from jetnet import training, pyprep, profile
+from jetnet import training, pyprep, profile, utils
 from jetnet.perf import rejection, performance
 import os, sys, glob
 from warnings import warn
@@ -104,6 +104,34 @@ class RDSProcess(multiprocessing.Process):
         if not os.path.isdir(testing_dir): 
             os.mkdir(testing_dir)
     
+
+        if not self._testing_ds: 
+            self._testing_ds = reduced_dataset
+
+        augmented_tree = os.path.join(testing_dir, 'perf_ntuple.root') 
+        if not os.path.isfile(augmented_tree): 
+            # should wrap this in a function to close the file when done
+            
+            from ROOT import TFile
+            testing_ds_file = TFile(self._testing_ds)
+
+            the_tree = testing_ds_file.Get('SVTree')
+            all_vars_in_tree = utils.get_leaves_in_tree(the_tree)
+
+            from jetnet import pynn
+            pynn.augment_tree(
+                in_file = self._testing_ds, 
+                nn_file = weights_path, 
+                out_file = augmented_tree, 
+                ints = all_vars_in_tree['Int_t'], 
+                doubles = all_vars_in_tree['Double_t'], 
+                extension = 'NewTune', 
+                show_progress = True) 
+        
+
+        if not self._do_more_diagnostics: 
+            return 
+
         ovrtrn_hist_path = os.path.join(testing_dir,'overtraining_hists.root')
         if not os.path.isfile(ovrtrn_hist_path): 
             training.run_performance(reduced_dataset = reduced_dataset, 
@@ -111,13 +139,8 @@ class RDSProcess(multiprocessing.Process):
                                      output_file = ovrtrn_hist_path, 
                                      with_ip3d = True, 
                                      print_and_exit = do_test) 
-    
 
-        if not self._do_more_diagnostics: 
-            return 
         
-        if not self._testing_ds: 
-            self._testing_ds = reduced_dataset
         test_ntuple_path = os.path.join(testing_dir,'perf_ntuple.root')
         if not os.path.isfile(test_ntuple_path): 
             training.run_test_ntuple(

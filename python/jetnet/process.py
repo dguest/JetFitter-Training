@@ -28,6 +28,7 @@ class RDSProcess(multiprocessing.Process):
         self._training_variables = training_variables
         self._do_test = do_test
         self._flavor_weights = flavor_weights
+        self._testing_ds = testing_dataset
 
     def run(self): 
 
@@ -110,20 +111,21 @@ class RDSProcess(multiprocessing.Process):
                                      with_ip3d = True, 
                                      print_and_exit = do_test) 
     
-        if not testing_dataset: 
-            testing_dataset = reduced_dataset
+
+        if not do_more_diagnostics: 
+            return 
+        
+        if not self._testing_ds: 
+            self._testing_ds = reduced_dataset
         test_ntuple_path = os.path.join(testing_dir,'perf_ntuple.root')
         if not os.path.isfile(test_ntuple_path): 
             training.run_test_ntuple(
-                reduced_dataset = testing_dataset, 
+                reduced_dataset = self._testing_ds, 
                 weights_file = weights_path, 
                 output_file = test_ntuple_path, 
                 print_and_exit = do_test
                 )
 
-        if not do_more_diagnostics: 
-            return
-        
         rej_hist_path = os.path.join(testing_dir, 'performance_hists') 
         if not os.path.isdir(rej_hist_path): 
             os.mkdir(rej_hist_path)

@@ -46,6 +46,8 @@ void trainNN(std::string inputfile,
 
   srand(time(0)); 
 
+  // --- setup the output streams --- 
+
   std::string output_textfile_name = out_dir + "/run_info.txt"; 
   std::ofstream output_textfile; 
   std::streambuf* textfile_buffer; 
@@ -70,9 +72,16 @@ void trainNN(std::string inputfile,
   std::ostream textout(normal_output); 
   std::ostream verboseout(textfile_buffer); 
 
+
+
+  // --- setup the neural net ---
+
   textout << "--- starting trainNN ----\n"; 
 
   if (n_hidden_layer_nodes.size() == 0){
+    if (bit_flags & train::throw_on_warn) 
+      throw std::runtime_error("no hidden layer sizes given"); 
+    
     textout << "WARNING: setting hidden layers to default sizes\n"; 
     n_hidden_layer_nodes.push_back(15); 
     n_hidden_layer_nodes.push_back(8); 
@@ -90,7 +99,10 @@ void trainNN(std::string inputfile,
   verboseout << " nodesFirstLayer: " << nodesFirstLayer << std::endl;
   verboseout << " nodesSecondLayer: " << nodesSecondLayer << std::endl;
   
+
   
+  // --- load training trees ---
+
   TFile* input_file = new TFile(inputfile.c_str());
   TTree* in_tree = dynamic_cast<TTree*>(input_file->Get("SVTree"));
   if (! in_tree){ 
@@ -99,6 +111,9 @@ void trainNN(std::string inputfile,
 
   InputVariableContainer in_var; 
   if (input_variables.size() == 0) { 
+    if (bit_flags & train::throw_on_warn) 
+      throw std::runtime_error("no input variables given"); 
+
     textout << "WARNING: no input variables given, using defaults\n"; 
     in_var.set_hardcoded_defaults(in_tree); 
   }
@@ -123,6 +138,9 @@ void trainNN(std::string inputfile,
   TeachingVariables teach; 
   
   if (in_tree->SetBranchAddress("weight",&teach.weight) ) { 
+    if (bit_flags & train::throw_on_warn) 
+      throw std::runtime_error("no 'weight' branch found"); 
+
     textout << "WARNING: no weight branch found, setting all weights to 1"
 	      << std::endl; 
     teach.weight = 1; 

@@ -24,8 +24,11 @@ namespace train {
   const unsigned req_training_lt_min  = 1u << 1; 
   const unsigned verbose              = 1u << 2; 
   const unsigned write_out_to_file    = 1u << 3; 
+  const unsigned throw_on_warn        = 1u << 4; 
 
   const unsigned giacintos = push_min_to_xtest | req_training_lt_min;
+
+  const unsigned defaults  = giacintos | throw_on_warn; 
 }
 
 // --- for internal use
@@ -85,7 +88,7 @@ void trainNN(std::string inputfile,
 	     std::vector<InputVariableInfo> = train_nn::INPUT_VARS, 
 	     FlavorWeights flavor_weights = train_nn::FLAVOR_WEIGHTS,  
 	     int n_training_events_target = -1, 
-	     const unsigned bit_flags = train::giacintos);
+	     const unsigned bit_flags = train::defaults);
 
 
 #endif // TRAIN_NN_H

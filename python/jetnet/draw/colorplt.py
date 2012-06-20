@@ -32,7 +32,7 @@ def get_bin_array(red_hist, green_hist, blue_hist):
     np_array = array(bin_array)
     return np_array
 
-def get_bin_ranges(hist2d): 
+def _get_bin_ranges(hist2d): 
     x_axis = hist2d.GetXaxis()
     x_max = x_axis.GetBinUpEdge(x_axis.GetNbins())
     x_min = x_axis.GetBinLowEdge(1)
@@ -43,20 +43,36 @@ def get_bin_ranges(hist2d):
 
     return ( (x_min,x_max), (y_min,y_max))
 
-def print_color_plot(root_file_name, 
-                     flavors = ['charm','bottom','light'], 
-                     tag_format = 'JetEta_vs_JetPt_{}'): 
+# *************** work do here **************
+def _texify(string): 
+    replacements = [
+        ('Eta',' \eta'), 
+        ('Pt' ,'')
+        ]
+
+_flavors = ['charm','bottom','light']
+_def_plots = ['JetEta_vs_JetPt_{}'.format(t) for t in _flavors]
+
+def print_color_plot(root_file_name, plots = _def_plots): 
 
     root_file = TFile(root_file_name)
-    y_label, xlabel = tag_format.split('_')[0:3:2]
-    h = [root_file.Get(tag_format.format(f)) for f in flavors]
+    tags = []
+    x_labels = []
+    y_labels = []
+    for pl in plots: 
+        y_label, x_label = pl.split('_')[0:3:2]
+        x_labels.append(x_label)
+        y_labels.append(y_label)
+        tags.append(pl.split('_')[-1])
+
+    h = [root_file.Get(p) for p in plots]
     np_array  = get_bin_array(*h)
     array_max_vals = [np_array[:,:,i].max() for i in xrange(3)]
     for i,the_max in enumerate(array_max_vals): 
         np_array[:,:,i] = np_array[:,:,i] / the_max
 
     first_plot = h[0]
-    pt_range, eta_range = get_bin_ranges(first_plot)
+    pt_range, eta_range = _get_bin_ranges(first_plot)
         
     fig = plt.figure()
     pt_span = pt_range[1] - pt_range[0]
@@ -74,7 +90,7 @@ def print_color_plot(root_file_name,
     plt.yticks(fontsize = 16)
 
     empty = array([])
-    for tag, color in zip(flavors, 'rgb'): 
+    for tag, color in zip(tags, 'rgb'): 
         plt.plot(empty, color + '-', label = tag , lw = 10)
     
     plt.legend()

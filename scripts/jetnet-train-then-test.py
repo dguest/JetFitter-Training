@@ -1,11 +1,11 @@
 #!/usr/bin/env python2.7
 
+# Author: Daniel Guest (dguest@cern.ch)
+
 """
 runs full chain on <file list>
 
 options set in 'jetnet.cfg'
-
-Author: Daniel Guest (dguest@cern.ch)
 """
 
 # hide this godawful abomination of a framework
@@ -15,7 +15,7 @@ ROOT.PyConfig.IgnoreCommandLineOptions = True
 
 from jetnet import training, pyprep, profile, rds, process
 from jetnet.perf import rejection, performance
-import os, sys
+import os, sys, glob
 from warnings import warn
 
 import argparse
@@ -96,6 +96,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(
         description = description, 
+        epilog = 'author: Dan Guest <dguest@cern.ch>', 
         formatter_class = argparse.RawDescriptionHelpFormatter)
     parser.set_defaults(
         test = False, 
@@ -118,33 +119,52 @@ if __name__ == '__main__':
     working_dir = None
 
     training_variables = []
-    with open(options.wt) as white_file: 
-        for line in white_file: 
-            var = line.strip()
-            if var: 
-                training_variables.append(var)
 
     config_file_name = options.config
     flavor_weights = {}
-    if os.path.isfile(config_file_name): 
-        config = SafeConfigParser()
-        config.read(config_file_name)
-        flavor_weights = { k : float(w) for k, w in config.items('weights') }
-        pt_divisions = map(
-            float,config.get('preprocessing','pt_divisions').split() )
-        jet_tagger = config.get('preprocessing','jet_tagger')
-        testing_dataset = config.get('testing', 'testing_dataset')
-        observer_discriminators = config.get(
-            'preprocessing','observer_discriminators').split()
+    if not os.path.isfile(config_file_name): 
+        config_files = glob.glob('*.cfg')
+        if len(config_files) > 1: 
+            sys.exit('found multiple config files {}, '
+                     'not sure which to use'.format(config_files))
+        elif not config_files: 
+            sys.exit('could not find config file')
+        else: 
+            config_file_name = config_files[0]
 
-        if 'ARRAYID' in jet_tagger: 
-            the_array_id = os.environ['PBS_ARRAYID'].rjust(2,'0')
-            jet_tagger = jet_tagger.replace('ARRAYID',the_array_id)
-            working_dir = jet_tagger
-            testing_dataset = os.path.join(working_dir,testing_dataset)
+    config = SafeConfigParser()
+    config.read(config_file_name)
+    flavor_weights = { k : float(w) for k, w in config.items('weights') }
+    pt_divisions = map(
+        float,config.get('preprocessing','pt_divisions').split() )
+    jet_tagger = config.get('preprocessing','jet_tagger')
+    testing_dataset = config.get('testing', 'testing_dataset')
+    observer_discriminators = config.get(
+        'preprocessing','observer_discriminators').split()
 
+    if config.has_option('training','variables'): 
+        training_variables = config.get('training','variables').split()
+        if os.path.isfile(options.wt): 
+            sys.exit(
+                "variables already given in config file, don't use "
+                "whitelist")
+        
     else: 
-        sys.exit('could not find config file %s' % config_file_name)
+        with open(options.wt) as white_file: 
+            for line in white_file: 
+                var = line.strip()
+                if var: 
+                    training_variables.append(var)
+
+        warn('whitelist will soon be merged with the config file '
+             'under [training] --> variables', 
+             FutureWarning)
+
+    if 'ARRAYID' in jet_tagger: 
+        the_array_id = os.environ['PBS_ARRAYID'].rjust(2,'0')
+        jet_tagger = jet_tagger.replace('ARRAYID',the_array_id)
+        working_dir = jet_tagger
+        testing_dataset = os.path.join(working_dir,testing_dataset)
 
 
     input_files = []

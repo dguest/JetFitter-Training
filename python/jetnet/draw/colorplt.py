@@ -43,19 +43,17 @@ def _get_bin_ranges(hist2d):
 
     return ( (x_min,x_max), (y_min,y_max))
 
-# *************** work do here **************
 def _texify(string): 
     replacements = [
-        ('Eta',' \eta'), 
-        ('Pt' ,'')
+        ('Eta',r' $\eta$'), 
+        ('Pt' ,r' $p_\mathrm{T}$'), 
         ]
+    for search, rep in replacements: 
+        string = string.replace(search,rep)
 
-_flavors = ['charm','bottom','light']
-_def_plots = ['JetEta_vs_JetPt_{}'.format(t) for t in _flavors]
+    return string 
 
-def print_color_plot(root_file_name, plots = _def_plots): 
-
-    root_file = TFile(root_file_name)
+def _make_tags(plots): 
     tags = []
     x_labels = []
     y_labels = []
@@ -65,11 +63,40 @@ def print_color_plot(root_file_name, plots = _def_plots):
         y_labels.append(y_label)
         tags.append(pl.split('_')[-1])
 
+    if all(x_labels[0] == x for x in x_labels): 
+        xlab = x_labels[0]
+    else: 
+        xlab = 'x'
+
+    if all(y_labels[0] == x for x in y_labels): 
+        ylab = y_labels[0]
+    else: 
+        ylab = 'y'
+
+
+    return _texify(xlab), _texify(ylab), tags
+
+_flavors = ['charm','bottom','light']
+_def_plots = ['JetEta_vs_JetPt_{}'.format(t) for t in _flavors]
+
+def print_color_plot(root_file_name, plots = _def_plots, 
+                     normalize_by_tag = False): 
+    """
+    makes a color plot, prints as a pdf... work in progress
+    """
+
+
+    root_file = TFile(root_file_name)
+
     h = [root_file.Get(p) for p in plots]
     np_array  = get_bin_array(*h)
     array_max_vals = [np_array[:,:,i].max() for i in xrange(3)]
-    for i,the_max in enumerate(array_max_vals): 
-        np_array[:,:,i] = np_array[:,:,i] / the_max
+    if normalize_by_tag: 
+        for i,the_max in enumerate(array_max_vals): 
+            np_array[:,:,i] = np_array[:,:,i] / the_max
+    else: 
+        overall_max = max(array_max_vals)
+        np_array = np_array / overall_max
 
     first_plot = h[0]
     pt_range, eta_range = _get_bin_ranges(first_plot)
@@ -84,9 +111,12 @@ def print_color_plot(root_file_name, plots = _def_plots):
                       extent = all_extent, 
                       aspect = all_aspect, 
                       interpolation='nearest')
-    plt.xlabel(r'$p_\mathrm{T}$ [GeV]', fontsize = 32)
+    
+    xlab,ylab,tags = _make_tags(plots)
+    
+    plt.xlabel(xlab, fontsize = 32)
     plt.xticks(fontsize = 16)
-    plt.ylabel(r'$\eta$', fontsize = 32)
+    plt.ylabel(ylab, fontsize = 32)
     plt.yticks(fontsize = 16)
 
     empty = array([])

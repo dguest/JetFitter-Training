@@ -54,6 +54,7 @@ class RDSProcess(multiprocessing.Process):
         if not do_test: 
             if not os.path.isfile(mean_rms_file): 
                 if not os.path.isfile(profile_file): 
+                    print '--- making profile file for normalization ---'
                     profile.make_profile_file(reduced_dataset, profile_file)
             
                 profile.build_mean_rms_from_profile(
@@ -93,6 +94,7 @@ class RDSProcess(multiprocessing.Process):
     
         weights_path = os.path.join(training_dir, 'weightMinimum.root')
         if not os.path.isfile(weights_path): 
+            print '--- running training ---'
             training.run_training(reduced_dataset = reduced_dataset, 
                                   output_directory = training_dir, 
                                   normalization = normalization_dict, 

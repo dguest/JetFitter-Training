@@ -17,35 +17,25 @@ from jetnet import training, pyprep, profile, rds, process
 from jetnet.perf import rejection, performance
 import os, sys, glob
 from warnings import warn
+from math import log, exp
 
 import argparse
 from ConfigParser import SafeConfigParser
 
 class UglyWarning(UserWarning): pass
 
-_default_flav_weights = { 
-    'light': 1, 
-    'charm': 1, 
-    'bottom':1, 
-    }
-
 
 def train_and_test(input_files, testing_dataset, 
                    pt_divisions, training_variables, 
                    observer_discriminators, 
+                   flavor_weights, 
                    jet_collection = 'BTag_AntiKt4TopoEMJetsReTagged', 
                    jet_tagger = 'JetFitterCharm', 
-                   flavor_weights = _default_flav_weights, 
                    working_dir = None, 
                    output_path = None, 
                    rds_name = 'reduced_dataset.root', 
                    do_test = False, 
                    ): 
-
-
-    double_variables, int_variables = rds.get_allowed_rds_variables(
-        input_files = input_files, 
-        full_dir_name = jet_collection + '_' + jet_tagger)
 
     if working_dir is None: 
         working_dir = jet_collection
@@ -53,19 +43,66 @@ def train_and_test(input_files, testing_dataset,
     if not os.path.isfile(testing_dataset): 
         raise IOError('{} not found'.format(testing_dataset))
 
+
     if not os.path.isdir(working_dir): 
         os.mkdir(working_dir)
 
     # --- rds part
+
+    # get weights file 
     reduced_dir = os.path.join(working_dir, 'reduced')
     if not os.path.isdir(reduced_dir): 
         os.mkdir(reduced_dir)
 
     rds_path = os.path.join(reduced_dir, rds_name)
-    
+
+    weight_file = os.path.join(reduced_dir, 'weights.root')
+    if not os.path.isfile(weight_file): 
+        
+        # build a light ntuple if one doesn't exist
+        if os.path.isfile(rds_path): 
+            small_rds_path = rds_path 
+
+        else: 
+            print '--- making flat ntuple to build weight file ---'
+
+            rds_dir, rds_name = os.path.split(rds_path)
+            small_rds = '.'.join(rds_name.split('.')[:-1]) + '_small.root'
+            small_rds_path = os.path.join(rds_dir,small_rds)
+            if not os.path.isfile(small_rds_path): 
+                pyprep.make_flat_ntuple(
+                    input_files = input_files, 
+                    jet_collection = jet_collection, 
+                    jet_tagger = jet_tagger, 
+                    output_file = small_rds_path)
+            
+        pt_low, pt_high = (15.0, 300)
+        log_span = log(pt_high) - log(pt_low)
+        log_range = [log(pt_low) + i * log_span / 10 for i in xrange(11)]
+        pt_bins = [exp(x) for x in log_range]
+
+        print '--- making weight file ---'
+        from jetnet import cxxprofile
+        cxxprofile.pro2d(
+            in_file = small_rds_path, 
+            tree = 'SVTree', 
+            plots = [( ('JetPt', pt_bins),
+                       ('JetEta',10,-2.5,2.5) )], 
+            tags = ['bottom','charm','light'], 
+            out_file = weight_file, 
+            show_progress = True)
+
+
+    double_variables, int_variables = rds.get_allowed_rds_variables(
+        input_files = input_files, 
+        full_dir_name = jet_collection + '_' + jet_tagger)
+
+
     if not os.path.isfile(rds_path): 
+        print '--- making flattened dataset for training ---'
         pyprep.make_flat_ntuple(
             input_files = input_files, 
+            weight_file = weight_file, 
             double_variables = double_variables, 
             int_variables = int_variables, 
             observer_discriminators = observer_discriminators, 

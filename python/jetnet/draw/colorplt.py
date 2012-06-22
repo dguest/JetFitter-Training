@@ -6,20 +6,37 @@ import matplotlib.pyplot as plt
 # root_file = TFile('flavor_wt_hists.root')
 # flavors = ['charm','bottom','light']
 
+def _get_n_bins(hist): 
+    x_bins = hist.GetNbinsX()
+    y_bins = hist.GetNbinsY()
+    return x_bins, y_bins
+
+def _are_bins_equal(hist): 
+    bin_range = xrange(1,hist.GetNbinsX() + 1)
+    bin_ups = [hist.GetXaxis().GetBinUpEdge(b) for b in bin_range]
+    bin_divs = [hist.GetBinLowEdge(1) ] + bin_ups
+    ave_bin_diff = (bin_divs[-1] - bin_divs[0]) / (len(bin_divs) - 1)
+    devs_from_linnear = []
+    for i, b_val in enumerate(bin_divs): 
+        dev = b_val - ave_bin_diff * i - bin_divs[0]
+        devs_from_linnear.append(dev)
+
+    return sum(devs_from_linnear) < ave_bin_diff / 1e4
+    
+
 def get_bin_array(red_hist, green_hist, blue_hist): 
-    def get_n_bins(hist): 
-        x_bins = red_hist.GetNbinsX()
-        y_bins = red_hist.GetNbinsY()
-        return x_bins, y_bins
 
     hists = [red_hist, green_hist, blue_hist]
+    
+    bin_counts = [_get_n_bins(h) for h in hists]
 
-    all_equal = (
-      get_n_bins(red_hist) == get_n_bins(blue_hist) == get_n_bins(green_hist)
-      )
+    all_equal = (bin_counts[0] == bin_counts[1] == bin_counts[2])
     assert all_equal, 'oh dear!'
 
-    x_bins, y_bins = get_n_bins(red_hist)
+    assert _are_bins_equal(red_hist), "bins don't seem equal"
+        
+
+    x_bins, y_bins = _get_n_bins(red_hist)
 
     bin_array = []
     for y_bin in xrange(1,y_bins + 1): 

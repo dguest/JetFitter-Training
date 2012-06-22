@@ -125,6 +125,8 @@ if __name__ == '__main__':
     parser.add_argument('output_file', default = 'flat_dataset.root', 
                         help = 'default: %(default)s', nargs = '?')
     parser.add_argument('--test', action = 'store_true')
+    parser.add_argument('-w', action = 'store_true', 
+                        help = 'make weight branch')
     parser.add_argument(
         '--binned', action = 'store_true', 
         help = 'make ntuple binned in pt and eta')
@@ -157,7 +159,10 @@ if __name__ == '__main__':
             'preprocessing','observer_discriminators').split()
         jet_tagger = config.get('preprocessing','jet_tagger')
         jet_collection = config.get('preprocessing','jet_collection')
-        flavor_wt_file = config.get('caching','flavor_wt_file')
+        if options.w: 
+            flavor_wt_file = config.get('caching','flavor_wt_file')
+        else: 
+            flavor_wt_file = ''
         if 'ARRAYID' in jet_tagger: 
             the_array_id = os.environ['PBS_ARRAYID'].rjust(2,'0')
             jet_tagger = jet_tagger.replace('ARRAYID',the_array_id)

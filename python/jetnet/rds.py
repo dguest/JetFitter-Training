@@ -49,6 +49,9 @@ def get_allowed_rds_variables(
     leaves_dict = utils.get_leaves_in_tree(sample_tree)
 
     if whitelist: 
+        warn("whitelist is going to be removed for the sake of transparency"
+             " you probably shouldn't use it", 
+             FutureWarning, stacklevel = 2)
         double_variables = whitelist
         int_variables = whitelist
 
@@ -64,7 +67,7 @@ def get_allowed_rds_variables(
         int_variables.remove('Flavour')
         double_variables = leaves_dict['Double_t']
         double_variables.remove('Discriminator')
-        warn("no whitelist given, will return all vars", stacklevel = 2)
+        # warn("no whitelist given, will return all vars", stacklevel = 2)
         
         # for flav in 'buc': 
         #     double_variables.remove('Likelihood_' + flav)

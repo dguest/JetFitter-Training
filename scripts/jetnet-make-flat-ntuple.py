@@ -43,7 +43,6 @@ def make_flat_ntuple(
     do_test = False, 
     skim_function = pyprep.make_flat_ntuple, 
     ): 
-    args = locals()             # may be needed for recursive calls
 
     double_variables, int_variables = rds.get_allowed_rds_variables(
         input_files = input_files, 

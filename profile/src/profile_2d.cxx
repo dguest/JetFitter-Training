@@ -34,7 +34,7 @@ std::pair<int,int> pro_2d(std::string file_name,
   if (!tree) { 
     std::string err = "%s in %s cannot be opened"; 
     std::string f = file.GetName(); 
-    std::string t = tree->GetName(); 
+    std::string t = tree_name; 
     throw std::runtime_error( (boost::format(err) % t % f).str()); 
   }
   tree->SetBranchStatus("*",0); 

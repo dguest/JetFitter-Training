@@ -130,7 +130,8 @@ def train_and_test(input_files, testing_dataset,
         if not working_dir_list: 
             summary_dir = 'summary'
         else: 
-            summary_dir = os.path.join(working_dir_list,'summary')
+            working_dir_parent = os.path.join(*working_dir_list)
+            summary_dir = os.path.join(working_dir_parent,'summary')
 
         if not os.path.isdir(summary_dir): 
             os.mkdir(summary_dir)

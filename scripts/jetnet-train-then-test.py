@@ -136,7 +136,7 @@ def train_and_test(input_files, testing_dataset,
         if not os.path.isdir(summary_dir): 
             os.mkdir(summary_dir)
 
-        profile_summery_name = jet_collection + '_profile.root'
+        profile_summery_name = jet_tagger + '_profile.root'
         profile_summery_path = os.path.join(summary_dir,profile_summery_name)
         shutil.copyfile(proc_outputs['profile'], profile_summery_path)
 

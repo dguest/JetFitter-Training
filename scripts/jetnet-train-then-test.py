@@ -126,11 +126,16 @@ def train_and_test(input_files, testing_dataset,
     proc.join()
 
     if 'profile' in proc_outputs: 
-        summary_dir = os.path.join(*working_dir.split('/')[:-1])
-        if not os.path.isdir(summary_dir): 
-            os.path.mkdir(summary_dir)
+        working_dir_list = working_dir.split('/')[:-1]
+        if not working_dir_list: 
+            summary_dir = 'summary'
+        else: 
+            summary_dir = os.path.join(working_dir_list,'summary')
 
-        profile_summery_name = working_dir + '_profile.root'
+        if not os.path.isdir(summary_dir): 
+            os.mkdir(summary_dir)
+
+        profile_summery_name = jet_collection + '_profile.root'
         profile_summery_path = os.path.join(summary_dir,profile_summery_name)
         shutil.copyfile(proc_outputs['profile'], profile_summery_path)
 

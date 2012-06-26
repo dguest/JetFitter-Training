@@ -31,6 +31,8 @@ class RDSProcess(multiprocessing.Process):
         self._testing_ds = testing_dataset
         self._do_more_diagnostics = do_more_diagnostics
 
+        self.out_queue = multiprocessing.Queue()
+
     def run(self): 
 
         reduced_dataset = self._reduced_dataset
@@ -129,9 +131,21 @@ class RDSProcess(multiprocessing.Process):
                 doubles = all_vars_in_tree['Double_t'], 
                 extension = 'NewTune', 
                 show_progress = True) 
+
+        profiled_path = os.path.splitext(augmented_tree)[0] + '_profile.root'
         
+        if not os.path.isfile(profiled_path): 
+            profile.make_profile_file(reduced_dataset = augmented_tree, 
+                                      profile_file = profiled_path)
+
+        output_paths = {
+            'profile': profiled_path, 
+            'perf_ntuple': augmented_tree, 
+            }
+
 
         if not self._do_more_diagnostics: 
+            self.out_queue.put(output_paths)
             return 
 
         ovrtrn_hist_path = os.path.join(testing_dir,'overtraining_hists.root')
@@ -188,3 +202,6 @@ class RDSProcess(multiprocessing.Process):
                 for output_format in formats: 
                     full_name = output_path + output_format
                     perf_canvases[0].Print(full_name)
+
+        # --- return some output info
+        self.out_queue.put(output_paths)

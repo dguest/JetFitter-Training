@@ -13,9 +13,8 @@ import ROOT
 ROOT.PyConfig.IgnoreCommandLineOptions = True
 
 
-from jetnet import training, pyprep, profile, rds, process
-from jetnet.perf import rejection, performance
-import os, sys, glob
+from jetnet import pyprep, process, rds
+import os, sys, glob, shutil
 from warnings import warn
 from math import log, exp
 
@@ -123,8 +122,17 @@ def train_and_test(input_files, testing_dataset,
         do_more_diagnostics = False,
         do_test = do_test)
     proc.start()
+    proc_outputs = proc.out_queue.get()
     proc.join()
 
+    if 'profile' in proc_outputs: 
+        summary_dir = os.path.join(*working_dir.split('/')[:-1])
+        if not os.path.isdir(summary_dir): 
+            os.path.mkdir(summary_dir)
+
+        profile_summery_name = working_dir + '_profile.root'
+        profile_summery_path = os.path.join(summary_dir,profile_summery_name)
+        shutil.copyfile(proc_outputs['profile'], profile_summery_path)
 
     
 if __name__ == '__main__': 
@@ -133,8 +141,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(
         description = description, 
-        epilog = 'author: Dan Guest <dguest@cern.ch>', 
-        formatter_class = argparse.RawDescriptionHelpFormatter)
+        epilog = 'author: Dan Guest <dguest@cern.ch>')
     parser.set_defaults(
         test = False, 
         )

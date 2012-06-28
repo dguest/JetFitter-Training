@@ -146,11 +146,6 @@ extern "C" PyObject* train_py(PyObject *self,
   }
   else { 
 
-    if (node_vec.size() != 2){ 
-      PyErr_SetString(PyExc_ValueError,
-		      "node tuple must have two entries (for now)"); 
-      return 0;
-    }
 
     try { 
       trainNN(input_file, 

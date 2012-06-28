@@ -77,9 +77,6 @@ void trainNN(std::string inputfile,
     n_hidden_layer_nodes.push_back(15); 
     n_hidden_layer_nodes.push_back(8); 
   }
-  int nodesFirstLayer = n_hidden_layer_nodes.at(0); 
-  int nodesSecondLayer = n_hidden_layer_nodes.at(1);
-
 
   gROOT->ProcessLine("#include <TTree.h>"); 
   gROOT->ProcessLine("#include <TFile.h>"); 
@@ -87,8 +84,13 @@ void trainNN(std::string inputfile,
   verboseout << "starting with settings: " << std::endl;
   verboseout << " nIterations: " << nIterations << std::endl;
   verboseout << " dilutionFactor: " << dilutionFactor << std::endl;
-  verboseout << " nodesFirstLayer: " << nodesFirstLayer << std::endl;
-  verboseout << " nodesSecondLayer: " << nodesSecondLayer << std::endl;
+  for (int hidden_layer_n = 0; 
+       hidden_layer_n < n_hidden_layer_nodes.size();  
+       hidden_layer_n++) { 
+    int nodes_here = n_hidden_layer_nodes.at(hidden_layer_n); 
+    verboseout << " nodes layer " << hidden_layer_n + 1 << 
+      ": " << nodes_here << std::endl;
+  }
   
   
   TFile* input_file = new TFile(inputfile.c_str());
@@ -134,33 +136,18 @@ void trainNN(std::string inputfile,
     throw std::runtime_error("SVTree in " + inputfile + 
 			     " missing one of: bottom, charm, light"); 
 
-  int* nneurons;
-
-  if (nodesSecondLayer != 0){
-    nneurons=new int[4];
-  }
-  else {
-    nneurons=new int[3];
-  }
+  int nlayer = n_hidden_layer_nodes.size() + 2; 
+  int* nneurons = new int[nlayer];
 
 
   int numberinputs = in_var.size();
   nneurons[0] = numberinputs;
 
-  int nlayer=3;
-  if (nodesSecondLayer != 0){
-    nlayer=4;
+  for (int layer_n = 1; layer_n < nlayer - 1; layer_n++) { 
+    nneurons[layer_n] = n_hidden_layer_nodes.at(layer_n - 1); 
   }
   
-  nneurons[1]=nodesFirstLayer;
-
-  if (nodesSecondLayer!=0)  {
-      nneurons[2]=nodesSecondLayer;
-      nneurons[3]=3;
-  }
-  else {
-    nneurons[2]=3;
-  }
+  nneurons[nlayer - 1] = 3; 
 
   //  float eventWeight(0);
   float trainingError(0);
@@ -410,6 +397,8 @@ void trainNN(std::string inputfile,
   // histoFile->Write();
   histoFile->Close();
   delete histoFile;
+
+  delete nneurons; 
 
 }
 

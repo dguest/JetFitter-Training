@@ -129,9 +129,9 @@ extern "C" PyObject* train_py(PyObject *self,
 
   // --- parse flags
   unsigned bit_flags = 0; 
-  bit_flags |= train::giacintos       && strchr(flags,'g'); 
-  bit_flags |= train::throw_on_warn   && strchr(flags,'t'); 
-  bit_flags |= train::verbose         && strchr(flags,'v'); 
+  if (strchr(flags,'g')) bit_flags |= train::giacintos;
+  if (strchr(flags,'t')) bit_flags |= train::throw_on_warn;
+  if (strchr(flags,'v')) bit_flags |= train::verbose;
 
   bool debug = strchr(flags,'d'); 
   

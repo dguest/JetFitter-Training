@@ -48,15 +48,18 @@ def run_training(reduced_dataset,
     if nodes is None:
         nodes = (20, 10)
 
+    flags = 't'
+
+    if debug: flags += 'd'
+
     pynn.trainNN(reduced_dataset = reduced_dataset, 
                  output_directory = output_directory, 
                  n_iterations = 10000, 
-                 dilution_factor = 2, 
                  normalization = normalization, 
                  nodes = nodes, 
                  flavor_weights = flavor_weights, 
                  n_training_events_target = events, 
-                 debug = debug)
+                 flags = flags)
 
 
 def run_performance(reduced_dataset, weights_file, 

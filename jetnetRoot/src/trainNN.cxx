@@ -67,6 +67,9 @@ void trainNN(const TrainingInputs inputs,
   std::ostream textout(normal_output); 
   std::ostream verboseout(textfile_buffer); 
 
+  if (bit_flags & train::verbose) { 
+    verboseout << "using verbose output\n"; 
+  }
 
 
   // --- setup the neural net ---

@@ -24,7 +24,9 @@ static const char* train_doc_string =
   "normalization\n"
   "nodes\n"
   "restart_training_from\n"
-  "debug"; 
+  "flags\n"
+  "flag values -- d: debug, g: giacintos training, t: throw on warning "
+  "v: verbose"; 
 
 extern "C" PyObject* train_py(PyObject *self, 
 			      PyObject *args, 
@@ -40,7 +42,7 @@ extern "C" PyObject* train_py(PyObject *self,
   inputs.restart_training_from = 0; 
   PyObject* flavor_weights = 0; 
   inputs.n_training_events = -1; 
-  bool debug = false; 
+  const char* flags = ""; 
 
   const char *kwlist[] = {
     "reduced_dataset",
@@ -51,11 +53,11 @@ extern "C" PyObject* train_py(PyObject *self,
     "restart_training_from",
     "flavor_weights", 
     "n_training_events_target", 
-    "debug", 
+    "flags", 
     NULL};
  
   if (!PyArg_ParseTupleAndKeywords
-      (args, keywds, "s|siOOiOib", 
+      (args, keywds, "s|siOOiOis", 
        // this function should take a const, and 
        // may be changed, until then we'll cast
        const_cast<char**>(kwlist),
@@ -67,7 +69,7 @@ extern "C" PyObject* train_py(PyObject *self,
        &inputs.restart_training_from, 
        &flavor_weights, 
        &inputs.n_training_events, 
-       &debug)
+       &flags)
       ) return NULL;
 
   inputs.file = input_file; 
@@ -125,6 +127,15 @@ extern "C" PyObject* train_py(PyObject *self,
   flavor_weights_struct.charm = flavor_weights_map["charm"]; 
   flavor_weights_struct.light = flavor_weights_map["light"]; 
 
+  // --- parse flags
+  unsigned bit_flags = 0; 
+  bit_flags |= train::giacintos       && strchr(flags,'g'); 
+  bit_flags |= train::throw_on_warn   && strchr(flags,'t'); 
+  bit_flags |= train::verbose         && strchr(flags,'v'); 
+
+  bool debug = strchr(flags,'d'); 
+  
+
   // --- dump debug info 
   if (debug){ 
     printf("in = %s, out dir = %s, itr = %i, rest from = %i, nodes: (", 
@@ -151,7 +162,8 @@ extern "C" PyObject* train_py(PyObject *self,
 
 
     try { 
-      trainNN(inputs, node_vec, input_variable_info, flavor_weights_struct); 
+      trainNN(inputs, node_vec, input_variable_info, 
+	      flavor_weights_struct, bit_flags); 
     }
     catch (const LoadReducedDSException& e){ 
       PyErr_SetString(PyExc_IOError,"could not load dataset"); 

@@ -28,6 +28,7 @@ def train_and_test(input_files, testing_dataset,
                    pt_divisions, training_variables, 
                    observer_discriminators, 
                    flavor_weights, 
+                   config_file, # this should be used for more opts
                    jet_collection = 'BTag_AntiKt4TopoEMJetsReTagged', 
                    jet_tagger = 'JetFitterCharm', 
                    working_dir = None, 
@@ -120,25 +121,34 @@ def train_and_test(input_files, testing_dataset,
         flavor_weights = flavor_weights, 
         testing_dataset = testing_dataset, 
         do_more_diagnostics = False,
-        do_test = do_test)
+        do_test = do_test, 
+        config_file = config_file)
     proc.start()
-    proc_outputs = proc.out_queue.get()
     proc.join()
+    proc_outputs = proc.out_queue.get(block = False)
+
+    # make the summary folder 
+
+    working_dir_list = working_dir.split('/')[:-1]
+    if not working_dir_list: 
+        summary_dir = 'summary'
+    else: 
+        working_dir_parent = os.path.join(*working_dir_list)
+        summary_dir = os.path.join(working_dir_parent,'summary')
+
+    if not os.path.isdir(summary_dir): 
+        os.mkdir(summary_dir)
 
     if 'profile' in proc_outputs: 
-        working_dir_list = working_dir.split('/')[:-1]
-        if not working_dir_list: 
-            summary_dir = 'summary'
-        else: 
-            working_dir_parent = os.path.join(*working_dir_list)
-            summary_dir = os.path.join(working_dir_parent,'summary')
-
-        if not os.path.isdir(summary_dir): 
-            os.mkdir(summary_dir)
 
         profile_summery_name = jet_tagger + '_profile.root'
         profile_summery_path = os.path.join(summary_dir,profile_summery_name)
         shutil.copyfile(proc_outputs['profile'], profile_summery_path)
+
+
+    this_config_name = jet_tagger + '_config_file.cfg'
+    this_config_path = os.path.join(summary_dir, this_config_name)
+    shutil.copyfile(config_file, this_config_path)
 
     
 if __name__ == '__main__': 
@@ -227,6 +237,7 @@ if __name__ == '__main__':
         input_files, 
         testing_dataset = testing_dataset, 
         do_test = do_test, 
+        config_file = config_file_name, 
         training_variables = training_variables, 
         flavor_weights = flavor_weights, 
         jet_tagger = jet_tagger, 

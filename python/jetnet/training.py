@@ -37,7 +37,8 @@ def run_training(reduced_dataset,
                  flavor_weights, 
                  normalization, 
                  nodes = None, 
-                 debug = False): 
+                 debug = False, 
+                 events = 1000000): 
 
     if not os.path.isdir(output_directory): 
         os.mkdir(output_directory)
@@ -54,7 +55,7 @@ def run_training(reduced_dataset,
                  normalization = normalization, 
                  nodes = nodes, 
                  flavor_weights = flavor_weights, 
-                 n_training_events_target = 1000000, 
+                 n_training_events_target = events, 
                  debug = debug)
 
 

@@ -9,7 +9,7 @@ from jetnet import training, pyprep, profile, utils
 from jetnet.perf import rejection, performance
 import os, sys, glob
 from warnings import warn
-import multiprocessing
+import multiprocessing, ConfigParser
 
 
 class RDSProcess(multiprocessing.Process): 
@@ -20,7 +20,8 @@ class RDSProcess(multiprocessing.Process):
                  flavor_weights, 
                  testing_dataset = None,
                  do_more_diagnostics = True, 
-                 do_test = False): 
+                 do_test = False, 
+                 config_file = None): 
         super(RDSProcess,self).__init__()
 
         self._reduced_dataset = reduced_dataset
@@ -30,6 +31,35 @@ class RDSProcess(multiprocessing.Process):
         self._flavor_weights = flavor_weights
         self._testing_ds = testing_dataset
         self._do_more_diagnostics = do_more_diagnostics
+
+        self._nodes = None
+        self._n_training_events = 1000000
+
+        if config_file: 
+            parser = ConfigParser.SafeConfigParser()
+            with open(config_file) as f: 
+                parser.readfp(f)
+            training_opt = dict(parser.items('training'))
+            try: 
+                self._nodes = [int(i) for i in training_opt['nodes'].split()]
+            except KeyError: 
+                warn("'nodes' not found in {}".format(config_file), 
+                     stacklevel = 2)
+
+            try: 
+                self._n_training_events = int(training_opt['n_events'])
+            except KeyError: 
+                war_str = ("'n_events' not found in {} [training], " 
+                           "defaulting to {}")
+                warn(war_str.format(config_file, self._n_training_events), 
+                     FutureWarning, stacklevel = 2)
+
+        if not self._nodes: 
+            warn('\'nodes\' list should be given in the config file '
+                 'under [training]', 
+                 FutureWarning, stacklevel = 2)
+            self._nodes = [20,10]
+
 
         self.out_queue = multiprocessing.Queue()
 
@@ -101,7 +131,9 @@ class RDSProcess(multiprocessing.Process):
                                   output_directory = training_dir, 
                                   normalization = normalization_dict, 
                                   flavor_weights = self._flavor_weights, 
-                                  debug = do_test)
+                                  nodes = self._nodes, 
+                                  debug = do_test, 
+                                  events = self._n_training_events)
     
         # --- diagnostics part 
         testing_dir = os.path.join(working_dir, 'testing')
@@ -114,6 +146,7 @@ class RDSProcess(multiprocessing.Process):
 
         augmented_tree = os.path.join(testing_dir, 'perf_ntuple.root') 
         if not os.path.isfile(augmented_tree): 
+            print '--- augmenting reduced dataset with nn classifiers ---'
             # should wrap this in a function to close the file when done
             
             from ROOT import TFile
@@ -135,6 +168,7 @@ class RDSProcess(multiprocessing.Process):
         profiled_path = os.path.splitext(augmented_tree)[0] + '_profile.root'
         
         if not os.path.isfile(profiled_path): 
+            print '--- profiling performance ntuple ---'
             profile.make_profile_file(reduced_dataset = augmented_tree, 
                                       profile_file = profiled_path)
 

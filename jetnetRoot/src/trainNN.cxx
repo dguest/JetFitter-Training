@@ -307,6 +307,8 @@ void trainNN(const TrainingInputs inputs,
 	epochesWithRisingError+=10;
 	// NOTE: changed Sat May 12 17:04:56 CEST 2012, 
 	//       should ask giacinto why he was doing this in the first place
+	// As of Thu Jun 28 20:30:08 CEST 2012 this is turned on with the 'g'
+	// flag
 	if (trainingError>testError && 
 	    (bit_flags & train::push_min_to_xtest)) {
 	  epochWithMinimum=epoch;

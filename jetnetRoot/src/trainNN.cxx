@@ -33,20 +33,17 @@
 
 
 
-void trainNN(std::string inputfile,
-	     std::string out_dir, 
-             int nIterations,
-             int dilutionFactor,
-	     int restartTrainingFrom, 
+void trainNN(const TrainingInputs inputs, 
 	     std::vector<int> n_hidden_layer_nodes, 
 	     std::vector<InputVariableInfo> input_variables, 
-	     FlavorWeights flavor_weights, 
-	     int n_training_events_target, 
+	     const FlavorWeights flavor_weights, 
 	     const unsigned bit_flags) {
 
   srand(time(0)); 
 
-  std::string output_textfile_name = out_dir + "/run_info.txt"; 
+  // --- setup the output streams --- 
+
+  std::string output_textfile_name = inputs.output_dir + "/run_info.txt"; 
   std::ofstream output_textfile; 
   std::streambuf* textfile_buffer; 
   bool do_file_output = 
@@ -70,9 +67,16 @@ void trainNN(std::string inputfile,
   std::ostream textout(normal_output); 
   std::ostream verboseout(textfile_buffer); 
 
+
+
+  // --- setup the neural net ---
+
   textout << "--- starting trainNN ----\n"; 
 
   if (n_hidden_layer_nodes.size() == 0){
+    if (bit_flags & train::throw_on_warn) 
+      throw std::runtime_error("no hidden layer sizes given"); 
+    
     textout << "WARNING: setting hidden layers to default sizes\n"; 
     n_hidden_layer_nodes.push_back(15); 
     n_hidden_layer_nodes.push_back(8); 
@@ -82,8 +86,7 @@ void trainNN(std::string inputfile,
   gROOT->ProcessLine("#include <TFile.h>"); 
   
   verboseout << "starting with settings: " << std::endl;
-  verboseout << " nIterations: " << nIterations << std::endl;
-  verboseout << " dilutionFactor: " << dilutionFactor << std::endl;
+  verboseout << " nIterations: " << inputs.n_iterations << std::endl;
   for (int hidden_layer_n = 0; 
        hidden_layer_n < n_hidden_layer_nodes.size();  
        hidden_layer_n++) { 
@@ -91,16 +94,21 @@ void trainNN(std::string inputfile,
     verboseout << " nodes layer " << hidden_layer_n + 1 << 
       ": " << nodes_here << std::endl;
   }
+  verboseout << " nIterations: " << inputs.n_iterations << std::endl;
   
-  
-  TFile* input_file = new TFile(inputfile.c_str());
+  // --- load training trees ---
+
+  TFile* input_file = new TFile(inputs.file.c_str());
   TTree* in_tree = dynamic_cast<TTree*>(input_file->Get("SVTree"));
   if (! in_tree){ 
-    throw std::runtime_error("Could not find SVTree in " + inputfile); 
+    throw std::runtime_error("Could not find SVTree in " + inputs.file); 
   }
 
   InputVariableContainer in_var; 
   if (input_variables.size() == 0) { 
+    if (bit_flags & train::throw_on_warn) 
+      throw std::runtime_error("no input variables given"); 
+
     textout << "WARNING: no input variables given, using defaults\n"; 
     in_var.set_hardcoded_defaults(in_tree); 
   }
@@ -125,6 +133,9 @@ void trainNN(std::string inputfile,
   TeachingVariables teach; 
   
   if (in_tree->SetBranchAddress("weight",&teach.weight) ) { 
+    if (bit_flags & train::throw_on_warn) 
+      throw std::runtime_error("no 'weight' branch found"); 
+
     textout << "WARNING: no weight branch found, setting all weights to 1"
 	      << std::endl; 
     teach.weight = 1; 
@@ -133,7 +144,7 @@ void trainNN(std::string inputfile,
   if (in_tree->SetBranchAddress("bottom",&teach.bottom) ||
       in_tree->SetBranchAddress("charm", &teach.charm) ||
       in_tree->SetBranchAddress("light", &teach.light) ) 
-    throw std::runtime_error("SVTree in " + inputfile + 
+    throw std::runtime_error("SVTree in " + inputs.file + 
 			     " missing one of: bottom, charm, light"); 
 
   int nlayer = n_hidden_layer_nodes.size() + 2; 
@@ -161,16 +172,16 @@ void trainNN(std::string inputfile,
   textout << n_entries << " entries in chain\n"; 
 
   TrainingSettings settings; 
-  settings.dilution_factor = dilutionFactor; 
+  settings.dilution_factor = DILUTION_FACTOR; 
   settings.n_training_events = 0; 
   settings.n_testing_events = 0; 
 
-  if (n_training_events_target > 0) { 
-    int target_entries = n_training_events_target; 
-    if (target_entries > n_entries / dilutionFactor) 
+  if (inputs.n_training_events > 0) { 
+    int target_entries = inputs.n_training_events; 
+    if (target_entries > n_entries / settings.dilution_factor) 
       throw std::runtime_error
 	( (boost::format("asked for %i entries, only have %i")
-	   % (target_entries * dilutionFactor) 
+	   % (target_entries * settings.dilution_factor) 
 	   % n_entries).str() ); 
     settings.n_training_events = target_entries; 
     settings.n_testing_events = target_entries; 
@@ -183,8 +194,8 @@ void trainNN(std::string inputfile,
 	  " Looping over event " << i << std::endl;
       }
     
-      if (i%dilutionFactor==0) settings.n_training_events+=1;
-      if (i%dilutionFactor==1) settings.n_testing_events+=1;
+      if (i%settings.dilution_factor==0) settings.n_training_events+=1;
+      if (i%settings.dilution_factor==1) settings.n_testing_events+=1;
 
     }
   }
@@ -228,15 +239,15 @@ void trainNN(std::string inputfile,
   jn->Shuffle(true,false);
 
   // -- the code below the assert is almost certainly broken
-  assert(restartTrainingFrom == 0); 
+  assert(inputs.restart_training_from == 0); 
   jn->Init();
-  // if (restartTrainingFrom == 0) {
+  // if (inputs.restart_training_from == 0) {
   //   jn->Init();
   // }
   // else {
   //   std::stringstream weight_name; 
-  //   weight_name << out_dir; 
-  //   weight_name << "/Weights" << restartTrainingFrom << ".root"; 
+  //   weight_name << inputs.output_dir; 
+  //   weight_name << "/Weights" << inputs.restart_training_from << ".root"; 
   //   jn->ReadFromFile(weight_name.str().c_str());
   // }
   
@@ -248,7 +259,7 @@ void trainNN(std::string inputfile,
 
   //prepare output stream
   
-  std::string chronology_name = out_dir + "/trainingCronology.txt"; 
+  std::string chronology_name = inputs.output_dir + "/trainingCronology.txt"; 
 
   ofstream cronology(chronology_name.c_str(),ios_base::out);
   if (! cronology ) 
@@ -261,21 +272,23 @@ void trainNN(std::string inputfile,
   cronology.close();
 
   //prepare training histo
-  TH1F* histoTraining=new TH1F("training","training",
-			       (int)std::floor((float)nIterations/10.+0.5),
-			       1,std::floor((float)nIterations/10.+1.5));
+  TH1F* histoTraining = new TH1F
+    ("training","training",
+     (int)std::floor((float)inputs.n_iterations/10.+0.5),
+     1,std::floor((float)inputs.n_iterations/10.+1.5));
 
-  TH1F* histoTesting=new TH1F("testing","testing",
-			      (int)std::floor((float)nIterations/10.+0.5),
-			      1,std::floor((float)nIterations/10.+1.5));
+  TH1F* histoTesting=new TH1F
+    ("testing","testing",
+     (int)std::floor((float)inputs.n_iterations/10.+0.5),
+     1,std::floor((float)inputs.n_iterations/10.+1.5));
 
 
-  for(int epoch=restartTrainingFrom+1;epoch<=nIterations;++epoch){
-    if (epoch!=restartTrainingFrom+1) {
+  for(int epoch=inputs.restart_training_from+1;epoch<=inputs.n_iterations;++epoch){
+    if (epoch!=inputs.restart_training_from+1) {
       trainingError = jn->Train();
     }
 
-    if (epoch%10==0 || epoch==restartTrainingFrom+1) {
+    if (epoch%10==0 || epoch==inputs.restart_training_from+1) {
 
       testError = jn->Test(); 
 
@@ -320,7 +333,7 @@ void trainNN(std::string inputfile,
 
       cronology.close();
       
-      std::string weight_name = out_dir + "/Weights"; 
+      std::string weight_name = inputs.output_dir + "/Weights"; 
       TString name(weight_name.c_str());
       name+=epoch;
       name+=".root";
@@ -365,7 +378,7 @@ void trainNN(std::string inputfile,
 
   if (epochWithMinimum != 0) {
 
-    std::string weights_out_name = out_dir + "/Weights"; 
+    std::string weights_out_name = inputs.output_dir + "/Weights"; 
     TString min_file_name(weights_out_name.c_str());
     min_file_name += epochWithMinimum;
     min_file_name += ".root";
@@ -378,7 +391,7 @@ void trainNN(std::string inputfile,
     // textout << " Reading back network with minimum" << endl;
     // setTrainedNetwork(*jn,trainedNetwork);
 
-    std::string min_weights_name = out_dir + "/weightMinimum.root"; 
+    std::string min_weights_name = inputs.output_dir + "/weightMinimum.root"; 
     TFile out_min(min_weights_name.c_str(),"recreate");
     out_min.WriteTObject(trainedNetwork);
 
@@ -390,7 +403,7 @@ void trainNN(std::string inputfile,
 	      << endl;
   }
   
-  std::string training_info_name = out_dir + "/trainingInfo.root"; 
+  std::string training_info_name = inputs.output_dir + "/trainingInfo.root"; 
   TFile* histoFile=new TFile(training_info_name.c_str(),"recreate");
   histoTraining->Write();
   histoTesting->Write();
@@ -439,7 +452,7 @@ int copy_testing_events(std::ostream& stream,
     
     if (i % s.dilution_factor !=1 ) continue;
 
-    // if (n_training_events_target > 0) { 
+    // if (inputs.n_training_events > 0) { 
 
     float number_events_remaining = 
       float(n_entries - i) / float(s.dilution_factor); 

@@ -19,6 +19,7 @@ class FloatParseException: public ParseException{};
 
 std::vector<std::string> parse_string_list(PyObject* string_list);
 std::vector<int> parse_int_tuple(PyObject* py_list); 
+std::vector<int> parse_int_seq(PyObject* py_list); 
 std::vector<double> parse_double_list(PyObject* py_list); 
 std::map<std::string,double> parse_double_dict(PyObject* py_dict); 
 

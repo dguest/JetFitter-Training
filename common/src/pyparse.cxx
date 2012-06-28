@@ -60,6 +60,32 @@ std::vector<int> parse_int_tuple(PyObject* py_list){
 
 }
 
+std::vector<int> parse_int_seq(PyObject* py_list){ 
+  std::vector<int> ints; 
+  if (py_list == 0) { 
+    return ints; 
+  }
+
+  bool ok = PySequence_Check(py_list); 
+  if (!ok) {
+    PyErr_SetString(PyExc_TypeError,"expected a sequence of ints"); 
+    return ints; 
+  }
+
+  int n_items = PySequence_Size(py_list); 
+  for (int i = 0; i < n_items; i++){ 
+    PyObject* the_ob = PySequence_GetItem(py_list, i); 
+    int the_int = PyInt_AsLong(the_ob); 
+    if (PyErr_Occurred()) { 
+      return ints; 
+    }
+    ints.push_back(the_int); 
+  }
+  return ints; 
+
+}
+
+
 std::vector<double> parse_double_list(PyObject* py_list){ 
   std::vector<double> out_vals; 
   if (py_list == 0) { 

@@ -79,7 +79,7 @@ extern "C" PyObject* train_py(PyObject *self,
 
 
   // --- parse node configuration 
-  std::vector<int> node_vec = parse_int_tuple(nodes); 
+  std::vector<int> node_vec = parse_int_seq(nodes); 
   if (PyErr_Occurred()) return 0; 
 
   // --- parse flavor weights 

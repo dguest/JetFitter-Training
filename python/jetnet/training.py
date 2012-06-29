@@ -38,7 +38,9 @@ def run_training(reduced_dataset,
                  normalization, 
                  nodes = None, 
                  debug = False, 
-                 events = 1000000): 
+                 events = 1000000, 
+                 other_opt_dict = {}, 
+                 ): 
 
     if not os.path.isdir(output_directory): 
         os.mkdir(output_directory)
@@ -59,7 +61,8 @@ def run_training(reduced_dataset,
                  nodes = nodes, 
                  flavor_weights = flavor_weights, 
                  n_training_events_target = events, 
-                 flags = flags)
+                 flags = flags, 
+                 **other_opt_dict)
 
 
 def run_performance(reduced_dataset, weights_file, 

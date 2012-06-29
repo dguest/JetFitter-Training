@@ -38,6 +38,10 @@ struct TrainingInputs
   int n_iterations; 
   int restart_training_from; 
   int n_training_events; 
+  
+  int n_patterns_per_update; 
+  float learning_rate; 
+  float learning_rate_decrease; 
 }; 
 
 // --- for internal use
@@ -56,6 +60,8 @@ struct TeachingVariables
 }; 
 
 const int N_PATTERNS_PER_UPDATE = 200;// || _2 = 200 (before 100) _3,_4=20
+const float LEARNING_RATE = 0.5; 
+const float LEARNING_RATE_DECREASE = 0.99; 
 const int DILUTION_FACTOR = 2; 
 
 bool is_flavor_tagged(const TeachingVariables&); 
@@ -88,7 +94,7 @@ int copy_training_events(std::ostream& stream,
 			 const TrainingSettings& settings, 
 			 const FlavorWeights&); 
 
-void setup_jetnet(JetNet* jn); 
+void setup_jetnet(JetNet* jn, const TrainingInputs& t); 
 
 
 void trainNN(const TrainingInputs inputs, 

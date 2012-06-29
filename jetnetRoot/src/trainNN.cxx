@@ -215,7 +215,7 @@ void trainNN(const TrainingInputs inputs,
   textout <<  " setting up JetNet... " << endl;
   jn->SetUpdatesPerEpoch( int(std::floor(float(settings.n_training_events)/
 					 float(N_PATTERNS_PER_UPDATE) )));
-  setup_jetnet(jn); 
+  setup_jetnet(jn, inputs); 
 
   std::vector<JetNet::InputNode> jn_input_info; 
   for (std::vector<InputVariableInfo>::const_iterator itr = 
@@ -594,22 +594,22 @@ int copy_training_events(std::ostream& stream, JetNet* jn,
 
 }
 
-void setup_jetnet(JetNet* jn) { 
+void setup_jetnet(JetNet* jn, const TrainingInputs& t) { 
   //  jn->SetMSTJN(4,12); Fletscher-Rieves (Scaled Conj Grad)
 
   
-  jn->SetPatternsPerUpdate( N_PATTERNS_PER_UPDATE );
+  jn->SetPatternsPerUpdate( t.n_patterns_per_update );
   jn->SetUpdatingProcedure( 0 );
   jn->SetErrorMeasure( 0 );
   jn->SetActivationFunction( 1 );
   //  jn->SetLearningRate( 0.5);//0.8 || _2 =0.5 _3=0.05 _4=0.15
-  jn->SetLearningRate( 0.5);//0.8 //move to 20 for _3 _4 = 0.15
+  jn->SetLearningRate( t.learning_rate);//0.8 //move to 20 for _3 _4 = 0.15
   //  jn->SetMomentum( 0.3 );//0.3 //is now 0.5 || _2 = 0.3 _3 = 0.03 _4 = 0.05
   jn->SetMomentum( 0.03 );//0.3 //is now 0.5
   jn->SetInitialWeightsWidth( 1. );
   //  jn->SetLearningRateDecrease( 0.992 );
   //  jn->SetLearningRateDecrease( 0.99 );//0.992 || _2 = 0.99 _3 = 0.98 _4=0.99
-  jn->SetLearningRateDecrease( 0.99 );//0.992
+  jn->SetLearningRateDecrease( t.learning_rate_decrease );//0.992
 }
 
 bool is_flavor_tagged(const TeachingVariables& t){ 

@@ -34,6 +34,7 @@ class RDSProcess(multiprocessing.Process):
 
         self._nodes = None
         self._n_training_events = 1000000
+        self._other_opt_dict = {}
 
         if config_file: 
             parser = ConfigParser.SafeConfigParser()
@@ -42,17 +43,35 @@ class RDSProcess(multiprocessing.Process):
             training_opt = dict(parser.items('training'))
             try: 
                 self._nodes = [int(i) for i in training_opt['nodes'].split()]
+
             except KeyError: 
                 warn("'nodes' not found in {}".format(config_file), 
                      stacklevel = 2)
 
             try: 
                 self._n_training_events = int(training_opt['n_events'])
+
             except KeyError: 
                 war_str = ("'n_events' not found in {} [training], " 
                            "defaulting to {}")
                 warn(war_str.format(config_file, self._n_training_events), 
                      FutureWarning, stacklevel = 2)
+
+            allowed_others =  {
+                "n_patterns_per_update", 
+                "learning_rate", 
+                "learning_rate_decrease"}
+            
+            other_opt_dict = {}
+            for opt_name, opt_val in training_opt.iteritems(): 
+                if opt_name in allowed_others: 
+                    if opt_name[0:2] == 'n_': 
+                        converter = int
+                    else: 
+                        converter = float
+                    other_opt_dict[opt_name] = converter(opt_val)
+            self._other_opt_dict = other_opt_dict
+
 
         if not self._nodes: 
             warn('\'nodes\' list should be given in the config file '
@@ -133,7 +152,8 @@ class RDSProcess(multiprocessing.Process):
                                   flavor_weights = self._flavor_weights, 
                                   nodes = self._nodes, 
                                   debug = do_test, 
-                                  events = self._n_training_events)
+                                  events = self._n_training_events, 
+                                  other_opt_dict = self._other_opt_dict)
     
         # --- diagnostics part 
         testing_dir = os.path.join(working_dir, 'testing')

@@ -44,6 +44,10 @@ extern "C" PyObject* train_py(PyObject *self,
   inputs.n_training_events = -1; 
   const char* flags = ""; 
 
+  inputs.n_patterns_per_update = N_PATTERNS_PER_UPDATE; 
+  inputs.learning_rate = LEARNING_RATE; 
+  inputs.learning_rate_decrease = LEARNING_RATE_DECREASE; 
+
   const char *kwlist[] = {
     "reduced_dataset",
     "output_directory", 
@@ -53,11 +57,14 @@ extern "C" PyObject* train_py(PyObject *self,
     "restart_training_from",
     "flavor_weights", 
     "n_training_events_target", 
+    "n_patterns_per_update", 
+    "learning_rate", 
+    "learning_rate_decrease", 
     "flags", 
     NULL};
  
   if (!PyArg_ParseTupleAndKeywords
-      (args, keywds, "s|siOOiOis", 
+      (args, keywds, "s|siOOiOiiffs", 
        // this function should take a const, and 
        // may be changed, until then we'll cast
        const_cast<char**>(kwlist),
@@ -69,6 +76,9 @@ extern "C" PyObject* train_py(PyObject *self,
        &inputs.restart_training_from, 
        &flavor_weights, 
        &inputs.n_training_events, 
+       &inputs.n_patterns_per_update, 
+       &inputs.learning_rate, 
+       &inputs.learning_rate_decrease, 
        &flags)
       ) return NULL;
 

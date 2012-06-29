@@ -14,19 +14,28 @@
 #include "pynn.hh"
 
 
-static const char* train_doc_string = 
-  "run the neural net. \n"
-  "Keywords:\n"
-  "reduced_dataset\n"
-  "output_directory\n"
-  "n_iterations\n"
-  "dilution_factor\n"
-  "normalization\n"
-  "nodes\n"
-  "restart_training_from\n"
-  "flags\n"
-  "flag values -- d: debug, g: giacintos training, t: throw on warning "
-  "v: verbose"; 
+static const std::string train_additional = 
+  "flag values:\n\td: debug,\n\tg: giacintos training,"
+  "\n\tt: throw on warning,"
+  "\n\tv: verbose"; 
+
+static const char *train_kwlist[] = {
+  "reduced_dataset",
+  "output_directory", 
+  "n_iterations", 
+  "normalization", 
+  "nodes", 
+  "restart_training_from",
+  "flavor_weights", 
+  "n_training_events_target", 
+  "n_patterns_per_update", 
+  "learning_rate", 
+  "learning_rate_decrease", 
+  "flags", 
+  NULL};
+
+static char train_doc[MAX_DOC_STRING_LENGTH]; 
+
 
 extern "C" PyObject* train_py(PyObject *self, 
 			      PyObject *args, 
@@ -48,26 +57,12 @@ extern "C" PyObject* train_py(PyObject *self,
   inputs.learning_rate = LEARNING_RATE; 
   inputs.learning_rate_decrease = LEARNING_RATE_DECREASE; 
 
-  const char *kwlist[] = {
-    "reduced_dataset",
-    "output_directory", 
-    "n_iterations", 
-    "normalization", 
-    "nodes", 
-    "restart_training_from",
-    "flavor_weights", 
-    "n_training_events_target", 
-    "n_patterns_per_update", 
-    "learning_rate", 
-    "learning_rate_decrease", 
-    "flags", 
-    NULL};
  
   if (!PyArg_ParseTupleAndKeywords
       (args, keywds, "s|siOOiOiiffs", 
        // this function should take a const, and 
        // may be changed, until then we'll cast
-       const_cast<char**>(kwlist),
+       const_cast<char**>(train_kwlist),
        &input_file, 
        &output_dir, 
        &inputs.n_iterations, 
@@ -278,6 +273,21 @@ extern "C" PyObject* test_py(PyObject *self,
   return Py_None;
 }
 
+static const char* augment_kwlist[] = {
+  "in_file",
+  "nn_file", 
+  "tree", 
+  "out_file", 
+  "ints", 
+  "doubles", 
+  "subset", 
+  "extension", 
+  "max_entries",
+  "show_progress", 
+  NULL};
+static char augment_doc[MAX_DOC_STRING_LENGTH]; 
+
+
 PyObject* py_augment_tree(PyObject *self, 
 			  PyObject *args, 
 			  PyObject *keywds)
@@ -292,25 +302,13 @@ PyObject* py_augment_tree(PyObject *self,
   const char* extension = "Aug"; 
   int max_entries = -1; 
   bool show_progress = false; 
-  const char* kwlist[] = {
-    "in_file",
-    "nn_file", 
-    "tree", 
-    "out_file", 
-    "ints", 
-    "doubles", 
-    "subset", 
-    "extension", 
-    "max_entries",
-    "show_progress", 
-    NULL};
     
   bool ok = PyArg_ParseTupleAndKeywords
     (args, keywds, 
      "ss|ssOOOsib", 
      // I think python people argue about whether this should be 
      // a const char** or a char**
-     const_cast<char**>(kwlist),
+     const_cast<char**>(augment_kwlist),
      &file_name,
      &nn_file, 
      &tree_name, 
@@ -449,7 +447,7 @@ static PyMethodDef keywdarg_methods[] = {
   // three.
   {"trainNN", (PyCFunction)train_py, 
    METH_VARARGS | METH_KEYWORDS,
-   train_doc_string},
+   train_doc},
   {"testNN", (PyCFunction)test_py, 
    METH_VARARGS | METH_KEYWORDS,
    test_doc_string},
@@ -458,12 +456,14 @@ static PyMethodDef keywdarg_methods[] = {
    ntuple_doc_string},
   {"augment_tree", (PyCFunction)py_augment_tree, 
    METH_VARARGS | METH_KEYWORDS,
-   "augments a tree (duh)"},
+   augment_doc},
   {NULL, NULL, 0, NULL}   /* sentinel */
 };
 
 extern "C" PyMODINIT_FUNC initpynn(void)
 {
+  build_doc(train_doc, "trainNN(", train_kwlist, ")\n" + train_additional); 
+  build_doc(augment_doc, "augment_tree(", augment_kwlist, ")"); 
   Py_InitModule("pynn", keywdarg_methods);
 }
 
@@ -514,4 +514,18 @@ std::vector<InputVariableInfo> parse_input_variable_info(PyObject* in_dict)
   }
   
   return input_variable_info; 
+}
+
+
+void build_doc(char* doc_array, 
+	       std::string b, const char** input_kwds, std::string a){ 
+  strcat(doc_array, b.c_str()); 
+  for (int n = 0; n < 20; n++) { 
+    const char* this_str = input_kwds[n]; 
+    if (! this_str) break; 
+    if (n != 0) strcat(doc_array,", "); 
+    strcat(doc_array, this_str); 
+  }
+  strcat(doc_array, a.c_str()); 
+  assert(strlen(doc_array) < MAX_DOC_STRING_LENGTH); 
 }

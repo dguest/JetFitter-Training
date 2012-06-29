@@ -62,7 +62,7 @@ def run_training(reduced_dataset,
                  flavor_weights = flavor_weights, 
                  n_training_events_target = events, 
                  flags = flags, 
-                 other_opt_dict = other_opt_dict)
+                 **other_opt_dict)
 
 
 def run_performance(reduced_dataset, weights_file, 

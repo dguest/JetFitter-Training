@@ -60,6 +60,7 @@ const int DILUTION_FACTOR = 2;
 
 bool is_flavor_tagged(const TeachingVariables&); 
 float get_entry_weight(const TeachingVariables&, const FlavorWeights&); 
+float adjusted_keep_prob(float old_prob, const FlavorWeights&); 
 void copy_cat_trees(TFile& dest_file, const TFile& source_file); 
 
 namespace train_nn { 

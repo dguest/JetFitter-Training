@@ -447,6 +447,12 @@ float get_entry_weight(const TeachingVariables& teach,
   return event_weight; 
 }
 
+float adjusted_keep_prob(float old_prob, const FlavorWeights& w) { 
+  int n_skipped = (w.bottom < 0) + (w.light < 0) + (w.charm < 0); 
+  assert(n_skipped < 3); 
+  return old_prob / (1 - n_skipped / 3.0); 
+}
+
 
 int copy_testing_events(std::ostream& stream, 
 			JetNet* jn, 
@@ -476,6 +482,8 @@ int copy_testing_events(std::ostream& stream,
     float keep_event_probibility = 
       number_events_needed / number_events_remaining; 
 
+    keep_event_probibility = adjusted_keep_prob(keep_event_probibility, w); 
+
     float f_rand = float(rand()) / float(RAND_MAX); 
     if (f_rand > keep_event_probibility) continue; 
     // }
@@ -497,6 +505,8 @@ int copy_testing_events(std::ostream& stream,
     jn->SetOutputTestSet( testing_counter, 2, teach.light );
 
     jn->SetEventWeightTestSet( testing_counter, event_weight); 
+
+    assert(testing_counter <= s.n_testing_events); 
 
     testing_counter+=1;
 
@@ -541,6 +551,8 @@ int copy_training_events(std::ostream& stream, JetNet* jn,
     float keep_event_probibility = 
       number_events_needed / number_events_remaining; 
 
+    keep_event_probibility = adjusted_keep_prob(keep_event_probibility, w); 
+
     float f_rand = float(rand()) / float(RAND_MAX); 
     if (f_rand > keep_event_probibility) continue; 
 
@@ -562,6 +574,8 @@ int copy_training_events(std::ostream& stream, JetNet* jn,
     jn->SetOutputTrainSet( training_counter, 2, teach.light );
 
     jn->SetEventWeightTrainSet(training_counter, event_weight );
+
+    assert(training_counter <= s.n_training_events); 
 
     training_counter+=1;
 

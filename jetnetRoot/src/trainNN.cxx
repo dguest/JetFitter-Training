@@ -213,8 +213,9 @@ void trainNN(const TrainingInputs inputs,
 			     nneurons );
 
   textout <<  " setting up JetNet... " << endl;
-  jn->SetUpdatesPerEpoch( int(std::floor(float(settings.n_training_events)/
-					 float(N_PATTERNS_PER_UPDATE) )));
+  float updates_per_epoch = std::floor(float(settings.n_training_events)/
+				       float(inputs.n_patterns_per_update)); 
+  jn->SetUpdatesPerEpoch(int( updates_per_epoch ));
   setup_jetnet(jn, inputs); 
 
   std::vector<JetNet::InputNode> jn_input_info; 

@@ -438,6 +438,16 @@ void copy_cat_trees(TFile& dest_file, const TFile& source_file) {
   }
 }
 
+float get_entry_weight(const TeachingVariables& teach, 
+		       const FlavorWeights& w) { 
+  float event_weight = -1; 
+  if (teach.bottom) event_weight = teach.weight * w.bottom; 
+  else if (teach.charm) event_weight = teach.weight * w.charm; 
+  else if (teach.light) event_weight = teach.weight * w.light; 
+  return event_weight; 
+}
+
+
 int copy_testing_events(std::ostream& stream, 
 			JetNet* jn, 
 			const InputVariableContainer& in_buffer, 
@@ -472,8 +482,9 @@ int copy_testing_events(std::ostream& stream,
     
     in_tree->GetEntry(i);
 
-
-    if (! is_flavor_tagged(teach) ) continue;
+    float event_weight = get_entry_weight(teach, w); 
+    
+    if (event_weight < 0) continue; 
 
     for (int var_num = 0; var_num < in_buffer.size(); var_num++){ 
       jn->SetInputTestSet( testing_counter, 
@@ -485,18 +496,8 @@ int copy_testing_events(std::ostream& stream,
     jn->SetOutputTestSet( testing_counter, 1, teach.charm );
     jn->SetOutputTestSet( testing_counter, 2, teach.light );
 
-    if (teach.bottom) {
-	jn->SetEventWeightTestSet( testing_counter, 
-				   teach.weight *w.bottom );
-      }
-    else if (teach.charm) {
-      jn->SetEventWeightTestSet(  testing_counter, 
-				  teach.weight*w.charm );
-    }
-    else if (teach.light){
-      jn->SetEventWeightTestSet(  testing_counter, 
-				  teach.weight*w.light );
-    }
+    jn->SetEventWeightTestSet( testing_counter, event_weight); 
+
     testing_counter+=1;
 
     //not used!
@@ -546,7 +547,9 @@ int copy_training_events(std::ostream& stream, JetNet* jn,
 
     in_tree->GetEntry(i);
 
-    if (! is_flavor_tagged(teach)) continue;
+    float event_weight = get_entry_weight(teach, w); 
+
+    if (event_weight < 0) continue;
 
     for (int var_num = 0; var_num < in_buffer.size(); var_num++){ 
       jn->SetInputTrainSet( training_counter, 
@@ -558,18 +561,8 @@ int copy_training_events(std::ostream& stream, JetNet* jn,
     jn->SetOutputTrainSet( training_counter, 1, teach.charm );
     jn->SetOutputTrainSet( training_counter, 2, teach.light );
 
-    if (teach.bottom) {
-      jn->SetEventWeightTrainSet(  training_counter, 
-				   teach.weight * w.bottom );
-    }
-    else if (teach.charm){
-      jn->SetEventWeightTrainSet(  training_counter, 
-				   teach.weight * w.charm);
-    }
-    else if (teach.light) {
-      jn->SetEventWeightTrainSet(  training_counter, 
-				   teach.weight * w.light);
-    }
+    jn->SetEventWeightTrainSet(training_counter, event_weight );
+
     training_counter+=1;
 
   }

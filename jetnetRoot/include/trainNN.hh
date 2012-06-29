@@ -59,6 +59,7 @@ const int N_PATTERNS_PER_UPDATE = 200;// || _2 = 200 (before 100) _3,_4=20
 const int DILUTION_FACTOR = 2; 
 
 bool is_flavor_tagged(const TeachingVariables&); 
+float get_entry_weight(const TeachingVariables&, const FlavorWeights&); 
 void copy_cat_trees(TFile& dest_file, const TFile& source_file); 
 
 namespace train_nn { 

@@ -320,10 +320,14 @@ Double_t TFlavorNetwork::sigmoid(Double_t x) const {
 bool TFlavorNetwork::is_consistent() const { 
   if (mThresholdVectors.size() != mWeightMatrices.size()) 
     return false; 
+  int nodes_last_layer = mnInput; 
   for (unsigned layer_n = 0; layer_n < mThresholdVectors.size(); layer_n++){ 
     int n_threshold_nodes = mThresholdVectors.at(layer_n)->GetNrows(); 
     int n_weights_nodes = mWeightMatrices.at(layer_n)->GetNcols(); 
     if (n_threshold_nodes != n_weights_nodes) return false; 
+    if (mWeightMatrices.at(layer_n)->GetNrows() != nodes_last_layer)
+      return false; 
+    nodes_last_layer = n_weights_nodes; 
   }
   
   if (mThresholdVectors.size() - 1 != mnHiddenLayerSize.size() ){ 

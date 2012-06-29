@@ -10,7 +10,13 @@
 #include "JetNet.hh"
 
 int main(int narg, char* varg[]) { 
-  test_trained(); 
+  std::vector<int> hidden_layer_sizes; 
+  for (int i = 1; i < narg; i++) { 
+    printf("adding hidden layer %s\n", varg[i]); 
+    hidden_layer_sizes.push_back(atoi(varg[i])); 
+  }
+  printf("running\n"); 
+  test_trained(hidden_layer_sizes); 
   return 0; 
 }
 
@@ -21,7 +27,7 @@ float get_rand(float range, float offset) {
   return rand_base; 
 }
 
-bool test_trained() { 
+bool test_trained(std::vector<int> layer_sizes) { 
   srand(time(0)); 
   std::vector<TFlavorNetwork::Input> inputs; 
   TFlavorNetwork::Input cat = {"cat",get_rand(),get_rand()}; 
@@ -31,13 +37,20 @@ bool test_trained() {
   inputs.push_back(dog); 
   inputs.push_back(horse); 
 
+
   std::vector<TVectorD*> thresholds;
   std::vector<TMatrixD*> weights;
 
-  for (int i = 0; i < 2; i++){ 
-    thresholds.push_back(new TVectorD(3));
-    weights.push_back(new TMatrixD(3,3));
+  int last_layer_size = inputs.size(); 
+  for (int i = 0; i < layer_sizes.size() ; i++){ 
+    int this_layer_size = layer_sizes.at(i); 
+    thresholds.push_back(new TVectorD(this_layer_size));
+    weights.push_back(new TMatrixD(last_layer_size,this_layer_size));
+    last_layer_size = this_layer_size; 
   }
+  thresholds.push_back(new TVectorD(3));
+  weights.push_back(new TMatrixD(last_layer_size,3));
+  
 
   std::cout << "before:\n"; 
   print_node_info(inputs); 
@@ -50,14 +63,16 @@ bool test_trained() {
   print_node_info(read_back); 
 
   // --- jn testing part
-  int* nneurons = new int[4]; 
-  nneurons[0] = 3; 
-  nneurons[1] = 3; 
-  nneurons[2] = 3; 
-  nneurons[3] = 3; 
+  int* nneurons = new int[layer_sizes.size() + 2]; 
+  nneurons[0] = inputs.size(); 
+  for (int i = 0; i < layer_sizes.size(); i++){ 
+    printf("hidden %i: %i nodes\n",i,layer_sizes.at(i)); 
+    nneurons[i + 1] = layer_sizes.at(i); 
+  }
+  nneurons[layer_sizes.size() + 1] = 3; 
   JetNet* jn = new JetNet( 100, // testing events 
 			   100, // training events
-			   4, //layers
+			   layer_sizes.size() + 2, //layers
 			   nneurons );
   jn->Init(); 
 
@@ -88,6 +103,7 @@ bool test_trained() {
     double normed_value = 
       (value + inputs.at(i).offset ) * inputs.at(i).scale; 
 
+    // normed_value += 1; 
     jn->SetInputs(i,normed_value); 
     input_map[inputs.at(i).name] = value; 
     input_vector.push_back(normed_value); 
@@ -135,7 +151,7 @@ bool test_trained() {
 
   JetNet* new_jn = new JetNet( 100, // testing events 
 			       100, // training events
-			       4, //layers
+			       layer_sizes.size() + 2, //layers
 			       nneurons );
 
   setTrainedNetwork(*new_jn,jn_trained_out); 

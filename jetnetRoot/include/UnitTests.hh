@@ -4,7 +4,7 @@
 #include <iostream>
 #include <vector>
 
-bool test_trained(); 
+bool test_trained(std::vector<int>); 
 
 float get_rand(float range = 1, float offset = 0); 
 

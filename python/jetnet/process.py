@@ -8,9 +8,9 @@ ROOT.gROOT.SetBatch()           # don't draw (crashes subprocess)
 from jetnet import training, pyprep, profile, utils
 from jetnet.perf import rejection, performance
 import os, sys, glob
+from os.path import isdir, isfile, splitext, basename
 from warnings import warn
 import multiprocessing, ConfigParser
-
 
 class RDSProcess(multiprocessing.Process): 
     def __init__(self, 
@@ -34,14 +34,14 @@ class RDSProcess(multiprocessing.Process):
 
         # these things are set by the config file
         self._training_subdir = 'training'
+        self._testing_subdir = 'testing'
         self._nodes = None
         self._n_training_events = 1000000
         self._other_opt_dict = {}
 
         if config_file: 
             parser = ConfigParser.SafeConfigParser()
-            with open(config_file) as f: 
-                parser.readfp(f)
+            parser.read(config_file)
             training_opt = dict(parser.items('training'))
             try: 
                 self._nodes = [int(i) for i in training_opt['nodes'].split()]
@@ -50,8 +50,6 @@ class RDSProcess(multiprocessing.Process):
                 warn("'nodes' not found in {}".format(config_file), 
                      stacklevel = 2)
 
-            if 'train_dir' in training_opt: 
-                self._training_subdir = training_opt['train_dir']
 
             try: 
                 self._n_training_events = int(training_opt['n_events'])
@@ -76,6 +74,16 @@ class RDSProcess(multiprocessing.Process):
                     other_opt_dict[opt_name] = converter(opt_val)
             self._other_opt_dict = other_opt_dict
 
+            cfg_basename = splitext(basename(config_file))[0]
+            if 'train_dir' in training_opt: 
+                self._training_subdir = training_opt['train_dir']
+            else: 
+                self._training_subdir = 'training_' + cfg_basename
+                
+            if parser.has_option('testing','test_dir'): 
+                self._testing_subdir = parser.get('testing','test_dir')
+            else: 
+                self._testing_subdir = 'testing_' + cfg_basename
 
         if not self._nodes: 
             warn('\'nodes\' list should be given in the config file '
@@ -160,7 +168,7 @@ class RDSProcess(multiprocessing.Process):
                                   other_opt_dict = self._other_opt_dict)
     
         # --- diagnostics part 
-        testing_dir = os.path.join(working_dir, 'testing')
+        testing_dir = os.path.join(working_dir, self._testing_subdir)
         if not os.path.isdir(testing_dir): 
             os.mkdir(testing_dir)
     

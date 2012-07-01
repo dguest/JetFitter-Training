@@ -45,7 +45,7 @@ PyObject* py_profile_fast(PyObject *self,
     
   bool ok = PyArg_ParseTupleAndKeywords
     (args, keywds, 
-     "sss|OOOib", 
+     "sss|OOOib:profile_fast", 
      // I think python people argue about whether this should be 
      // a const char** or a char**
      const_cast<char**>(kwlist),
@@ -121,7 +121,7 @@ PyObject* py_pro2d(PyObject *self,
     
   bool ok = PyArg_ParseTupleAndKeywords
     (args, keywds, 
-     "sssO|Oib", 
+     "sssO|Oib:pro2d", 
      // I think python people argue about whether this should be 
      // a const char** or a char**
      const_cast<char**>(kwlist),

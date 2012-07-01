@@ -32,6 +32,8 @@ class RDSProcess(multiprocessing.Process):
         self._testing_ds = testing_dataset
         self._do_more_diagnostics = do_more_diagnostics
 
+        # these things are set by the config file
+        self._training_subdir = 'training'
         self._nodes = None
         self._n_training_events = 1000000
         self._other_opt_dict = {}
@@ -48,9 +50,11 @@ class RDSProcess(multiprocessing.Process):
                 warn("'nodes' not found in {}".format(config_file), 
                      stacklevel = 2)
 
+            if 'train_dir' in training_opt: 
+                self._training_subdir = training_opt['train_dir']
+
             try: 
                 self._n_training_events = int(training_opt['n_events'])
-
             except KeyError: 
                 war_str = ("'n_events' not found in {} [training], " 
                            "defaulting to {}")
@@ -113,7 +117,7 @@ class RDSProcess(multiprocessing.Process):
                     text_file_name = mean_rms_file)
 
         # --- training part 
-        training_dir = os.path.join(working_dir,'training')
+        training_dir = os.path.join(working_dir,self._training_subdir)
         if not os.path.isdir(training_dir): 
             os.mkdir(training_dir)
     

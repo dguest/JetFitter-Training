@@ -24,39 +24,72 @@ from ConfigParser import SafeConfigParser
 class UglyWarning(UserWarning): pass
 
 
-def train_and_test(input_files, testing_dataset, 
-                   pt_divisions, training_variables, 
-                   observer_discriminators, 
-                   flavor_weights, 
-                   config_file, # this should be used for more opts
-                   jet_collection = 'BTag_AntiKt4TopoEMJetsReTagged', 
-                   jet_tagger = 'JetFitterCharm', 
+def train_and_test(input_files, 
+                   config_file, 
                    working_dir = None, 
-                   output_path = None, 
-                   rds_name = 'reduced_dataset.root', 
                    do_test = False, 
                    ): 
 
+
+    config = SafeConfigParser()
+    config.read(config_file)
+
+    # --- setup preprocessing
+    preproc = dict(config.items('preprocessing'))
+    jet_collection = preproc['jet_collection']
+
     if working_dir is None: 
         working_dir = jet_collection
-
-    if not os.path.isfile(testing_dataset): 
-        raise IOError('{} not found'.format(testing_dataset))
-
-
     if not os.path.isdir(working_dir): 
         os.mkdir(working_dir)
 
+
+    pt_divisions = [float(x) for x in preproc['pt_divisions'].split() ]
+    observer_discriminators = preproc['observer_discriminators'].split()
+
+    # --- early load of post-training options  
+    training_variables = config.get('training','variables').split()
+    testing_dataset = config.get('testing', 'testing_dataset')
+    if not os.path.isfile(testing_dataset): 
+        raise IOError('{} not found'.format(testing_dataset))
+
+    flavor_weights = {}
+    if config.has_section('weights'): 
+        warn('moving [weights] contents into [training] section', 
+             FutureWarning)
+        flavor_weights = dict( config.items('weights') )
+        for wt_name, wt in flavor_weights.items(): 
+            config.set('training', wt_name + '_wt', wt)
+        config.remove_section('weights')
+        with open(config_file_name,'w') as new_cfg: 
+            config.write(new_cfg)
+
+    flavors = ['bottom','charm','light']
+    flavor_weights = { 
+        f : config.get('training', f + '_wt') for f in flavors
+        }
+    for f in flavor_weights: 
+        flavor_weights[f] = float(flavor_weights[f])
+
+
     # --- rds part
 
+    jet_tagger = preproc['jet_tagger']
+    if 'ARRAYID' in jet_tagger: 
+        the_array_id = os.environ['PBS_ARRAYID'].rjust(2,'0')
+        jet_tagger = jet_tagger.replace('ARRAYID',the_array_id)
+        working_dir = jet_tagger
+        testing_dataset = os.path.join(working_dir,testing_dataset)
+
+
     # get weights file 
-    reduced_dir = os.path.join(working_dir, 'reduced')
-    if not os.path.isdir(reduced_dir): 
-        os.mkdir(reduced_dir)
+    rds_dir = os.path.join(working_dir, 'reduced')
+    if not os.path.isdir(rds_dir): 
+        os.mkdir(rds_dir)
 
-    rds_path = os.path.join(reduced_dir, rds_name)
+    rds_path = os.path.join(rds_dir, 'reduced_dataset.root')
 
-    weight_file = os.path.join(reduced_dir, 'weights.root')
+    weight_file = os.path.join(rds_dir, 'weights.root')
     if not os.path.isfile(weight_file): 
         
         # build a light ntuple if one doesn't exist
@@ -65,9 +98,7 @@ def train_and_test(input_files, testing_dataset,
 
         else: 
             print '--- making flat ntuple to build weight file ---'
-
-            rds_dir, rds_name = os.path.split(rds_path)
-            small_rds = '.'.join(rds_name.split('.')[:-1]) + '_small.root'
+            small_rds = 'small_rds.root'
             small_rds_path = os.path.join(rds_dir,small_rds)
             if not os.path.isfile(small_rds_path): 
                 pyprep.make_flat_ntuple(
@@ -127,7 +158,8 @@ def train_and_test(input_files, testing_dataset,
     proc.join()
     proc_outputs = proc.out_queue.get(block = False)
 
-    # make the summary folder 
+
+    # --- make the summary folder 
 
     working_dir_list = working_dir.split('/')[:-1]
     if not working_dir_list: 
@@ -139,14 +171,17 @@ def train_and_test(input_files, testing_dataset,
     if not os.path.isdir(summary_dir): 
         os.mkdir(summary_dir)
 
+    summary_base_name, cfg_ext = os.path.splitext(config_file)
+    if 'PBS_ARRAYID' in os.environ: 
+        summary_base_name += '_subjob{}'.format(os.environ['PBS_ARRAYID'])
+
     if 'profile' in proc_outputs: 
+        profile_summary_name = summary_base_name + '_profile.root'
+        profile_summary_path = os.path.join(summary_dir,profile_summary_name)
+        shutil.copyfile(proc_outputs['profile'], profile_summary_path)
 
-        profile_summery_name = jet_tagger + '_profile.root'
-        profile_summery_path = os.path.join(summary_dir,profile_summery_name)
-        shutil.copyfile(proc_outputs['profile'], profile_summery_path)
 
-
-    this_config_name = jet_tagger + '_config_file.cfg'
+    this_config_name = summary_base_name + cfg_ext
     this_config_path = os.path.join(summary_dir, this_config_name)
     shutil.copyfile(config_file, this_config_path)
 
@@ -165,10 +200,6 @@ if __name__ == '__main__':
     parser.add_argument('input_files')
     parser.add_argument('--test', action = 'store_true')
     parser.add_argument(
-        '--whitelist', dest = 'wt', 
-        help = 'whitelist textfile for training (default: %(default)s)', 
-        default = 'whitelist.txt')
-    parser.add_argument(
         '--config', 
         help = 'use this configuration file (default: %(default)s)', 
         default = 'jetnet.cfg')
@@ -178,10 +209,7 @@ if __name__ == '__main__':
     do_test = options.test
     working_dir = None
 
-    training_variables = []
-
     config_file_name = options.config
-    flavor_weights = {}
     if not os.path.isfile(config_file_name): 
         config_files = glob.glob('*.cfg')
         if len(config_files) > 1: 
@@ -192,57 +220,6 @@ if __name__ == '__main__':
         else: 
             config_file_name = config_files[0]
 
-    config = SafeConfigParser()
-    config.read(config_file_name)
-    if config.has_section('weights'): 
-        warn('moving [weights] contents into [training] section', 
-             FutureWarning)
-        flavor_weights = dict( config.items('weights') )
-        for wt_name, wt in flavor_weights.items(): 
-            config.set('training', wt_name + '_wt', wt)
-        config.remove_section('weights')
-        with open(config_file_name,'w') as new_cfg: 
-            config.write(new_cfg)
-        
-    flavors = ['bottom','charm','light']
-    flavor_weights = { 
-        f : config.get('training', f + '_wt') for f in flavors
-        }
-    for f in flavor_weights: 
-        flavor_weights[f] = float(flavor_weights[f])
-
-    pt_divisions = map(
-        float,config.get('preprocessing','pt_divisions').split() )
-    jet_tagger = config.get('preprocessing','jet_tagger')
-    testing_dataset = config.get('testing', 'testing_dataset')
-    observer_discriminators = config.get(
-        'preprocessing','observer_discriminators').split()
-
-    if config.has_option('training','variables'): 
-        training_variables = config.get('training','variables').split()
-        if os.path.isfile(options.wt): 
-            sys.exit(
-                "variables already given in config file, don't use "
-                "whitelist")
-        
-    else: 
-        with open(options.wt) as white_file: 
-            for line in white_file: 
-                var = line.strip()
-                if var: 
-                    training_variables.append(var)
-
-        warn('whitelist will soon be merged with the config file '
-             'under [training] --> variables', 
-             FutureWarning)
-
-    if 'ARRAYID' in jet_tagger: 
-        the_array_id = os.environ['PBS_ARRAYID'].rjust(2,'0')
-        jet_tagger = jet_tagger.replace('ARRAYID',the_array_id)
-        working_dir = jet_tagger
-        testing_dataset = os.path.join(working_dir,testing_dataset)
-
-
     input_files = []
     with open(options.input_files) as file_list: 
         for line in file_list: 
@@ -251,12 +228,7 @@ if __name__ == '__main__':
     print 'running full chain' 
     train_and_test(
         input_files, 
-        testing_dataset = testing_dataset, 
-        do_test = do_test, 
         config_file = config_file_name, 
-        training_variables = training_variables, 
-        flavor_weights = flavor_weights, 
-        jet_tagger = jet_tagger, 
-        pt_divisions = pt_divisions, 
+        do_test = do_test, 
         working_dir = working_dir, 
-        observer_discriminators = observer_discriminators)
+        )

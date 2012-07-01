@@ -194,7 +194,23 @@ if __name__ == '__main__':
 
     config = SafeConfigParser()
     config.read(config_file_name)
-    flavor_weights = { k : float(w) for k, w in config.items('weights') }
+    if config.has_section('weights'): 
+        warn('moving [weights] contents into [training] section', 
+             FutureWarning)
+        flavor_weights = dict( config.items('weights') )
+        for wt_name, wt in flavor_weights.items(): 
+            config.set('training', wt_name + '_wt', wt)
+        config.remove_section('weights')
+        with open(config_file_name,'w') as new_cfg: 
+            config.write(new_cfg)
+        
+    flavors = ['bottom','charm','light']
+    flavor_weights = { 
+        f : config.get('training', f + '_wt') for f in flavors
+        }
+    for f in flavor_weights: 
+        flavor_weights[f] = float(flavor_weights[f])
+
     pt_divisions = map(
         float,config.get('preprocessing','pt_divisions').split() )
     jet_tagger = config.get('preprocessing','jet_tagger')

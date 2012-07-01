@@ -38,6 +38,13 @@ def train_and_test(input_files,
     preproc = dict(config.items('preprocessing'))
     jet_collection = preproc['jet_collection']
 
+    jet_tagger = preproc['jet_tagger']
+    if 'ARRAYID' in jet_tagger: 
+        the_array_id = os.environ['PBS_ARRAYID'].rjust(2,'0')
+        jet_tagger = jet_tagger.replace('ARRAYID',the_array_id)
+        working_dir = jet_tagger
+        testing_dataset = os.path.join(working_dir,testing_dataset)
+
     if working_dir is None: 
         working_dir = jet_collection
     if not os.path.isdir(working_dir): 
@@ -73,14 +80,6 @@ def train_and_test(input_files,
 
 
     # --- rds part
-
-    jet_tagger = preproc['jet_tagger']
-    if 'ARRAYID' in jet_tagger: 
-        the_array_id = os.environ['PBS_ARRAYID'].rjust(2,'0')
-        jet_tagger = jet_tagger.replace('ARRAYID',the_array_id)
-        working_dir = jet_tagger
-        testing_dataset = os.path.join(working_dir,testing_dataset)
-
 
     # get weights file 
     rds_dir = os.path.join(working_dir, 'reduced')

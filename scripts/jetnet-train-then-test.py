@@ -45,6 +45,14 @@ def train_and_test(input_files,
     # --- early load of post-training options  
     training_variables = config.get('training','variables').split()
     testing_dataset = config.get('testing', 'testing_dataset')
+
+    jet_tagger = preproc['jet_tagger']
+    if 'ARRAYID' in jet_tagger: 
+        the_array_id = os.environ['PBS_ARRAYID'].rjust(2,'0')
+        jet_tagger = jet_tagger.replace('ARRAYID',the_array_id)
+        working_dir = jet_tagger
+        testing_dataset = os.path.join(working_dir,testing_dataset)
+
     if not os.path.isfile(testing_dataset): 
         raise IOError('{} not found'.format(testing_dataset))
 
@@ -66,12 +74,6 @@ def train_and_test(input_files,
     for f in flavor_weights: 
         flavor_weights[f] = float(flavor_weights[f])
 
-    jet_tagger = preproc['jet_tagger']
-    if 'ARRAYID' in jet_tagger: 
-        the_array_id = os.environ['PBS_ARRAYID'].rjust(2,'0')
-        jet_tagger = jet_tagger.replace('ARRAYID',the_array_id)
-        working_dir = jet_tagger
-        testing_dataset = os.path.join(working_dir,testing_dataset)
 
     # --- setup the working directory 
     if working_dir is None: 

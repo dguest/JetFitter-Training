@@ -13,6 +13,7 @@
 #include "makeTestNtuple.hh"
 #include "pynn.hh"
 
+static const std::string train_name = "trainNN"; 
 
 static const std::string train_additional = 
   "flag values:\n\td: debug,\n\tg: giacintos training,"
@@ -33,6 +34,8 @@ static const char *train_kwlist[] = {
   "learning_rate_decrease", 
   "flags", 
   NULL};
+
+static const std::string train_argtypes = "s|siOOiOiiffs"; 
 
 static char train_doc[MAX_DOC_STRING_LENGTH]; 
 
@@ -57,9 +60,10 @@ extern "C" PyObject* train_py(PyObject *self,
   inputs.learning_rate = LEARNING_RATE; 
   inputs.learning_rate_decrease = LEARNING_RATE_DECREASE; 
 
+  std::string argtype_str = train_argtypes + ":" + train_name; 
  
   if (!PyArg_ParseTupleAndKeywords
-      (args, keywds, "s|siOOiOiiffs", 
+      (args, keywds, argtype_str.c_str(), 
        // this function should take a const, and 
        // may be changed, until then we'll cast
        const_cast<char**>(train_kwlist),
@@ -96,7 +100,7 @@ extern "C" PyObject* train_py(PyObject *self,
   std::map<std::string, double> flavor_weights_map; 
   flavor_weights_map["bottom"] = 1; 
   flavor_weights_map["charm"] = 1; 
-  flavor_weights_map["light"] = 5; 
+  flavor_weights_map["light"] = 1; 
 
   std::map<std::string, double> new_flavor_weights 
     = parse_double_dict(flavor_weights); 
@@ -109,24 +113,14 @@ extern "C" PyObject* train_py(PyObject *self,
     
   for ( SDMapItr itr = new_flavor_weights.begin(); 
 	itr != new_flavor_weights.end(); itr++){ 
+    if (!flavor_weights_map.count(itr->first) ) { 
+      std::string prob_str = "not sure what '" + itr->first + "' is as a "
+	"flavor weight"; 
+      PyErr_SetString(PyExc_TypeError, prob_str.c_str()); 
+    }
     flavor_weights_map[itr->first] = itr->second; 
   }
 
-  if (flavor_weights_map.size() != 3) { 
-    flavor_weights_map.erase("bottom"); 
-    flavor_weights_map.erase("charm"); 
-    flavor_weights_map.erase("light"); 
-    std::string badkey = "I don't know what "; 
-    for (SDMapItr itr = flavor_weights_map.begin(); 
-	 itr != flavor_weights_map.end(); itr++){ 
-      badkey.append(itr->first); 
-      badkey.append(" "); 
-    }
-    badkey.append("is, allowed flavors are 'bottom', 'charm', 'light'"); 
-	   
-    PyErr_SetString(PyExc_LookupError, badkey.c_str()); 
-    return 0; 
-  }
   FlavorWeights flavor_weights_struct; 
   flavor_weights_struct.bottom = flavor_weights_map["bottom"]; 
   flavor_weights_struct.charm = flavor_weights_map["charm"]; 
@@ -273,6 +267,7 @@ extern "C" PyObject* test_py(PyObject *self,
   return Py_None;
 }
 
+static const std::string augment_name = "augment_tree"; 
 static const char* augment_kwlist[] = {
   "in_file",
   "nn_file", 
@@ -285,6 +280,7 @@ static const char* augment_kwlist[] = {
   "max_entries",
   "show_progress", 
   NULL};
+static const std::string augment_argtypes = "ss|ssOOOsib"; 
 static char augment_doc[MAX_DOC_STRING_LENGTH]; 
 
 
@@ -302,10 +298,12 @@ PyObject* py_augment_tree(PyObject *self,
   const char* extension = "Aug"; 
   int max_entries = -1; 
   bool show_progress = false; 
-    
+
+  std::string argtypes_string = augment_argtypes + ":" + augment_name; 
+
   bool ok = PyArg_ParseTupleAndKeywords
     (args, keywds, 
-     "ss|ssOOOsib", 
+     argtypes_string.c_str(), 
      // I think python people argue about whether this should be 
      // a const char** or a char**
      const_cast<char**>(augment_kwlist),
@@ -445,7 +443,7 @@ static PyMethodDef keywdarg_methods[] = {
   // The cast of the function is necessary since PyCFunction values
   // only take two PyObject* parameters, and keywdarg() takes
   // three.
-  {"trainNN", (PyCFunction)train_py, 
+  {train_name.c_str(), (PyCFunction)train_py, 
    METH_VARARGS | METH_KEYWORDS,
    train_doc},
   {"testNN", (PyCFunction)test_py, 
@@ -454,7 +452,7 @@ static PyMethodDef keywdarg_methods[] = {
   {"makeNtuple", (PyCFunction)make_test_ntuple, 
    METH_VARARGS | METH_KEYWORDS,
    ntuple_doc_string},
-  {"augment_tree", (PyCFunction)py_augment_tree, 
+  {augment_name.c_str(), (PyCFunction)py_augment_tree, 
    METH_VARARGS | METH_KEYWORDS,
    augment_doc},
   {NULL, NULL, 0, NULL}   /* sentinel */
@@ -462,8 +460,10 @@ static PyMethodDef keywdarg_methods[] = {
 
 extern "C" PyMODINIT_FUNC initpynn(void)
 {
-  build_doc(train_doc, "trainNN(", train_kwlist, ")\n" + train_additional); 
-  build_doc(augment_doc, "augment_tree(", augment_kwlist, ")"); 
+  build_doc(train_doc, 
+	    train_name + "(", train_kwlist, ")\n" + train_additional); 
+  build_doc(augment_doc, 
+	    augment_name + "(", augment_kwlist, ")"); 
   Py_InitModule("pynn", keywdarg_methods);
 }
 

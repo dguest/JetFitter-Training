@@ -1,27 +1,50 @@
 import array, random
-import ROOT
-from ROOT import TFile
 
 # --- utility functions 
-def rejection(signal, background, total_background): 
+def _rejection(signal, background, total_background): 
     if background == 0: 
         return None
     return total_background / background
-rejection.string = 'rejection'
+_rejection.string = 'rejection'
 
-def bin_rev_iter(hist): 
+def _bin_rev_iter(hist): 
     n_bins = hist.GetNbinsX()
     for bin_num in xrange(n_bins + 1,1, -1): 
         yield hist.GetBinContent(bin_num)
 
-def bin_fwd_iter(hist): 
+def _bin_fwd_iter(hist): 
     n_bins = hist.GetNbinsX()
     for bin_num in xrange(1,n_bins + 1): 
         yield hist.GetBinContent(bin_num)
 
+def sig_vs_rej(signal, background, flags = 'r'): 
+    """
+    makes signal vs rejection plots, uses numpy for faster computation
+    by default starts with high bins ('r' flag). 
+    """
+    import numpy 
+    if 'r' in flags: 
+        the_itr = _bin_rev_iter
+    else: 
+        the_itr = _bin_fwd_iter
 
+    sig_array = numpy.fromiter(the_itr(signal),'d')
+    bkg_array = numpy.fromiter(the_itr(background),'d')
+    
+    sig_sum = numpy.cumsum(sig_array)
+    bkg_sum = numpy.cumsum(bkg_array)
+    
+    total_signal = sig_sum[-1]
+    total_backtround = bkg_sum[-1]
 
-def plots_to_xy(signal, background, y_function = rejection, rev_itr = True): 
+    nonzero_bkg = bkg_sum.nonzero()
+
+    efficiency = sig_sum[nonzero_bkg] / total_signal
+    rejection = total_backtround / bkg_sum[nonzero_bkg]
+
+    return efficiency, rejection
+
+def plots_to_xy(signal, background, y_function = _rejection, rev_itr = True): 
     """
     reads in root histograms for signal and background, returns
     (efficiency, rejection) tuple. 
@@ -44,9 +67,9 @@ def plots_to_xy(signal, background, y_function = rejection, rev_itr = True):
     bkg_array = array.array('d')
 
     if rev_itr == True: 
-        itr_func = bin_rev_iter
+        itr_func = _bin_rev_iter
     else: 
-        itr_func = bin_fwd_iter
+        itr_func = _bin_fwd_iter
 
     bin_values = zip(itr_func(signal), itr_func(background))
     total_signal = sum(itr_func(signal))
@@ -68,6 +91,9 @@ def plot_dict(root_file, target = 'TH1D'):
     """
     reads in a root file, returns a dict of all TH1D (or target)
     """
+    import ROOT
+    from ROOT import TFile
+
     if isinstance(root_file, str): 
         root_file = TFile(root_file)
     the_dict = {}

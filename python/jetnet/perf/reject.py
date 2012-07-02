@@ -1,3 +1,4 @@
+from numpy import interp
 import array, random
 
 # --- utility functions 
@@ -19,7 +20,7 @@ def _bin_fwd_iter(hist):
 
 def sig_vs_rej(signal, background, flags = 'r'): 
     """
-    makes signal vs rejection plots, uses numpy for faster computation
+    makes signal vs rejection arrays, uses numpy for faster computation
     by default starts with high bins ('r' flag). 
     """
     import numpy 
@@ -35,14 +36,41 @@ def sig_vs_rej(signal, background, flags = 'r'):
     bkg_sum = numpy.cumsum(bkg_array)
     
     total_signal = sig_sum[-1]
-    total_backtround = bkg_sum[-1]
+    total_background = bkg_sum[-1]
 
     nonzero_bkg = bkg_sum.nonzero()
 
     efficiency = sig_sum[nonzero_bkg] / total_signal
-    rejection = total_backtround / bkg_sum[nonzero_bkg]
+    rejection = total_background / bkg_sum[nonzero_bkg]
 
     return efficiency, rejection
+
+def _get_checked(root_file, name): 
+    thing = root_file.Get(name)
+    if not thing: 
+        raise IOError(
+            'could not find {} in {}'.format(name, root_file.GetName()))
+    return thing
+
+def get_rejection_at(points, root_file, basename, signal, background):
+    """
+    gets interpolated rejection at 'points'
+    """
+    if isinstance(root_file,str): 
+        from ROOT import TFile
+        root_file = TFile(root_file)
+
+    signal_name = '_'.join([basename,signal])
+    signal_hist = _get_checked(root_file, signal_name)
+    
+    background_name = '_'.join([basename,background])
+    background_hist = _get_checked(root_file, background_name)
+
+    eff, rej = sig_vs_rej(signal_hist, background_hist, flags = 'r')
+    rejection_points = interp(points, eff, rej)
+
+    return rejection_points
+
 
 def plots_to_xy(signal, background, y_function = _rejection, rev_itr = True): 
     """

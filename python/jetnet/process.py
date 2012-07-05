@@ -38,7 +38,7 @@ class RDSProcess(multiprocessing.Process):
         self._nodes = None
         self._n_training_events = 1000000
         self._other_opt_dict = {}
-        self._profile_extension = 'NewTune'
+        self._augment_extension = 'NewTune'
 
         if config_file: 
             parser = ConfigParser.SafeConfigParser()
@@ -80,11 +80,17 @@ class RDSProcess(multiprocessing.Process):
                 self._training_subdir = training_opt['train_dir']
             else: 
                 self._training_subdir = 'training_' + cfg_basename
-                
-            if parser.has_option('testing','test_dir'): 
-                self._testing_subdir = parser.get('testing','test_dir')
+
+            testing_opt = dict(parser.items('testing'))
+            if 'test_dir' in testing_opt: 
+                self._testing_subdir = testing_opt['test_dir']
             else: 
                 self._testing_subdir = 'testing_' + cfg_basename
+            if 'augment_extension' in testing_opt: 
+                self._augment_extension = testing_opt['augment_extension']
+            else: 
+                warn("'augment_extension' should be given in the config "
+                     "file under [testing]", stacklevel = 3)
 
         if not self._nodes: 
             warn('\'nodes\' list should be given in the config file '
@@ -206,7 +212,7 @@ class RDSProcess(multiprocessing.Process):
                 out_file = augmented_tree, 
                 ints = all_vars_in_tree['Int_t'], 
                 doubles = all_vars_in_tree['Double_t'], 
-                extension = self._profile_extension , 
+                extension = self._augment_extension , 
                 subset = output_subset, 
                 show_progress = True) 
 

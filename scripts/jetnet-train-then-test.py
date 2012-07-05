@@ -43,17 +43,25 @@ def train_and_test(input_files,
     observer_discriminators = preproc['observer_discriminators'].split()
 
     # --- early load of post-training options  
-    training_variables = config.get('training','variables').split()
-    testing_dataset = config.get('testing', 'testing_dataset')
+    training_opts = dict(config.items('training'))
+    testing_opts = dict(config.items('testing'))
+    training_variables = training_opts['variables'].split()
 
+    testing_dataset = None
+
+    if 'testing_dataset' in testing_opts: 
+        testing_dataset = testing_opts['testing_dataset']
+
+    # --- change some things if this is an array job
     jet_tagger = preproc['jet_tagger']
     if 'ARRAYID' in jet_tagger: 
         the_array_id = os.environ['PBS_ARRAYID'].rjust(2,'0')
         jet_tagger = jet_tagger.replace('ARRAYID',the_array_id)
         working_dir = jet_tagger
-        testing_dataset = os.path.join(working_dir,testing_dataset)
+        if testing_dataset: 
+            testing_dataset = os.path.join(working_dir,testing_dataset)
 
-    if not os.path.isfile(testing_dataset): 
+    if testing_dataset and not os.path.isfile(testing_dataset): 
         raise IOError('{} not found'.format(testing_dataset))
 
     flavor_weights = {}
@@ -83,13 +91,15 @@ def train_and_test(input_files,
 
 
     # --- rds part
-
+    rds_name = 'reduced_dataset.root'
     # get weights file 
     rds_dir = os.path.join(working_dir, 'reduced')
     if not os.path.isdir(rds_dir): 
         os.mkdir(rds_dir)
 
-    rds_path = os.path.join(rds_dir, 'reduced_dataset.root')
+    rds_path = os.path.join(rds_dir, rds_name )
+    if not testing_dataset: 
+        testing_dataset = rds_path
 
     weight_file = os.path.join(rds_dir, 'weights.root')
     if not os.path.isfile(weight_file): 
@@ -199,11 +209,11 @@ if __name__ == '__main__':
         )
 
     parser.add_argument('input_files')
-    parser.add_argument('--test', action = 'store_true')
     parser.add_argument(
-        '--config', 
+        'config', 
         help = 'use this configuration file (default: %(default)s)', 
         default = 'jetnet.cfg')
+    parser.add_argument('--test', action = 'store_true')
 
     options = parser.parse_args(sys.argv[1:])
 

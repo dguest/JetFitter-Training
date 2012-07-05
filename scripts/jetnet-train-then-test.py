@@ -14,7 +14,7 @@ ROOT.PyConfig.IgnoreCommandLineOptions = True
 
 
 from jetnet import pyprep, process, rds
-import os, sys, glob, shutil
+import os, sys, glob, shutil, time
 from warnings import warn
 from math import log, exp
 
@@ -22,6 +22,27 @@ import argparse
 from ConfigParser import SafeConfigParser
 
 class UglyWarning(UserWarning): pass
+
+_hold_name = 'HOLD_JOBS'
+def hold_job(working_dir): 
+    sleep_for = 5
+    while os.path.isfile(os.path.join(working_dir,_hold_name)): 
+        if sleep_for < 10: 
+            print 'found hold order, holding...'
+        time.sleep(sleep_for)
+        if sleep_for < 300: 
+            sleep_for += 10
+
+def set_hold(working_dir, value = True): 
+    hold_file = os.path.join(working_dir,_hold_name)
+    if value == True: 
+        if not os.path.isfile(hold_file): 
+            print 'setting hold'
+            with open(hold_file,'w') as hold: 
+                hold.write('holding while datasets are transcribed\n')
+    else: 
+        if os.path.isfile(hold_file): 
+            os.remove(hold_file)
 
 
 def train_and_test(input_files, 
@@ -84,11 +105,14 @@ def train_and_test(input_files,
 
 
     # --- setup the working directory 
-    if working_dir is None: 
+    if not working_dir: 
         working_dir = jet_collection
     if not os.path.isdir(working_dir): 
         os.mkdir(working_dir)
 
+    # --- hold here if someone else is working 
+    hold_job(working_dir)
+    set_hold(working_dir)
 
     # --- rds part
     rds_name = 'reduced_dataset.root'
@@ -156,6 +180,8 @@ def train_and_test(input_files,
             debug = do_test, 
             )
 
+    # --- unset other job hold 
+    set_hold(working_dir, value = False)
 
     proc = process.RDSProcess(
         reduced_dataset = rds_path, 
@@ -235,6 +261,7 @@ if __name__ == '__main__':
     with open(options.input_files) as file_list: 
         for line in file_list: 
             input_files.append(line.strip())
+
 
     print 'running full chain' 
     train_and_test(

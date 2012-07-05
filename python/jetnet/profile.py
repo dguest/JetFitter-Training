@@ -203,9 +203,10 @@ def make_profile_file(reduced_dataset, profile_file = None,
     tags = ['charm','bottom','light']
 
     ints = []
-    for var, var_range in range_dict['Int_t'].iteritems(): 
-        if var in tags: continue
-        ints.append( (var,var_range[0],var_range[1]) )
+    if 'Int_t' in range_dict: 
+        for var, var_range in range_dict['Int_t'].iteritems(): 
+            if var in tags: continue
+            ints.append( (var,var_range[0],var_range[1]) )
 
     doubles = []
     for var, var_range in range_dict['Double_t'].iteritems(): 

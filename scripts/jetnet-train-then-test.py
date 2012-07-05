@@ -153,7 +153,6 @@ def train_and_test(input_files,
         training_variables = training_variables, 
         flavor_weights = flavor_weights, 
         testing_dataset = testing_dataset, 
-        do_more_diagnostics = False,
         do_test = do_test, 
         config_file = config_file)
     proc.start()

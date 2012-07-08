@@ -19,9 +19,10 @@ def draw_job_comparison(ratio, hist_dict, eff):
     plots_and_legs = []
     fig = plt.figure()
     ax = fig.add_subplot(111)
-    for hist_namer, color in zip(hist_dict,['+' + x for x in 'kbrp']): 
+    for hist_namer, color in zip(hist_dict,['+' + x for x in 'kbrgm']): 
         x, y = hist_dict[hist_namer]
         leg_str = hist_namer.split('{}')[-1]
+
         p = ax.plot(x,y,color, label = leg_str)[0]
 
         plots_and_legs.append((p,leg_str))

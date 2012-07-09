@@ -111,5 +111,11 @@ if __name__ == '__main__':
 
     ax.legend(plot_lines, plot_names)
     ax.set_xlabel('efficiency')
-    ax.set_ylabel('${}$-jet rejection'.format(args.r[1].replace('u','l')))
+
+    rej_flavor = args.r[1].replace('u','l')
+    if args.baseline: 
+        y_str = '${}$-jet rejection / {}'.format(rej_flavor, args.baseline)
+    else: 
+        y_str = '${}$-jet rejection'.format(rej_flavor)
+    ax.set_ylabel(y_str)
     fig.savefig( 'test.pdf' )

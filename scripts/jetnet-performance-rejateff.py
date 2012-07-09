@@ -5,24 +5,6 @@ import numpy as np
 import argparse, sys, re, cPickle, os
 from collections import defaultdict
 
-class RejArgs(dict): 
-    """
-    wrapper class for dictionary to be fed to get_rejection_at
-    """
-    _sig_bkg_re = re.compile('log([A-Z])([a-z])')
-    _expander = {x[0] : x for x in ['bottom','charm']}
-    _expander['u'] = 'light'
-    def __init__(self, basename, signal = '' , background = ''): 
-        if not signal: 
-            sig_char = self._sig_bkg_re.search(basename).group(1)
-            signal = self._expander[sig_char.lower()]
-        if not background: 
-            bkg_char = self._sig_bkg_re.search(basename).group(2)
-            background = self._expander[bkg_char]
-            
-        self['basename'] = basename
-        self['signal'] = signal
-        self['background'] = background
 
 if __name__ == '__main__': 
 
@@ -45,7 +27,7 @@ if __name__ == '__main__':
     for r in ratios: 
         for n in args.hist_name: 
             init_string = n.format(r[0].upper() + r[1])
-            hist_info[(r,n)] = RejArgs(init_string) 
+            hist_info[(r,n)] = reject.RejArgs(init_string) 
     
     rejections = defaultdict(dict)
 
@@ -67,5 +49,9 @@ if __name__ == '__main__':
 
     with open(args.p,'wb') as p: 
         # this should be dict-ified
-        cPickle.dump(rejections,p)
-        cPickle.dump(args.eff_points,p)
+        pkl_thing = { 
+            'rejections': rejections, 
+            'eff_points': args.eff_points, 
+            }
+        cPickle.dump(pkl_thing,p)
+

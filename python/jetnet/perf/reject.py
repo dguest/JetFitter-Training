@@ -1,5 +1,5 @@
 from numpy import interp
-import array, random
+import array, random, re
 
 # --- utility functions 
 def _rejection(signal, background, total_background): 
@@ -51,6 +51,26 @@ def _get_checked(root_file, name):
         raise IOError(
             'could not find {} in {}'.format(name, root_file.GetName()))
     return thing
+
+class RejArgs(dict): 
+    """
+    wrapper class for dictionary to be fed to get_rejection_at
+    """
+    _sig_bkg_re = re.compile('log([A-Z])([a-z])')
+    _expander = {x[0] : x for x in ['bottom','charm']}
+    _expander['u'] = 'light'
+    def __init__(self, basename, signal = '' , background = ''): 
+        if not signal: 
+            sig_char = self._sig_bkg_re.search(basename).group(1)
+            signal = self._expander[sig_char.lower()]
+        if not background: 
+            bkg_char = self._sig_bkg_re.search(basename).group(2)
+            background = self._expander[bkg_char]
+            
+        self['basename'] = basename
+        self['signal'] = signal
+        self['background'] = background
+
 
 def get_rejection_at(points, root_file, basename, signal, background):
     """

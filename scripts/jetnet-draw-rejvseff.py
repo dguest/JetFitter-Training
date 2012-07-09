@@ -13,6 +13,8 @@ import numpy as np
 import argparse, sys, re, cPickle, os
 from collections import defaultdict
 
+_rejmmkey = 'rej_minmax'
+
 if __name__ == '__main__': 
 
     parser = argparse.ArgumentParser(description = __doc__ , 
@@ -23,7 +25,10 @@ if __name__ == '__main__':
                         help = 'default: %(default)s')
     parser.add_argument('-r', default = 'cu', 
                         help = 'ratio to plot (default: %(default)s)')
-    parser.add_argument('-l,--logy', action = 'store_true')
+    parser.add_argument('-l,--logy', action = 'store_true', dest = 'logy')
+    parser.add_argument('--baseline', 
+                        help = 'use this as baseline if found', 
+                        default = '')
     args = parser.parse_args(sys.argv[1:])
 
     pickle_contents = {}
@@ -45,23 +50,55 @@ if __name__ == '__main__':
     plot_lines = []
     plot_names = []
 
+    baseline_x = np.zeros(0)
+    baseline_y = np.zeros(0)
+        
+    if args.baseline: 
+        for pickle, pk_contents in pickle_contents.iteritems(): 
+            rej_pts_dict = pk_contents[_rejmmkey]
+            id_keys = rej_pts_dict.keys()
+            for key in id_keys: 
+                ratio, tagger = key
+                if ratio == args.r and args.baseline in tagger: 
+                    if baseline_y: 
+                        sys.exit('ACHTUNG: doppelsteinbuck')
+                    hi, low = rej_pts_dict[key]
+                    baseline_y = (hi + low) / 2
+                    baseline_x = pk_contents['eff_points']
+
     for pickle, pk_contents in pickle_contents.iteritems(): 
         if not 'eff_points' in pk_contents: 
             for thing in pickle_contents: print thing
             sys.exit('ACHTUNG: Steinbuck!')
         
-        if not 'rej_minmax' in pk_contents: 
+        if not _rejmmkey in pk_contents: 
             if not 'rejection_vals' in pickle_contents: 
                 sys.exit('ACHTUNG: you are nothing without your values') 
 
         eff_points = pk_contents['eff_points']
         
-        for id_tuple, y_series in pk_contents['rej_minmax'].items(): 
+        for id_tuple, y_series in pk_contents[_rejmmkey].items(): 
             if id_tuple[0].lower() != args.r: 
                 continue
 
+            # skip baseline
+            if args.baseline in id_tuple[1]: 
+                continue
+
             plot_color = next(colors)
-            p = ax.fill_between(eff_points, y_series[0], y_series[1], 
+            
+            y_min, y_max = y_series
+            if np.any(baseline_y): 
+                y_min_ratio = []
+                y_max_ratio = []
+                for yl, yh, base_y in zip(y_min, y_max, baseline_y): 
+                    y_min_ratio.append(yl / base_y)
+                    y_max_ratio.append(yh / base_y)
+
+                y_min = y_min_ratio
+                y_max = y_max_ratio
+
+            p = ax.fill_between(eff_points, y_min, y_max, 
                                 alpha = 0.5, facecolor = plot_color, 
                                 edgecolor = plot_color, 
                                 )

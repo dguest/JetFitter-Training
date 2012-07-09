@@ -1,5 +1,13 @@
 #!/usr/bin/env python2.7
 
+"""
+draws rejection plots stored in a .pkl file. 
+
+Expects 'eff_points' and 'rej_minmax' in the pickle. 
+"""
+_author = 'Dan Guest <dguest@cern.ch>'
+
+
 from matplotlib import pyplot as plt
 import numpy as np
 import argparse, sys, re, cPickle, os
@@ -7,14 +15,15 @@ from collections import defaultdict
 
 if __name__ == '__main__': 
 
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description = __doc__ , 
+                                     epilog = 'author: ' + _author)
     parser.add_argument('input_pickles', nargs = '+')
 
     parser.add_argument('--save-dir', default = 'plots', 
                         help = 'default: %(default)s')
     parser.add_argument('-r', default = 'cu', 
                         help = 'ratio to plot (default: %(default)s)')
-    parser.add_argument('--logy', action = 'store_true')
+    parser.add_argument('-l,--logy', action = 'store_true')
     args = parser.parse_args(sys.argv[1:])
 
     pickle_contents = {}

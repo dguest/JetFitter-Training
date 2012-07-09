@@ -1,5 +1,12 @@
 #!/usr/bin/env python2.7
 
+"""
+runs over a list of histogram files, calculates efficiency vs rejection
+curves. 
+The min and max values for each efficiency point are stored in a .pkl file
+"""
+_author = 'Dan Guest <dguest@cern.ch>'
+
 from jetnet.perf import reject
 import numpy as np
 import argparse, sys, re, cPickle, os
@@ -10,7 +17,9 @@ from matplotlib import pyplot as plt
 
 if __name__ == '__main__': 
 
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        description = __doc__, 
+        epilog = 'author: ' + _author )
     parser.add_argument('input_files', nargs = '+')
     parser.add_argument('-p', default = 'rej_range.pkl', 
                         help = 'default: %(default)s')

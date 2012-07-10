@@ -65,13 +65,16 @@ def _get_bin_ranges(hist2d):
 
     return ( (x_min,x_max), (y_min,y_max))
 
-def _texify(string): 
-    replacements = [
-        ('Eta',r' $\eta$'), 
-        ('Pt' ,r' $p_\mathrm{T}$'), 
-        ('logCb',r'$\log (w_\mathrm{c} / w_\mathrm{b})$'), 
-        ('logCu',r'$\log (w_\mathrm{c} / w_\mathrm{u})$'), 
-        ]
+
+_replacements = [
+    ('Eta',r' $\eta$'), 
+    ('Pt' ,r' $p_\mathrm{T}$'), 
+    ('logCb',r'$\log (w_\mathrm{c} / w_\mathrm{b})$'), 
+    ('logCu',r'$\log (w_\mathrm{c} / w_\mathrm{u})$'), 
+    ('NewTune',r''), 
+    ]
+
+def _texify(string, replacements = _replacements): 
     for search, rep in replacements: 
         string = string.replace(search,rep)
 
@@ -104,7 +107,7 @@ _flavors = ['charm','bottom','light']
 _def_plots = ['JetEta_vs_JetPt_{}'.format(t) for t in _flavors]
 
 def print_color_plot(root_file_name, plots = _def_plots, 
-                     normalize_by_tag = False, logz = False): 
+                     normalize_by_tag = False, logz = False, legloc = 'best'): 
     """
     makes a color plot, prints as a pdf... work in progress
     """
@@ -144,16 +147,16 @@ def print_color_plot(root_file_name, plots = _def_plots,
     
     xlab,ylab,tags = _make_tags(plots)
     
-    plt.xlabel(xlab, fontsize = 32)
+    plt.xlabel(xlab, fontsize = 24)
     plt.xticks(fontsize = 16)
-    plt.ylabel(ylab, fontsize = 32)
+    plt.ylabel(ylab, fontsize = 24)
     plt.yticks(fontsize = 16)
 
     empty = array([])
     for tag, color in zip(tags, 'rgb'): 
         plt.plot(empty, color + '-', label = tag , lw = 10)
     
-    plt.legend()
+    plt.legend(loc = legloc)
     plt.axis(all_extent)
 
     plt.savefig('.'.join(root_file.GetName().split('.')[:-1]) + '.pdf', 

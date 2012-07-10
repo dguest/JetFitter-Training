@@ -81,11 +81,11 @@ if __name__ == '__main__':
             if id_tuple[0].lower() != args.r: 
                 continue
 
+            plot_color = next(colors)
             # skip baseline
             if args.baseline and args.baseline in id_tuple[1]: 
                 continue
 
-            plot_color = next(colors)
             
             y_min, y_max = y_series
             if np.any(baseline_y): 
@@ -111,7 +111,8 @@ if __name__ == '__main__':
 
     leg = ax.legend(plot_lines, plot_names, shadow = False )
     leg.get_frame().set_alpha(0.5)
-    ax.set_xlabel('efficiency')
+    x_char = args.r[0].lower().replace('u','l')
+    ax.set_xlabel('${}$-jet efficiency'.format(x_char))
 
     rej_flavor = args.r[1].replace('u','l')
     if args.baseline: 
@@ -122,6 +123,7 @@ if __name__ == '__main__':
         y_str = '${}$-jet rejection'.format(rej_flavor)
         out_file_name = '{}-effvsrej.pdf'.format(args.r)
     ax.set_ylabel(y_str)
+    ax.grid(True)
     
     savename = os.path.join(args.save_dir, out_file_name)
-    fig.savefig( savename )
+    fig.savefig( savename, bbox_inches='tight' )

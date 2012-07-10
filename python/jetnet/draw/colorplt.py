@@ -47,6 +47,11 @@ def get_bin_array(red_hist, green_hist, blue_hist):
                 [h.GetBinContent(x_bin, y_bin) for h in hists])
                           
     np_array = array(bin_array)
+
+    # it this fixes the reversed y axis, should probably figure out less of 
+    # a hack to do this
+    np_array = np_array[::-1,:,:]   
+
     return np_array
 
 def _get_bin_ranges(hist2d): 
@@ -64,6 +69,8 @@ def _texify(string):
     replacements = [
         ('Eta',r' $\eta$'), 
         ('Pt' ,r' $p_\mathrm{T}$'), 
+        ('logCb',r'$\log (w_\mathrm{c} / w_\mathrm{b})$'), 
+        ('logCu',r'$\log (w_\mathrm{c} / w_\mathrm{u})$'), 
         ]
     for search, rep in replacements: 
         string = string.replace(search,rep)
@@ -97,7 +104,7 @@ _flavors = ['charm','bottom','light']
 _def_plots = ['JetEta_vs_JetPt_{}'.format(t) for t in _flavors]
 
 def print_color_plot(root_file_name, plots = _def_plots, 
-                     normalize_by_tag = False): 
+                     normalize_by_tag = False, logz = False): 
     """
     makes a color plot, prints as a pdf... work in progress
     """
@@ -107,7 +114,13 @@ def print_color_plot(root_file_name, plots = _def_plots,
 
     h = [root_file.Get(p) for p in plots]
     np_array  = get_bin_array(*h)
+
+    if logz: 
+        np_array = np_array + 1
+        np_array = log(np_array)
+
     array_max_vals = [np_array[:,:,i].max() for i in xrange(3)]
+
     if normalize_by_tag: 
         for i,the_max in enumerate(array_max_vals): 
             np_array[:,:,i] = np_array[:,:,i] / the_max

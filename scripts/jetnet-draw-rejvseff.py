@@ -82,7 +82,7 @@ if __name__ == '__main__':
                 continue
 
             # skip baseline
-            if args.baseline in id_tuple[1]: 
+            if args.baseline and args.baseline in id_tuple[1]: 
                 continue
 
             plot_color = next(colors)
@@ -109,13 +109,19 @@ if __name__ == '__main__':
             plot_lines.append(proxy)
             plot_names.append(label)
 
-    ax.legend(plot_lines, plot_names)
+    leg = ax.legend(plot_lines, plot_names, shadow = False )
+    leg.get_frame().set_alpha(0.5)
     ax.set_xlabel('efficiency')
 
     rej_flavor = args.r[1].replace('u','l')
     if args.baseline: 
-        y_str = '${}$-jet rejection / {}'.format(rej_flavor, args.baseline)
+        bl = args.baseline
+        y_str = '${}$-jet rejection / {}'.format(rej_flavor, bl)
+        out_file_name = '{}-effvsrej-over-{}.pdf'.format(args.r, bl)
     else: 
         y_str = '${}$-jet rejection'.format(rej_flavor)
+        out_file_name = '{}-effvsrej.pdf'.format(args.r)
     ax.set_ylabel(y_str)
-    fig.savefig( 'test.pdf' )
+    
+    savename = os.path.join(args.save_dir, out_file_name)
+    fig.savefig( savename )

@@ -25,10 +25,13 @@ if __name__ == '__main__':
                         help = 'default: %(default)s')
     parser.add_argument('-r', default = 'cu', 
                         help = 'ratio to plot (default: %(default)s)')
-    parser.add_argument('-l,--logy', action = 'store_true', dest = 'logy')
+    parser.add_argument('-l','--logy', action = 'store_true', dest = 'logy')
     parser.add_argument('--baseline', 
                         help = 'use this as baseline if found', 
                         default = '')
+    parser.add_argument('-t','--output-type', default = '.pdf', 
+                        choices = ['.pdf','.png','.svg'], 
+                        help = 'default %(default)s ')
     args = parser.parse_args(sys.argv[1:])
 
     pickle_contents = {}
@@ -45,7 +48,7 @@ if __name__ == '__main__':
     if args.logy: 
         ax.set_yscale('log')
 
-    colors = iter(['red','green','blue'])
+    colors = iter(['red','green','blue','magenta','black'])
 
     plot_lines = []
     plot_names = []
@@ -60,7 +63,7 @@ if __name__ == '__main__':
             for key in id_keys: 
                 ratio, tagger = key
                 if ratio == args.r and args.baseline in tagger: 
-                    if baseline_y: 
+                    if np.any(baseline_y): 
                         sys.exit('ACHTUNG: doppelsteinbuck')
                     hi, low = rej_pts_dict[key]
                     baseline_y = (hi + low) / 2
@@ -103,6 +106,7 @@ if __name__ == '__main__':
                                 edgecolor = plot_color, 
                                 )
             label = id_tuple[1].split('{}')[-1]
+            label += ' ' + pickle.replace('-',' ').split()[0]
             
             proxy = plt.Rectangle((0, 0), 1, 1, fc = plot_color)
 
@@ -118,10 +122,12 @@ if __name__ == '__main__':
     if args.baseline: 
         bl = args.baseline
         y_str = '${}$-jet rejection / {}'.format(rej_flavor, bl)
-        out_file_name = '{}-effvsrej-over-{}.pdf'.format(args.r, bl)
+        out_file_name = '{}-effvsrej-over-{}{}'.format(
+            args.r, bl, args.output_type)
     else: 
         y_str = '${}$-jet rejection'.format(rej_flavor)
-        out_file_name = '{}-effvsrej.pdf'.format(args.r)
+        out_file_name = '{}-effvsrej{}'.format(args.r, args.output_type)
+
     ax.set_ylabel(y_str)
     ax.grid(True)
     

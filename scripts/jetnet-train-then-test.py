@@ -7,6 +7,7 @@ runs full chain on <file list>
 
 options set in 'jetnet.cfg'
 """
+__author__ = 'Daniel Guest <dguest@cern.ch>'
 
 # hide this godawful abomination of a framework
 import ROOT
@@ -229,7 +230,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(
         description = description, 
-        epilog = 'author: Dan Guest <dguest@cern.ch>')
+        epilog = 'author: ' + __author__)
     parser.set_defaults(
         test = False, 
         )

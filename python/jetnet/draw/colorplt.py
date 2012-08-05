@@ -1,4 +1,11 @@
 #!/usr/bin/env python2.7
+"""
+script to print 2d plots colored by the values of three histograms. 
+"""
+
+__author__ = 'Dan Guest'
+__contact__ = 'dguest@cern.ch'
+
 from ROOT import TFile, TH1D
 import numpy as np
 import matplotlib.pyplot as plt

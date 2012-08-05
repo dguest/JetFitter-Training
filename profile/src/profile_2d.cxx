@@ -13,7 +13,7 @@
 
 #include "TFile.h"
 #include "TTree.h"
-
+#include "TLeaf.h"
 
 std::pair<int,int> pro_2d(std::string file_name, 
 			  std::string tree_name, 
@@ -81,11 +81,19 @@ std::pair<int,int> pro_2d(std::string file_name,
 	 double_buffer.begin(); 
        itr != double_buffer.end(); 
        itr++){ 
+    TLeaf* the_leaf = tree->GetLeaf(itr->first.c_str()); 
+    if (!the_leaf) 
+      throw std::runtime_error("could not find branch " + itr->first); 
+
+    std::string type = the_leaf->GetTypeName();
+    if (type != "Double_t") { 
+      throw std::runtime_error("branch " + itr->first + 
+			       " is of unsupported type " + type); 
+    }
     tree->SetBranchStatus(itr->first.c_str(),1); 
     bool error = tree->SetBranchAddress(itr->first.c_str(),itr->second); 
-    if (error) { 
-      throw std::runtime_error("could not find branch " + itr->first); 
-    }
+    if (error) 
+      throw std::runtime_error("problem setting branch " + itr->first); 
 
   }
 

@@ -170,7 +170,6 @@ ProfileInfo pro_2d(std::string file_name,
   bool show_progress = options & opt::show_progress; 
   int one_percent = max_entries / 100; 
 
-  int n_cut = 0; 
   for (int entry_n = 0; entry_n < max_entries; entry_n++){ 
     if (max_entries >= 0 && int(entry_n) > max_entries) break; 
     if (show_progress && 

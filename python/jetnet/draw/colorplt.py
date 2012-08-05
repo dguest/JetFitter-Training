@@ -1,6 +1,6 @@
 #!/usr/bin/env python2.7
 from ROOT import TFile, TH1D
-from numpy import array, log
+import numpy as np
 import matplotlib.pyplot as plt
 
 # root_file = TFile('flavor_wt_hists.root')
@@ -24,7 +24,7 @@ def _are_bins_equal(hist):
     return sum(devs_from_linnear) < ave_bin_diff / 1e4
     
 
-def get_bin_array(red_hist, green_hist, blue_hist): 
+def _get_bin_array(red_hist, green_hist, blue_hist): 
 
     hists = [red_hist, green_hist, blue_hist]
     
@@ -46,7 +46,7 @@ def get_bin_array(red_hist, green_hist, blue_hist):
             x_row.append( 
                 [h.GetBinContent(x_bin, y_bin) for h in hists])
                           
-    np_array = array(bin_array)
+    np_array = np.array(bin_array)
 
     # it this fixes the reversed y axis, should probably figure out less of 
     # a hack to do this
@@ -85,7 +85,7 @@ def _make_tags(plots):
     x_labels = []
     y_labels = []
     for pl in plots: 
-        y_label, x_label = pl.split('_')[0:3:2]
+        y_label, x_label = '_'.join(pl.split('_')[:-1]).split('_vs_')
         x_labels.append(x_label)
         y_labels.append(y_label)
         tags.append(pl.split('_')[-1])
@@ -116,11 +116,11 @@ def print_color_plot(root_file_name, plots = _def_plots,
     root_file = TFile(root_file_name)
 
     h = [root_file.Get(p) for p in plots]
-    np_array  = get_bin_array(*h)
+    np_array  = _get_bin_array(*h)
 
     if logz: 
         np_array = np_array + 1
-        np_array = log(np_array)
+        np_array = np.log(np_array)
 
     array_max_vals = [np_array[:,:,i].max() for i in xrange(3)]
 
@@ -152,7 +152,7 @@ def print_color_plot(root_file_name, plots = _def_plots,
     plt.ylabel(ylab, fontsize = 24)
     plt.yticks(fontsize = 16)
 
-    empty = array([])
+    empty = np.array([])
     for tag, color in zip(tags, 'rgb'): 
         plt.plot(empty, color + '-', label = tag , lw = 10)
     

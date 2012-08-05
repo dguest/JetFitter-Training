@@ -15,13 +15,13 @@
 #include "TTree.h"
 #include "TLeaf.h"
 
-std::pair<int,int> pro_2d(std::string file_name, 
-			  std::string tree_name, 
-			  LeafInfoPairs plots, 
-			  std::vector<std::string> tag_leaves, 
-			  std::string output_file_name, 
-			  int max_entries, 
-			  const unsigned options){ 
+ProfileInfo pro_2d(std::string file_name, 
+		   std::string tree_name, 
+		   LeafInfoPairs plots, 
+		   std::vector<std::string> tag_leaves, 
+		   std::string output_file_name, 
+		   int max_entries, 
+		   const unsigned options){ 
   
   TFile file(file_name.c_str()); 
   if (file.IsZombie() || !file.IsOpen() ) { 
@@ -76,6 +76,8 @@ std::pair<int,int> pro_2d(std::string file_name,
       double_buffer[itr->second.wt_name] = new double; 
   }
 
+  CheckBuffer int_buffer; 
+  std::vector<std::pair<int*,double*> > ints_to_double_cast; 
   // set all (double) branches
   for (DoubleBufferMap::const_iterator itr = 
 	 double_buffer.begin(); 
@@ -85,13 +87,33 @@ std::pair<int,int> pro_2d(std::string file_name,
     if (!the_leaf) 
       throw std::runtime_error("could not find branch " + itr->first); 
 
+    tree->SetBranchStatus(itr->first.c_str(),1); 
+
+    bool error = false; 
+
     std::string type = the_leaf->GetTypeName();
-    if (type != "Double_t") { 
+    if (type == "Int_t") { 
+      int* int_ptr = 0; 
+      if (check_buffer.count(itr->first)) { 
+	int_ptr = check_buffer.find(itr->first)->second; 
+      }
+      else if (int_buffer.count(itr->first)) { 
+	int_ptr = check_buffer.find(itr->first)->second; 
+      }
+      else { 
+	int_ptr = new int; 
+	int_buffer[itr->first] = int_ptr; 
+      }
+      ints_to_double_cast.push_back(std::make_pair(int_ptr, itr->second)); 
+      error = tree->SetBranchAddress(itr->first.c_str(),int_ptr); 
+    }
+    else if (type == "Double_t") { 
+      error = tree->SetBranchAddress(itr->first.c_str(),itr->second); 
+    }
+    else {
       throw std::runtime_error("branch " + itr->first + 
 			       " is of unsupported type " + type); 
     }
-    tree->SetBranchStatus(itr->first.c_str(),1); 
-    bool error = tree->SetBranchAddress(itr->first.c_str(),itr->second); 
     if (error) 
       throw std::runtime_error("problem setting branch " + itr->first); 
 
@@ -105,14 +127,12 @@ std::pair<int,int> pro_2d(std::string file_name,
 
   Hists2D hists; 
 
-  for (LeafInfoPairs::const_iterator leaf_itr = plots.begin(); 
+  for (LeafInfoPairs::iterator leaf_itr = plots.begin(); 
        leaf_itr != plots.end(); 
        leaf_itr++){ 
 
-    int x_bins = leaf_itr->first.n_bins; 
-    int y_bins = leaf_itr->second.n_bins; 
-    if (x_bins < 0) x_bins = magic::DEF_2D_BINS; 
-    if (y_bins < 0) y_bins = magic::DEF_2D_BINS; 
+    set_smart_bins(leaf_itr->first); 
+    set_smart_bins(leaf_itr->second); 
 
     std::string x_var_name = leaf_itr->first.name; 
     std::string y_var_name = leaf_itr->second.name; 
@@ -163,21 +183,26 @@ std::pair<int,int> pro_2d(std::string file_name,
     }
     tree->GetEntry(entry_n); 
 
+    std::for_each(ints_to_double_cast.begin(), ints_to_double_cast.end(), 
+		  cast_int_to_double); 
+
     for (Hists2D::iterator itr = hists.begin(); itr != hists.end(); itr++){ 
       itr->second->fill(); 
     }
   }
   if (show_progress) std::cout << "\n"; 
 
+  ProfileInfo return_info; 
+  return_info.file_name = output_file_name; 
   TFile out_file(output_file_name.c_str(),"recreate"); 
 
   for (Hists2D::iterator itr = hists.begin(); itr != hists.end(); itr++){ 
     itr->second->SetName(itr->first.c_str()); 
     out_file.WriteTObject(itr->second); 
+    return_info.hist_names.push_back(itr->first); 
   }
 
-
-  return std::make_pair(max_entries - n_cut, n_cut); 
+  return return_info; 
 }
 
 Hists2D::~Hists2D() {
@@ -302,4 +327,28 @@ DoubleBufferMap::~DoubleBufferMap() {
   for (iterator itr = begin(); itr != end(); itr++){ 
     delete itr->second; 
   }
+}
+
+void cast_int_to_double(std::pair<int*,double*> the_pair) { 
+  *the_pair.second = *the_pair.first; 
+}
+
+int set_smart_bins(LeafInfo& info) { 
+  if (info.n_bins > 0) return info.n_bins; 
+  
+  if (info.n_bins == -1 || info.n_bins == 0) { 
+    info.n_bins = magic::DEF_2D_BINS; 
+    return info.n_bins; 
+  }
+
+  if (info.n_bins == -2) { 
+    info.n_bins = int(round(info.max - info.min + 1)); 
+    info.min -= 0.5; 
+    info.max += 0.5; 
+    return info.n_bins; 
+  }
+  
+  throw std::runtime_error("don't know how to intemperate " + 
+			   boost::lexical_cast<std::string>(info.n_bins) ); 
+  
 }

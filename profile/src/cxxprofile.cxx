@@ -94,9 +94,15 @@ static const char* doc_2d =
   "pro2d"
   "(in_file, tree, out_file, plots, tags, "
   "max_entries, show_progress) "
-  "--> n_passed, n_failed\n"
-  "Builds file 'output'.\n"
-  "'plots' takes a list of pairs of tuples (name, n_bins, min, max).\n"; 
+  "--> out file name, hist list\n"
+  "Builds file 'out_file'.\n"
+  "'plots' takes a list of pairs of leaf tuples. \n"
+  "\n"
+  "Leaf tuples are expected in one of two forms:\n"
+  "1) (name, n_bins, min, max) --- "
+  "if n_bins is ommitted will guess based on min and max\n"
+  "2) (name, bin_bounds) --- for variable bin sizes\n"
+  "optionally, a leaf for weight can be given after 'name'\n"; 
 
 PyObject* py_pro2d(PyObject *self, 
 		   PyObject *args, 
@@ -143,22 +149,29 @@ PyObject* py_pro2d(PyObject *self,
   unsigned options = opt::def_opt; 
   if (show_progress) options |= opt::show_progress; 
 
-  std::pair<int,int> n_pass_fail(std::make_pair(0,0)); 
+  ProfileInfo profile_return; 
   try { 
-    n_pass_fail = pro_2d(file_name, 
-			 tree_name, 
-			 leaf_info_pairs, 
-			 tag_leaves_vec, 
-			 output_file, 
-			 max_entries, 
-			 options); 
+    profile_return = pro_2d(file_name, 
+			    tree_name, 
+			    leaf_info_pairs, 
+			    tag_leaves_vec, 
+			    output_file, 
+			    max_entries, 
+			    options); 
   }
   catch (const std::runtime_error& e) { 
     PyErr_SetString(PyExc_IOError,e.what()); 
     return 0; 
   }
-  
-  return Py_BuildValue("ii",n_pass_fail.first, n_pass_fail.second); 
+
+  PyObject* hist_list = PyList_New(0); 
+  for (std::vector<std::string>::const_iterator 
+	 hist_name_itr = profile_return.hist_names.begin(); 
+       hist_name_itr != profile_return.hist_names.end(); 
+       hist_name_itr++) { 
+    PyList_Append(hist_list, PyString_FromString(hist_name_itr->c_str())); 
+  }
+  return Py_BuildValue("sN",profile_return.file_name.c_str(), hist_list); 
 
   // --- make sure you call INCREF if you return Py_None
   // Py_INCREF(Py_None);

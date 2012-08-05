@@ -57,12 +57,20 @@ public:
 // typedef std::vector<std::pair<LeafInfo,LeafInfo> > LeafInfoPairs; 
 class LeafInfoPairs: public std::vector<std::pair<LeafInfo,LeafInfo> > {}; 
 
-std::pair<int,int> pro_2d(std::string file, 
-			  std::string tree, 
-			  LeafInfoPairs plots, 
-			  std::vector<std::string> tag_leaves, 
-			  std::string output_file_name, 
-			  int max_entries = -1, 
-			  const unsigned options = opt::def_opt); 
+struct ProfileInfo { 
+  std::string file_name; 
+  std::vector<std::string> hist_names; 
+}; 
+
+ProfileInfo pro_2d(std::string file, 
+		   std::string tree, 
+		   LeafInfoPairs plots, 
+		   std::vector<std::string> tag_leaves, 
+		   std::string output_file_name, 
+		   int max_entries = -1, 
+		   const unsigned options = opt::def_opt); 
+
+void cast_int_to_double(std::pair<int*,double*>); 
+int set_smart_bins(LeafInfo&); 
 
 #endif // PROFILE_2D_H

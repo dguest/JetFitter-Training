@@ -32,6 +32,13 @@ if __name__ == '__main__':
     parser.add_argument('-t','--output-type', default = '.pdf', 
                         choices = ['.pdf','.png','.svg'], 
                         help = 'default %(default)s ')
+    parser.add_argument('--leg', default = 'best', 
+                        choices = [
+            'upper left', 'upper right', 'lower left', 'lower right', 'best'], 
+                        help = 'legend location, default: %(default)s ')
+    parser.add_argument('--xlim', nargs = 2, type = float, default = None, 
+                        dest = 'x')
+
     args = parser.parse_args(sys.argv[1:])
 
     pickle_contents = {}
@@ -113,7 +120,7 @@ if __name__ == '__main__':
             plot_lines.append(proxy)
             plot_names.append(label)
 
-    leg = ax.legend(plot_lines, plot_names, shadow = False )
+    leg = ax.legend(plot_lines, plot_names, shadow = False, loc = args.leg)
     leg.get_frame().set_alpha(0.5)
     x_char = args.r[0].lower().replace('u','l')
     ax.set_xlabel('${}$-jet efficiency'.format(x_char))
@@ -130,6 +137,11 @@ if __name__ == '__main__':
 
     ax.set_ylabel(y_str)
     ax.grid(True)
+    ax.set_ymargin(0.1)
+    ax.autoscale()
+    if args.x: 
+        ax.set_xlim(args.x[0],args.x[1])
+
     
     savename = os.path.join(args.save_dir, out_file_name)
     fig.savefig( savename, bbox_inches='tight' )

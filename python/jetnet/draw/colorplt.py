@@ -9,6 +9,7 @@ __contact__ = 'dguest@cern.ch'
 from ROOT import TFile, TH1D
 import numpy as np
 import matplotlib.pyplot as plt
+import re
 
 # root_file = TFile('flavor_wt_hists.root')
 # flavors = ['charm','bottom','light']
@@ -79,15 +80,29 @@ _replacements = [
     ('logCb',r'$\log (w_\mathrm{c} / w_\mathrm{b})$'), 
     ('logCu',r'$\log (w_\mathrm{c} / w_\mathrm{u})$'), 
     ('NewTune',r''), 
+    ('JetFitterCOMBNN','COMB'), 
+    ('COMBNN','COMB'), 
+    ('SVPlus','SVP'), 
+    ('Lxy',r'$L_{xy}$'), 
+    ('rap',r'$\varphi$'), 
+    ('$$','$ $'), 
+    ('$_','$ '), 
+    ]
+
+_regex_subs = [ 
+    (r'(?<=[A-Za-z])_(?=[$A-Za-z]+)',r' '), 
     ]
 
 def _texify(string, replacements = _replacements): 
     for search, rep in replacements: 
         string = string.replace(search,rep)
 
+    for s, r in _regex_subs: 
+        string = re.sub(s,r,string)
+
     return string 
 
-def _make_tags(plots): 
+def _make_tags(plots, translate_label = _texify): 
     tags = []
     x_labels = []
     y_labels = []
@@ -107,14 +122,15 @@ def _make_tags(plots):
     else: 
         ylab = 'y'
 
-
-    return _texify(xlab), _texify(ylab), tags
+    return translate_label(xlab), translate_label(ylab), tags
 
 _flavors = ['charm','bottom','light']
 _def_plots = ['JetEta_vs_JetPt_{}'.format(t) for t in _flavors]
 
 def print_color_plot(root_file_name, plots = _def_plots, 
-                     normalize_by_tag = False, logz = False, legloc = 'best'): 
+                     normalize_by_tag = False, logz = False, 
+                     legloc = 'best', out_file_name = '', 
+                     tag_plots = _make_tags): 
     """
     makes a color plot, prints as a pdf... work in progress
     """
@@ -152,7 +168,7 @@ def print_color_plot(root_file_name, plots = _def_plots,
                       aspect = all_aspect, 
                       interpolation='nearest')
     
-    xlab,ylab,tags = _make_tags(plots)
+    xlab,ylab,tags = tag_plots(plots)
     
     plt.xlabel(xlab, fontsize = 24)
     plt.xticks(fontsize = 16)
@@ -166,6 +182,9 @@ def print_color_plot(root_file_name, plots = _def_plots,
     plt.legend(loc = legloc)
     plt.axis(all_extent)
 
-    plt.savefig('.'.join(root_file.GetName().split('.')[:-1]) + '.pdf', 
+    if not out_file_name: 
+        out_file_name = '.'.join(root_file.GetName().split('.')[:-1]) 
+
+    plt.savefig(out_file_name + '.pdf', 
                 bbox_inches = 'tight')
 

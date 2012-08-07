@@ -60,12 +60,20 @@ class RejArgs(dict):
     _expander = {x[0] : x for x in ['bottom','charm']}
     _expander['u'] = 'light'
     def __init__(self, basename, signal = '' , background = ''): 
-        if not signal: 
-            sig_char = self._sig_bkg_re.search(basename).group(1)
-            signal = self._expander[sig_char.lower()]
-        if not background: 
-            bkg_char = self._sig_bkg_re.search(basename).group(2)
-            background = self._expander[bkg_char]
+        """
+        parses basename to determine what the signal and background are, 
+        then sets dictionary variables 
+        """
+        if 'discriminator' in basename: 
+            signal = 'bottom'
+            background = 'light'
+        else: 
+            if not signal: 
+                sig_char = self._sig_bkg_re.search(basename).group(1)
+                signal = self._expander[sig_char.lower()]
+            if not background: 
+                bkg_char = self._sig_bkg_re.search(basename).group(2)
+                background = self._expander[bkg_char]
             
         self['basename'] = basename
         self['signal'] = signal

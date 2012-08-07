@@ -6,6 +6,18 @@ import numpy as np
 import argparse, sys, re, cPickle, os
 from collections import defaultdict
 
+_color_dict = { 
+    'JetFitterCOMBNN': 'r', 
+    'loose': 'g', 
+    'normal': 'b', 
+    'MV1': 'm', 
+    }
+
+def _get_color(hist_name): 
+    for k in _color_dict.keys(): 
+        if k in hist_name: 
+            return _color_dict[k]
+
 def draw_job_comparison(ratio, hist_dict, eff, logx = False): 
     tt = (r'${num}$-jet tagging ${den}$ rejection'
           r' ($w_{num} / w_{den}$) with' 
@@ -19,7 +31,10 @@ def draw_job_comparison(ratio, hist_dict, eff, logx = False):
     plots_and_legs = []
     fig = plt.figure()
     ax = fig.add_subplot(111)
-    for hist_namer, color in zip(hist_dict,['+' + x for x in 'kbrgm']): 
+    for hist_namer in hist_dict: 
+
+        color = _get_color(hist_namer)
+
         x, y = hist_dict[hist_namer]
         leg_str = hist_namer.split('{}')[-1]
 

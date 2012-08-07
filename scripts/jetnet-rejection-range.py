@@ -34,7 +34,10 @@ if __name__ == '__main__':
     hist_info = {}
     for r in ratios: 
         for n in args.hist_name: 
-            init_string = n.format(r[0].upper() + r[1])
+            if '{}' in n: 
+                init_string = n.format(r[0].upper() + r[1])
+            else: 
+                init_string = n
             hist_info[(r,n)] = reject.RejArgs(init_string) 
     
     rejections = defaultdict(dict)

@@ -15,6 +15,21 @@ from collections import defaultdict
 
 _rejmmkey = 'rej_minmax'
 
+_color_dict = { 
+    'JetFitterCOMBNN': 'red', 
+    'loose': 'green', 
+    'normal': 'blue', 
+    'MV1': 'magenta', 
+    }
+
+def _get_color(id_tuple): 
+    for k in _color_dict.keys(): 
+        if any((k in st) for st in id_tuple): 
+            return _color_dict[k]
+
+    return 'black'
+
+
 if __name__ == '__main__': 
 
     parser = argparse.ArgumentParser(description = __doc__ , 
@@ -55,7 +70,6 @@ if __name__ == '__main__':
     if args.logy: 
         ax.set_yscale('log')
 
-    colors = iter(['red','green','blue','magenta','black'])
 
     plot_lines = []
     plot_names = []
@@ -91,7 +105,7 @@ if __name__ == '__main__':
             if id_tuple[0].lower() != args.r: 
                 continue
 
-            plot_color = next(colors)
+            plot_color = _get_color(id_tuple + (pickle,))
             # skip baseline
             if args.baseline and args.baseline in id_tuple[1]: 
                 continue

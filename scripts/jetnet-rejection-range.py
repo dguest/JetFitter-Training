@@ -28,6 +28,8 @@ if __name__ == '__main__':
                         help = 'default: %(default)s')
     parser.add_argument('--subjob-prefix', default = 'subjob', 
                         help = 'default: %(default)s')
+    parser.add_argument('--eff-range', nargs = 2, type = float, 
+                        default = (0.1,0.9))
     args = parser.parse_args(sys.argv[1:])
 
     ratios = [x + y for x in 'cb' for y in 'ucb' if x != y]
@@ -44,7 +46,7 @@ if __name__ == '__main__':
 
     jobfinder = re.compile(args.subjob_prefix + '([0-9]+)')
 
-    eff_points = np.arange(0.1,0.9,0.01)
+    eff_points = np.arange(*args.eff_range,step = 0.01)
 
     for root_file in args.input_files: 
         subjob = int(jobfinder.search(root_file).group(1))

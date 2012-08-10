@@ -147,7 +147,7 @@ ProfileInfo pro_2d(std::string file_name,
     std::string hist_name = y_var_name + "_vs_" + x_var_name; 
 
     if (hists.count(hist_name) ) { 
-      throw std::runtime_error("attempted to redefine" + hist_name); 
+      throw std::runtime_error("attempted to redefine " + hist_name); 
     }
     hists[hist_name] = new FilterHist2D(leaf_itr->first, leaf_itr->second, 
 					double_buffer); 

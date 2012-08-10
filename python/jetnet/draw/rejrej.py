@@ -48,6 +48,26 @@ def _get_integrals(bins, verbose_string = None):
         sys.stdout.write('\n')
     return sums
 
+def _get_integrals_fast(bins, verbose_string = None): 
+    y_sums = np.cumsum(bins[:,::-1], axis = 1)[:,::-1]
+    sums = np.zeros(bins.shape)
+    x_max = bins.shape[0]
+    y_max = bins.shape[1]
+    for y in xrange(y_max - 1, -1 , -1): 
+        if verbose_string: 
+            sys.stdout.write('\r')
+            sys.stdout.write(verbose_string.format(y,y_max))
+            sys.stdout.flush()
+        total = 0.0
+        for x in xrange(x_max - 1, -1, -1): 
+            total += y_sums[x,y]
+            sums[x,y] = total
+
+    if verbose_string: 
+        sys.stdout.write('\n')
+
+    return sums
+
 def _max_noninf(array): 
     return np.amax(array[np.nonzero(np.isfinite(array))])
 
@@ -109,22 +129,29 @@ def run(in_ntuple = 'perf_ntuple.root', bins = 600):
 
     tagged_hists = [h for h in hist_names if h.split('_')[-1] in _tags]
 
-    integrals = {}
-    
+    cache_dict = {
+        'cuts':{}, 
+        }
+
+    integrals = cache_dict['cuts']
+
     int_pickle = 'cuts_cache.pkl'
     if not os.path.isfile(int_pickle): 
         for h in tagged_hists: 
-            integrals[h] = _get_integrals(
+            integrals[h] = _get_integrals_fast(
                 _get_bins(cache_file, h), 
-                verbose_string = h + '\t {} of {} rows complete')
+                verbose_string = h + '\t {:>7} of {} rows complete')
         with open(int_pickle,'w') as pkl: 
-            cPickle.dump(integrals, pkl)
+            cPickle.dump(cache_dict, pkl)
     else: 
         with open(int_pickle) as pkl: 
-            integrals = cPickle.load(pkl)
+            cache_dict = cPickle.load(pkl)
 
-    _build_plots_from_integrals(integrals, tagger = 'COMBNN_SVPlus')
-    _build_plots_from_integrals(integrals, tagger = 'JetFitterCOMBNN')
+    p = _build_plots_from_integrals
+    p(cache_dict, tagger = 'COMBNN_SVPlus'  , use_contour = True)
+    p(cache_dict, tagger = 'JetFitterCOMBNN', use_contour = True)
+    p(cache_dict, tagger = 'COMBNN_SVPlus'  , use_contour = False)
+    p(cache_dict, tagger = 'JetFitterCOMBNN', use_contour = False)
 
 def _match_hist(hist_dict, matches): 
     match = None
@@ -144,7 +171,13 @@ def _make_log_tag(signal, background):
     tag = short_tags[signal].upper() + short_tags[background].lower()
     return 'log{}'.format(tag)
 
-def _build_plots_from_integrals(integrals, tagger = 'COMBNN_SVPlus'): 
+def _build_plots_from_integrals(cache_dict, tagger = 'COMBNN_SVPlus', 
+                                use_contour = True): 
+
+    try: 
+        integrals = cache_dict['cuts']
+    except KeyError: 
+        integrals = cache_dict
     eff_dict = {n : a / a.max() for n, a in integrals.iteritems()}
     
     # rej_dict = {}
@@ -213,6 +246,19 @@ def _build_plots_from_integrals(integrals, tagger = 'COMBNN_SVPlus'):
             interpolation = 'nearest', 
             )
             # ).get_axes()
+        if use_contour: 
+            im.set_cmap('Greys')
+
+            ct = ax.contour(
+                eff_array, 
+                extent = (min_y,max_x, min_y, max_y), 
+                aspect = aspect, 
+                # color = 'k', 
+                linewidths = 2, 
+                levels = np.arange(0.1,1.0,0.1),
+                )
+                             
+            # plt.clabel(ct,fmt='%1.1f', inline=1, fontsize=10)
 
         ax.set_xticks([])
         ax.set_yticks([])
@@ -223,6 +269,7 @@ def _build_plots_from_integrals(integrals, tagger = 'COMBNN_SVPlus'):
         # cb = plt.colorbar()
         cb = Colorbar(ax = cb_ax, mappable = im)
         cb.set_label('{} efficiency'.format(signal))
+        if use_contour: cb.add_lines(ct)
         position = ax.get_position()
         new_aspect = ax.get_aspect()
         # ax.set_position(position)
@@ -235,10 +282,15 @@ def _build_plots_from_integrals(integrals, tagger = 'COMBNN_SVPlus'):
         ax_log.set_aspect(aspect)
         ax_log.set_xlabel('{} rejection'.format(x_flav))
         ax_log.set_ylabel('{} rejection'.format(y_flav))
+        ax_log.grid(True)
 
 
         ax_log.set_aspect(new_aspect)
         ax_log.set_position(position)
-
-        plt.savefig('{}_{}.pdf'.format(tagger,signal), bbox_inches = 'tight')
+        
+        name = '{}_{}'.format(tagger,signal)
+        if use_contour: 
+            name = '{}_{}_contour'.format(tagger,signal)
+            
+        plt.savefig(name + '.pdf', bbox_inches = 'tight')
         plt.close()

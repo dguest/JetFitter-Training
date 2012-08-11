@@ -255,11 +255,6 @@ def _get_rejrej_array(flat_eff, flat_x, flat_y):
     min_x = np.min(used_x)
     min_y = np.min(used_y)
 
-    if min_y != 0.0 or min_x != 0.0: 
-        warnings.warn(
-            'may not work with current minx ({}) or miny ({})'.format(
-                min_x, min_y))
-
     n_out_bins = 100
 
     x_bin_values = np.linspace(min_x, max_x, n_out_bins)

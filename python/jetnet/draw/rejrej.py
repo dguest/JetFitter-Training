@@ -49,23 +49,12 @@ def _get_integrals(bins, verbose_string = None):
     return sums
 
 def _get_integrals_fast(bins, verbose_string = None): 
+    """
+    much faster and simpler way to compute integrals, uses numpy cumsum
+    """
+    print verbose_string
     y_sums = np.cumsum(bins[:,::-1], axis = 1)[:,::-1]
-    sums = np.zeros(bins.shape)
-    x_max = bins.shape[0]
-    y_max = bins.shape[1]
-    for y in xrange(y_max - 1, -1 , -1): 
-        if verbose_string: 
-            sys.stdout.write('\r')
-            sys.stdout.write(verbose_string.format(y,y_max))
-            sys.stdout.flush()
-        total = 0.0
-        for x in xrange(x_max - 1, -1, -1): 
-            total += y_sums[x,y]
-            sums[x,y] = total
-
-    if verbose_string: 
-        sys.stdout.write('\n')
-
+    sums = np.cumsum(y_sums[::-1,:], axis = 0)[::-1,:]
     return sums
 
 def _max_noninf(array): 

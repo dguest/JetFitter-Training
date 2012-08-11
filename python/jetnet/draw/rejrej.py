@@ -133,8 +133,11 @@ def run(in_ntuple = 'perf_ntuple.root', bins = 600):
         with open(int_pickle,'w') as pkl: 
             cPickle.dump(cache_dict, pkl)
     else: 
+        sys.stdout.write('reading pickle...')
+        sys.stdout.flush()
         with open(int_pickle) as pkl: 
             cache_dict = cPickle.load(pkl)
+        sys.stdout.write('done\n')
 
     p = _build_plots_from_integrals
     p(cache_dict, tagger = 'COMBNN_SVPlus'  , use_contour = True)
@@ -160,22 +163,57 @@ def _make_log_tag(signal, background):
     tag = short_tags[signal].upper() + short_tags[background].lower()
     return 'log{}'.format(tag)
 
+def _loop_over_entries(x_bins, y_bins, used_eff, n_out_bins): 
+    """
+    builds max efficiency at rejection by looping over all points in 
+    cut grid. For small grids this should be faster. 
+    """
+    sys.stdout.write('finding eff at rejection... ')
+    sys.stdout.flush()
+    eff_array = np.zeros((n_out_bins,n_out_bins))
+    for x_bin, y_bin, z in zip(x_bins, y_bins, used_eff): 
+        # y_bin comes first because that's what imshow wants... 
+        eff_array[y_bin,x_bin] = max(z, eff_array[y_bin,x_bin])
+
+    sys.stdout.write('done\n')
+    return eff_array
+
+def _loop_over_bins(x_bins, y_bins, used_eff, n_out_bins): 
+    """
+    builds 
+    """
+    eff_array = np.zeros((n_out_bins,n_out_bins))
+    info = '\rfinding eff at rejection, {} of {} rows... '
+    for x_bin in xrange(n_out_bins): 
+        sys.stdout.write(info.format(x_bin, n_out_bins))
+        sys.stdout.flush()
+        for y_bin in xrange(n_out_bins): 
+            eff_index_this_bin = np.flatnonzero( (y_bins == y_bin) & 
+                                                 (x_bins == x_bin) )
+            if eff_index_this_bin.size: 
+                max_in_bin = np.max(used_eff[eff_index_this_bin])
+                # y_bin comes first because that's what imshow wants... 
+                eff_array[y_bin,x_bin] = max_in_bin
+    sys.stdout.write('done\n')
+    return eff_array
+
 def _build_plots_from_integrals(cache_dict, tagger = 'COMBNN_SVPlus', 
-                                use_contour = True): 
+                                use_contour = True, calc_by_grid = True): 
 
     try: 
         integrals = cache_dict['cuts']
     except KeyError: 
         integrals = cache_dict
+
+    sys.stdout.write('normalizing histograms...')
+    sys.stdout.flush()
+
     eff_dict = {n : a / a.max() for n, a in integrals.iteritems()}
-    
-    # rej_dict = {}
-    # lots of zeros in the integral array, allow div zero for now
     old_warn_set = np.seterr(divide = 'ignore') 
-    # for bg in _tags: 
-    #     rej_dict[bg] = integrals[bg].max() / integrals[bg]
     rej_dict = {n : a.max() / a for n, a in integrals.iteritems()}
     np.seterr(**old_warn_set)
+
+    sys.stdout.write('done\n')
 
 
     for signal in [f for f in _tags if f != 'light']: 
@@ -188,21 +226,19 @@ def _build_plots_from_integrals(cache_dict, tagger = 'COMBNN_SVPlus',
         flat_eff = _match_hist(eff_dict, search_strings + [signal]).flatten()
         flat_x = _match_hist(rej_dict, search_strings + [x_flav]).flatten()
         flat_y = _match_hist(rej_dict, search_strings + [y_flav]).flatten()
-        # flat_x = rej_dict[x_flav].flatten()
-        # flat_y = rej_dict[y_flav].flatten()
 
-        indices = np.nonzero( (flat_eff > 0.1) & 
+        indices = np.nonzero( (flat_eff > 0.05) & 
                               np.isfinite(flat_x) & 
                               np.isfinite(flat_y)
                               )
-
 
         used_x = np.log10(flat_x[indices])
         used_y = np.log10(flat_y[indices])
         used_eff = flat_eff[indices]
 
-        max_x = _max_noninf(used_x)
-        max_y = _max_noninf(used_y)
+        # allow 1% safety margin on max value
+        max_x = _max_noninf(used_x) * 1.0001
+        max_y = _max_noninf(used_y) * 1.0001
 
         min_x = np.min(used_x)
         min_y = np.min(used_y)
@@ -212,16 +248,22 @@ def _build_plots_from_integrals(cache_dict, tagger = 'COMBNN_SVPlus',
                 'may not work with current minx ({}) or miny ({})'.format(
                     min_x, min_y))
 
-        eff_array = np.zeros((100,100))
+        n_out_bins = 100
 
-        get_x_bin = _get_binner(max_x)
-        get_y_bin = _get_binner(max_y)
-        print 'here be {} slowness'.format(signal)
-        for x, y, z in zip(used_x, used_y, used_eff): 
-            x_bin = get_x_bin(x)
-            y_bin = get_y_bin(y)
+        x_bin_values = np.linspace(min_x, max_x, n_out_bins)
+        x_bins = np.digitize(used_x, bins = x_bin_values) - 1 # no underflow
 
-            eff_array[y_bin,x_bin] = max(z, eff_array[y_bin,x_bin])
+        y_bin_values = np.linspace(min_y, max_y, n_out_bins)
+        y_bins = np.digitize(used_y, bins = y_bin_values) - 1 # no underflow
+
+        sys.stdout.write('in {} entries for {}\n'.format(signal, tagger))
+
+        if calc_by_grid: 
+            make_eff_array = _loop_over_entries
+        else: 
+            make_eff_array = _loop_over_bins
+
+        eff_array = make_eff_array(x_bins, y_bins, used_eff, n_out_bins)
         
         fig = plt.figure()
         gs = GridSpec(20,21)
@@ -230,7 +272,7 @@ def _build_plots_from_integrals(cache_dict, tagger = 'COMBNN_SVPlus',
 
         im = plt.imshow(
             eff_array, 
-            extent = (min_y,max_x, max_y, min_y), 
+            extent = (min_x,max_x, max_y, min_y), 
             aspect = aspect, 
             interpolation = 'nearest', 
             )
@@ -240,7 +282,7 @@ def _build_plots_from_integrals(cache_dict, tagger = 'COMBNN_SVPlus',
 
             ct = ax.contour(
                 eff_array, 
-                extent = (min_y,max_x, min_y, max_y), 
+                extent = (min_x,max_x, min_y, max_y), 
                 aspect = aspect, 
                 # color = 'k', 
                 linewidths = 2, 

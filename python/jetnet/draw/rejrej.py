@@ -3,7 +3,7 @@ import os, sys, warnings, cPickle
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
 from matplotlib.colorbar import Colorbar
-from jetnet.cxxprofile import pro2d
+from jetnet.cxxprofile import pro2d, profile_fast
 
 """
 routine to draw b-rejection vs c- or l-rejection plots
@@ -44,6 +44,21 @@ def _get_integrals_fast(bins, verbose_string = None):
 
 def _max_noninf(array): 
     return np.amax(array[np.nonzero(np.isfinite(array))])
+
+def _build_1d_hists(input_file, cache_file = 'singlewt_cache.root', 
+                    bins = 600): 
+    discriminators = ['discriminatorMV1']
+    if not os.path.isfile(cache_file): 
+        profile_fast(
+            in_file = input_file, 
+            tree = 'SVTree', 
+            out_file = cache_file, 
+            doubles = discriminators, 
+            tags = _tags, 
+            show_progress = True)
+
+    the_hists = [d + '_' + t for d in discriminators for t in _tags]
+    return cache_file, the_hists
 
 def _build_hists(input_file, cache_file = 'rejrej_cache.root', 
                  plot_list = '', bins = 600): 
@@ -110,9 +125,18 @@ def _get_cuts_cache(cuts_pkl, tagged_hists, root_hists):
 
     return cache_dict
 
+def build_uniform_rej_plots(in_ntuple, bins): 
+    cache_dir = 'cache'
+    if not os.path.isdir(cache_dir): 
+        os.mkdir(cache_dir)
+    
+    single_wt_root = os.path.join(cache_dir,'singlewt_cache.root')
+    single_wt_root, single_wt_hists = _build_1d_hists(
+        in_ntuple, cache_file = single_wt_root, bins = bins)
 
+    
 
-def build_rej_plots(in_ntuple, bins): 
+def build_rej_plots(in_ntuple, bins, range_dict = {}): 
     cache_dir = 'cache'
     if not os.path.isdir(cache_dir): 
         os.mkdir(cache_dir)
@@ -141,19 +165,20 @@ def build_rej_plots(in_ntuple, bins):
         cache_dict = _get_cuts_cache(cuts_pickle, tagged_hists, cache_file)
         for tagger in missing_taggers: 
             rej_plots[tagger] = _build_plots_from_integrals(
-                cache_dict, tagger = tagger )
+                cache_dict, tagger=tagger, range_dict=range_dict)
         with open(rej_pickle,'w') as pkl: 
             cPickle.dump(rej_plots, pkl)
 
     return rej_plots
 
 
-def print_rej_plots(in_ntuple = 'perf_ntuple.root', bins = 600): 
+def print_rej_plots(in_ntuple='perf_ntuple.root', bins=600, 
+                    range_dict = {}): 
     """
     run on in_ntuple, produce bins^2 cuts
     """
 
-    rej_plots = build_rej_plots(in_ntuple, bins)
+    rej_plots = build_rej_plots(in_ntuple, bins, range_dict)
 
     for tagger, flavors in rej_plots.iteritems(): 
         for flavor, plot in flavors.iteritems(): 
@@ -172,6 +197,16 @@ def _loop_over_entries(x_bins, y_bins, used_eff, n_out_bins):
     """
     sys.stdout.write('finding eff at rejection... ')
     sys.stdout.flush()
+
+    valid_x = (x_bins >= 0) & (x_bins < n_out_bins) 
+    valid_y = (y_bins >= 0) & (y_bins < n_out_bins)
+
+    valid_indices = np.flatnonzero(valid_x & valid_y)
+
+    x_bins = x_bins[valid_indices]
+    y_bins = y_bins[valid_indices]
+    used_eff = used_eff[valid_indices]
+
     eff_array = np.zeros((n_out_bins,n_out_bins))
     for x_bin, y_bin, z in zip(x_bins, y_bins, used_eff): 
         # y_bin comes first because that's what imshow wants... 
@@ -199,7 +234,7 @@ def _loop_over_bins(x_bins, y_bins, used_eff, n_out_bins):
     sys.stdout.write('done\n')
     return eff_array
 
-def _get_rejrej_array(flat_eff, flat_x, flat_y): 
+def _get_rejrej_array(flat_eff, flat_x, flat_y, x_range=None, y_range=None): 
     indices = np.nonzero( (flat_eff > 0.05) & 
                           np.isfinite(flat_x) & 
                           np.isfinite(flat_y)
@@ -209,12 +244,18 @@ def _get_rejrej_array(flat_eff, flat_x, flat_y):
     used_y = np.log10(flat_y[indices])
     used_eff = flat_eff[indices]
 
-    # allow 1% safety margin on max value
-    max_x = _max_noninf(used_x) * 1.0001
-    max_y = _max_noninf(used_y) * 1.0001
+    if not x_range: 
+        # allow 1% safety margin on max value
+        max_x = _max_noninf(used_x) * 1.0001
+        min_x = np.min(used_x)
+    else: 
+        min_x, max_x = x_range
 
-    min_x = np.min(used_x)
-    min_y = np.min(used_y)
+    if not y_range: 
+        max_y = _max_noninf(used_y) * 1.0001
+        min_y = np.min(used_y)
+    else: 
+        min_y, max_y = y_range
 
     n_out_bins = 100
 
@@ -256,7 +297,7 @@ def _make_log_tag(signal, background):
 
 
 def _build_plots_from_integrals(cache_dict, tagger = 'COMBNN_SVPlus',
-                                calc_by_grid = True): 
+                                calc_by_grid = True, range_dict = {}): 
     """
     nofing
     """
@@ -284,6 +325,16 @@ def _build_plots_from_integrals(cache_dict, tagger = 'COMBNN_SVPlus',
     for signal in [f for f in _tags if f != 'light']: 
         x_flav, y_flav = [f for f in _tags if f != signal]
 
+        x_range = None
+        y_range = None
+
+        if signal in range_dict: 
+            range_for_signal = range_dict[signal]
+            if x_flav in range_for_signal: 
+                x_range = range_for_signal[x_flav]
+            if y_flav in range_for_signal: 
+                y_range = range_for_signal[y_flav]
+
         x_ratio_tag = _make_log_tag(signal, x_flav)
         y_ratio_tag = _make_log_tag(signal, y_flav)
         search_strings = [x_ratio_tag, y_ratio_tag, tagger]
@@ -294,7 +345,7 @@ def _build_plots_from_integrals(cache_dict, tagger = 'COMBNN_SVPlus',
 
         sys.stdout.write('in {} entries for {}\n'.format(signal, tagger))
         eff_array, x_range, y_range = _get_rejrej_array(
-            flat_eff, flat_x, flat_y)
+            flat_eff, flat_x, flat_y, x_range, y_range)
 
         out_dict[signal] = { 
             'eff':eff_array, 

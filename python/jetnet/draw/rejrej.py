@@ -11,10 +11,8 @@ routine to draw b-rejection vs c- or l-rejection plots
 
 _tags = ['bottom','charm','light']
 
-def _get_bins(file_name, hist_name, message = ''): 
+def _get_bins(file_name, hist_name): 
     
-    if message: 
-        print message
     from ROOT import TFile
     root_file = TFile(file_name)
     
@@ -33,11 +31,13 @@ def _get_bins(file_name, hist_name, message = ''):
 
     return bins
 
-def _get_integrals_fast(bins, verbose_string = None): 
+def _get_integrals_fast(bins): 
     """
     much faster and simpler way to compute integrals, uses numpy cumsum
     """
-    print verbose_string
+    # ****** work do here *******
+    # check if bins are a 1d array, if so use top-bottom cuts
+
     y_sums = np.cumsum(bins[:,::-1], axis = 1)[:,::-1]
     sums = np.cumsum(y_sums[::-1,:], axis = 0)[::-1,:]
     return sums
@@ -47,7 +47,9 @@ def _max_noninf(array):
 
 def _build_1d_hists(input_file, cache_file = 'singlewt_cache.root', 
                     bins = 600): 
-    discriminators = ['discriminatorMV1']
+    discriminators = [
+        ('discriminatorMV1',1000,-10,10)
+        ]
     if not os.path.isfile(cache_file): 
         profile_fast(
             in_file = input_file, 
@@ -111,11 +113,10 @@ def _get_cuts_cache(cuts_pkl, tagged_hists, root_hists):
 
     if not os.path.isfile(cuts_pkl): 
         for h in tagged_hists: 
-            # ***** work do here ****
-            # make this look for 'discriminator' in the hist name
-            integrals[h] = _get_integrals_fast(
-                _get_bins(root_hists, h, message = 'getting bins for' + h), 
-                verbose_string = 'integrating ' + h)
+            print 'getting bins for', h
+            bins = _get_bins(root_hists, h)
+            print 'integrating', h
+            integrals[h] = _get_integrals_fast(bins)
         with open(cuts_pkl,'w') as pkl: 
             cPickle.dump(cache_dict, pkl)
     else: 

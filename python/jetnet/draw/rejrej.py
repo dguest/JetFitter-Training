@@ -33,23 +33,6 @@ def _get_bins(file_name, hist_name, message = ''):
 
     return bins
 
-def _get_integrals(bins, verbose_string = None): 
-    """
-    verbose string should have two {} in it
-    """
-    sums = np.zeros(bins.shape)
-    xmax = bins.shape[0]
-    for x in xrange(xmax): 
-        if verbose_string: 
-            sys.stdout.write('\r')
-            sys.stdout.write(verbose_string.format(x,xmax))
-            sys.stdout.flush()
-        for y in xrange(bins.shape[1]): 
-            sums[x,y] = bins[x:,y:].sum()
-    if verbose_string: 
-        sys.stdout.write('\n')
-    return sums
-
 def _get_integrals_fast(bins, verbose_string = None): 
     """
     much faster and simpler way to compute integrals, uses numpy cumsum
@@ -61,12 +44,6 @@ def _get_integrals_fast(bins, verbose_string = None):
 
 def _max_noninf(array): 
     return np.amax(array[np.nonzero(np.isfinite(array))])
-
-def _get_binner(max_val, n_bins = 100): 
-    def binner(x): 
-        frac = x / max_val * 0.99999999 # never give top bin
-        return int(frac * n_bins )
-    return binner
 
 def _build_hists(input_file, cache_file = 'rejrej_cache.root', 
                  plot_list = '', bins = 600): 
@@ -170,11 +147,11 @@ def build_rej_plots(in_ntuple, bins):
 
     return rej_plots
 
-def run(in_ntuple = 'perf_ntuple.root', bins = 600): 
+
+def print_rej_plots(in_ntuple = 'perf_ntuple.root', bins = 600): 
     """
     run on in_ntuple, produce bins^2 cuts
     """
-
 
     rej_plots = build_rej_plots(in_ntuple, bins)
 
@@ -186,23 +163,7 @@ def run(in_ntuple = 'perf_ntuple.root', bins = 600):
             name = '{t}_{f}.pdf'.format(t = tagger, f = flavor)
             _plot_eff_array(plot, use_contour = True,  out_name = name)
 
-def _match_hist(hist_dict, matches): 
-    match = None
-    for h in hist_dict: 
-        if all(m in h for m in matches): 
-            if not match: 
-                match = h
-            else: 
-                raise LookupError('both {} and {} match {}'.format(
-                        match, h, matches))
-    if not match: 
-        raise LookupError('no {} in {}'.format(matches, hist_dict.keys()))
-    return hist_dict[match]
 
-def _make_log_tag(signal, background): 
-    short_tags = {'light':'u','bottom':'b','charm':'c'}
-    tag = short_tags[signal].upper() + short_tags[background].lower()
-    return 'log{}'.format(tag)
 
 def _loop_over_entries(x_bins, y_bins, used_eff, n_out_bins): 
     """
@@ -263,16 +224,45 @@ def _get_rejrej_array(flat_eff, flat_x, flat_y):
     y_bin_values = np.linspace(min_y, max_y, n_out_bins)
     y_bins = np.digitize(used_y, bins = y_bin_values) - 1 # no underflow
 
-
-    make_eff_array = _loop_over_entries
+    make_eff_array = _loop_over_entries # the other method seems slower
 
     eff_array = make_eff_array(x_bins, y_bins, used_eff, n_out_bins)
     
     return eff_array, (min_x, max_x), (min_y, max_y)
 
+def _match_hist(hist_dict, matches): 
+    # TODO: organize this, maybe remove it from the monolithic
+    #       _build_plots_from_integrals function below
+
+    match = None
+    for h in hist_dict: 
+        if all(m in h for m in matches): 
+            if not match: 
+                match = h
+            else: 
+                raise LookupError('both {} and {} match {}'.format(
+                        match, h, matches))
+    if not match: 
+        raise LookupError('no {} in {}'.format(matches, hist_dict.keys()))
+    return hist_dict[match]
+
+def _make_log_tag(signal, background): 
+    # TODO: aggrigate this function and the _match_hist function into 
+    #       a common class (or something), they are both only used in 
+    #       the _build_plots_from_integrals function
+    short_tags = {'light':'u','bottom':'b','charm':'c'}
+    tag = short_tags[signal].upper() + short_tags[background].lower()
+    return 'log{}'.format(tag)
+
 
 def _build_plots_from_integrals(cache_dict, tagger = 'COMBNN_SVPlus',
                                 calc_by_grid = True): 
+    """
+    nofing
+    """
+    # TODO: clean this up a bit.  Would it be simpler if this function 
+    #       took only the three plots we're interested in (rather than 
+    #       the cache_dict with all the matching functions)? 
 
     try: 
         integrals = cache_dict['cuts']

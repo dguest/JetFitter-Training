@@ -1,5 +1,5 @@
 import numpy as np
-import os, sys, warnings, cPickle
+import os, sys, warnings, cPickle, gzip
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
 from matplotlib.colorbar import Colorbar
@@ -111,6 +111,8 @@ def _get_cuts_cache(cuts_pkl, tagged_hists, root_hists):
 
     if not os.path.isfile(cuts_pkl): 
         for h in tagged_hists: 
+            # ***** work do here ****
+            # make this look for 'discriminator' in the hist name
             integrals[h] = _get_integrals_fast(
                 _get_bins(root_hists, h, message = 'getting bins for' + h), 
                 verbose_string = 'integrating ' + h)
@@ -125,7 +127,7 @@ def _get_cuts_cache(cuts_pkl, tagged_hists, root_hists):
 
     return cache_dict
 
-def build_uniform_rej_plots(in_ntuple, bins): 
+def build_singlewt_rej_plots(in_ntuple, bins, range_dict = {}): 
     cache_dir = 'cache'
     if not os.path.isdir(cache_dir): 
         os.mkdir(cache_dir)
@@ -134,6 +136,25 @@ def build_uniform_rej_plots(in_ntuple, bins):
     single_wt_root, single_wt_hists = _build_1d_hists(
         in_ntuple, cache_file = single_wt_root, bins = bins)
 
+    tagged_hists = [h for h in single_wt_hists if h.split('_')[-1] in _tags]
+
+    rej_pickle = os.path.join(cache_dir, 'singlewt_rej_cache.pkl')
+    if os.path.isfile(rej_pickle): 
+        with open(rej_pickle) as pkl: 
+            rej_plots = cPickle.load(pkl)
+    else: 
+        rej_plots = {}
+
+    taggers = ['MV1']
+
+    missing_taggers = [t for t in taggers if t not in rej_plots]
+
+    if missing_taggers: 
+        cuts_pickle = os.path.join(cache_dir, 'singlewt_sums_cache.pkl')
+        cache_dict = _get_cuts_cache(cuts_pickle, tagged_hists, 
+                                     single_wt_root) 
+
+    # hmm, maybe this is the same as the function below....
     
 
 def build_rej_plots(in_ntuple, bins, range_dict = {}): 
@@ -151,7 +172,7 @@ def build_rej_plots(in_ntuple, bins, range_dict = {}):
 
     rej_pickle = os.path.join(cache_dir,'rej_cache.pkl')
     if os.path.isfile(rej_pickle): 
-        with open(rej_pickle) as pkl: 
+        with open(rej_pickle,'r') as pkl: 
             rej_plots = cPickle.load(pkl)
     else: 
         rej_plots = {}

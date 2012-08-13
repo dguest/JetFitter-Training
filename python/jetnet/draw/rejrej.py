@@ -406,6 +406,64 @@ def _build_plots_from_integrals(integrals, tagger = 'COMBNN_SVPlus',
 
     return out_dict
 
+class RejRejPlot(object): 
+    """
+    Keeps track of the data (and cache) files associated with a given 
+    rejecton plot.
+    """
+    def __init__(self, tagger = 'JetFitterCOMBNN', signal = 'charm', 
+                 bins = 2000, x_range = 'auto', y_range = 'auto', 
+                 window_discrim = False, cache = 'cache', 
+                 parent_ntuple = 'perf_ntuple.root'): 
+
+        win_dir = 'window' if window_discrim else 'twocut'
+        cache_path = os.path.join(cache, tagger, signal, win_dir)
+        if not os.path.isdir(cache_path): 
+            os.makedirs(cache_path)
+
+        self._cache_path = cache_path
+        self._tagger = tagger
+        self._signal = signal 
+        self._x_range = x_range
+        self._y_range = y_range
+        self._window_discrim = window_discrim
+
+        rejrej_pickle = os.path.join(cache_path, 'rejrej.pkl')
+        self._rejrej_pickle = rejrej_pickle
+
+        remain_flavs = [f for f in _tags if f != signal]
+        self._x_flav, self._y_flav = remain_flavs
+
+        integrals_name = 'integrals_{bins}bins.pkl'.format(bins = bins)
+        integral_pkl = os.path.join(cache, tagger, integrals_name)
+        self._integrals_pickle = integral_pkl
+
+        root_file_name = 'root_{}_hists.root'.format(
+            '1d' if window_discrim else '2d')
+        self._root_cache = os.path.join(cache, root_file_name)
+
+        self.hist_1d_requests = None
+        self.hist_d2_requests = None
+
+        if not os.path.isfile(rejrej_pickle): 
+            self._build_rejrej()
+
+    def _build_rejrej(self): 
+        print "I'm fuucking buliding this shit"
+        if not os.path.isfile(self._integrals_pickle): 
+            self._build_integrals()
+    
+    def _build_integrals(self): 
+        print "and more shit!"
+        if not os.path.isfile(self._root_cache): 
+            self._raise_ntuple_run_flag()
+
+    def _raise_ntuple_run_flag(self):
+        print 'these should be tuples to be collected'
+        self.hist_d2_requests = True
+        self.hist_1d_requests = True 
+    
+
 def _plot_eff_array(array_dict, use_contour = True, 
                     out_name = 'rejrej.pdf'):     
 

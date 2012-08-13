@@ -402,9 +402,10 @@ def _plot_eff_array(array_dict, use_contour = True,
     ax = plt.subplot(gs[:,0:-1])
     aspect = float(x_max - x_min) / (y_max - y_min)
 
-    im = plt.imshow(
+    im = ax.imshow(
         eff_array, 
-        extent = (x_min,x_max, y_max, y_min), 
+        origin = 'upper', 
+        extent = (x_min,x_max, y_min, y_max), 
         aspect = aspect, 
         interpolation = 'nearest', 
         )
@@ -414,6 +415,7 @@ def _plot_eff_array(array_dict, use_contour = True,
 
         ct = ax.contour(
             eff_array, 
+            origin = 'upper', 
             extent = (x_min,x_max, y_min, y_max), 
             aspect = aspect, 
             linewidths = 2, 

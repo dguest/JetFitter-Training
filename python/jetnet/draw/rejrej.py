@@ -38,9 +38,16 @@ def _get_integrals_fast(bins):
     # ****** work do here *******
     # check if bins are a 1d array, if so use top-bottom cuts
 
-    y_sums = np.cumsum(bins[:,::-1], axis = 1)[:,::-1]
-    sums = np.cumsum(y_sums[::-1,:], axis = 0)[::-1,:]
-    return sums
+    if min(bins.shape) == 1: 
+        flatsum = np.cumsum(bins.flat[::-1])[::-1]
+        sums = np.subtract(*np.meshgrid(flatsum,flatsum))
+        assert sums.shape[0] == sums.shape[1]
+        return sums
+
+    else: 
+        y_sums = np.cumsum(bins[:,::-1], axis = 1)[:,::-1]
+        sums = np.cumsum(y_sums[::-1,:], axis = 0)[::-1,:]
+        return sums
 
 def _max_noninf(array): 
     return np.amax(array[np.nonzero(np.isfinite(array))])
@@ -48,7 +55,7 @@ def _max_noninf(array):
 def _build_1d_hists(input_file, cache_file = 'singlewt_cache.root', 
                     bins = 600): 
     discriminators = [
-        ('discriminatorMV1',1000,-10,10)
+        ('discriminatorMV1',bins,-0,1)
         ]
     if not os.path.isfile(cache_file): 
         profile_fast(
@@ -59,7 +66,7 @@ def _build_1d_hists(input_file, cache_file = 'singlewt_cache.root',
             tags = _tags, 
             show_progress = True)
 
-    the_hists = [d + '_' + t for d in discriminators for t in _tags]
+    the_hists = [d[0] + '_' + t for d in discriminators for t in _tags]
     return cache_file, the_hists
 
 def _build_hists(input_file, cache_file = 'rejrej_cache.root', 
@@ -104,69 +111,57 @@ def _build_hists(input_file, cache_file = 'rejrej_cache.root',
 
 def _get_cuts_cache(cuts_pkl, tagged_hists, root_hists): 
 
-    cache_dict = {
-        'cuts':{}, 
-        'rej':{}, 
-        }
-
-    integrals = cache_dict['cuts']
-
-    if not os.path.isfile(cuts_pkl): 
-        for h in tagged_hists: 
-            print 'getting bins for', h
-            bins = _get_bins(root_hists, h)
-            print 'integrating', h
-            integrals[h] = _get_integrals_fast(bins)
-        with open(cuts_pkl,'w') as pkl: 
-            cPickle.dump(cache_dict, pkl)
-    else: 
+    integrals = {}
+    if os.path.isfile(cuts_pkl): 
         sys.stdout.write('reading pickle...')
         sys.stdout.flush()
         with open(cuts_pkl) as pkl: 
-            cache_dict = cPickle.load(pkl)
+            integrals = cPickle.load(pkl)
         sys.stdout.write('done\n')
 
-    return cache_dict
+    missing_hists = [h for h in tagged_hists if h not in integrals]
+    for h in missing_hists: 
+        print 'getting bins for', h
+        bins = _get_bins(root_hists, h)
+        print 'integrating', h
+        integrals[h] = _get_integrals_fast(bins)
+        the_int = integrals[h]
+        assert the_int.shape[0] == the_int.shape[1]
+    if missing_hists: 
+        print 'writing {} to {}'.format(missing_hists, cuts_pkl)
+        with open(cuts_pkl,'w') as pkl: 
+            cPickle.dump(integrals, pkl)
 
-def build_singlewt_rej_plots(in_ntuple, bins, range_dict = {}): 
-    cache_dir = 'cache'
-    if not os.path.isdir(cache_dir): 
-        os.mkdir(cache_dir)
+    return integrals
+
+def _filter_for_tags(names, tags=_tags): 
+    passing = []
+    for n in names: 
+        for t in tags: 
+            if n.endswith(t): 
+                passing.append(n)
+    return passing
     
-    single_wt_root = os.path.join(cache_dir,'singlewt_cache.root')
-    single_wt_root, single_wt_hists = _build_1d_hists(
-        in_ntuple, cache_file = single_wt_root, bins = bins)
+_default_taggers = ['COMBNN_SVPlus','JetFitterCOMBNN', 'discriminatorMV1']
 
-    tagged_hists = [h for h in single_wt_hists if h.split('_')[-1] in _tags]
+def build_rej_plots(in_ntuple, bins, range_dict={}, 
+                    taggers=_default_taggers):
 
-    rej_pickle = os.path.join(cache_dir, 'singlewt_rej_cache.pkl')
-    if os.path.isfile(rej_pickle): 
-        with open(rej_pickle) as pkl: 
-            rej_plots = cPickle.load(pkl)
-    else: 
-        rej_plots = {}
-
-    taggers = ['MV1']
-
-    missing_taggers = [t for t in taggers if t not in rej_plots]
-
-    if missing_taggers: 
-        cuts_pickle = os.path.join(cache_dir, 'singlewt_sums_cache.pkl')
-        cache_dict = _get_cuts_cache(cuts_pickle, tagged_hists, 
-                                     single_wt_root) 
-
-    # hmm, maybe this is the same as the function below....
-    
-
-def build_rej_plots(in_ntuple, bins, range_dict = {}): 
     cache_dir = 'cache'
     if not os.path.isdir(cache_dir): 
         os.mkdir(cache_dir)
 
     cache_file = os.path.join(cache_dir,'wtdist_cache.root')
     cache_file, hist_names = _build_hists(in_ntuple, 
-                                          cache_file = cache_file, 
-                                          bins = bins)
+                                          cache_file=cache_file, 
+                                          bins=bins)
+
+    singlewt_cache = ''
+    singlewt_hists = []
+    if 'discriminatorMV1' in taggers: 
+        singlewt_cache = os.path.join(cache_dir, 'singlewt_cache.root')
+        singlewt_cache, singlewt_hists = _build_1d_hists(
+            in_ntuple, cache_file=singlewt_cache, bins=bins)
 
     if not os.path.isfile(cache_file): 
         sys.exit('vuf')
@@ -178,16 +173,31 @@ def build_rej_plots(in_ntuple, bins, range_dict = {}):
     else: 
         rej_plots = {}
 
-    taggers = ['COMBNN_SVPlus','JetFitterCOMBNN']
     missing_taggers = [t for t in taggers if t not in rej_plots]
 
     if missing_taggers: 
-        tagged_hists = [h for h in hist_names if h.split('_')[-1] in _tags]
-        cuts_pickle = os.path.join(cache_dir,'cuts_cache.pkl')
-        cache_dict = _get_cuts_cache(cuts_pickle, tagged_hists, cache_file)
+        tagged_hists = _filter_for_tags(hist_names)
+        two_hists = [h for h in tagged_hists if '_vs_' in h]
+
+        tagged_singlewt = _filter_for_tags(singlewt_hists)
+        one_hists = [h for h in tagged_singlewt if 'discriminator' in h]
+        integrals = {}
+
+        cuts_pickle = os.path.join(cache_dir,'integrals_cache.pkl')
+        onecuts_pickle = os.path.join(cache_dir,'integrals_1d_cache.pkl')
+
+        if two_hists: 
+            ints_2d = _get_cuts_cache(cuts_pickle, two_hists, cache_file)
+            integrals.update(ints_2d)
+        if one_hists: 
+            ints_1d = _get_cuts_cache(onecuts_pickle, 
+                                      one_hists, singlewt_cache)
+            integrals.update(ints_1d)
+
+
         for tagger in missing_taggers: 
             rej_plots[tagger] = _build_plots_from_integrals(
-                cache_dict, tagger=tagger, range_dict=range_dict)
+                integrals, tagger=tagger, range_dict=range_dict)
         with open(rej_pickle,'w') as pkl: 
             cPickle.dump(rej_plots, pkl)
 
@@ -208,7 +218,7 @@ def print_rej_plots(in_ntuple='perf_ntuple.root', bins=600,
             name = '{t}_{f}_contour.pdf'.format(t = tagger, f = flavor)
             _plot_eff_array(plot, use_contour = True,  out_name = name)
             name = '{t}_{f}.pdf'.format(t = tagger, f = flavor)
-            _plot_eff_array(plot, use_contour = True,  out_name = name)
+            _plot_eff_array(plot, use_contour = False,  out_name = name)
 
 
 
@@ -297,17 +307,22 @@ def _match_hist(hist_dict, matches):
     # TODO: organize this, maybe remove it from the monolithic
     #       _build_plots_from_integrals function below
 
-    match = None
+    matched = []
+    match_set = set(matches)
     for h in hist_dict: 
         if all(m in h for m in matches): 
-            if not match: 
-                match = h
-            else: 
-                raise LookupError('both {} and {} match {}'.format(
-                        match, h, matches))
-    if not match: 
+            matched.append(h)
+        elif 'discriminator' in ''.join(matches) and 'discriminator' in h: 
+            match_tag = match_set & set(_tags)
+            h_tag = h.split('_')[-1]
+            assert len(match_tag) == 1, match_tag
+            if h_tag in match_tag: 
+                matched.append(h)
+    if len(matched) == 0: 
         raise LookupError('no {} in {}'.format(matches, hist_dict.keys()))
-    return hist_dict[match]
+    elif len(matched) > 1: 
+        raise LookupError('{} all match {}'.format(matched, matches))
+    return hist_dict[matched[0]]
 
 def _make_log_tag(signal, background): 
     # TODO: aggrigate this function and the _match_hist function into 
@@ -318,7 +333,7 @@ def _make_log_tag(signal, background):
     return 'log{}'.format(tag)
 
 
-def _build_plots_from_integrals(cache_dict, tagger = 'COMBNN_SVPlus',
+def _build_plots_from_integrals(integrals, tagger = 'COMBNN_SVPlus',
                                 calc_by_grid = True, range_dict = {}): 
     """
     nofing
@@ -326,11 +341,6 @@ def _build_plots_from_integrals(cache_dict, tagger = 'COMBNN_SVPlus',
     # TODO: clean this up a bit.  Would it be simpler if this function 
     #       took only the three plots we're interested in (rather than 
     #       the cache_dict with all the matching functions)? 
-
-    try: 
-        integrals = cache_dict['cuts']
-    except KeyError: 
-        integrals = cache_dict
 
     sys.stdout.write('normalizing histograms...')
     sys.stdout.flush()

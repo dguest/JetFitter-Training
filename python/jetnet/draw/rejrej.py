@@ -420,6 +420,15 @@ _tagger_bounds = {
     'logCuJetFitterCOMBNN': (-5, 8) , 
     }
 
+class BadTaggerError(LookupError): 
+    """
+    Exception used by HistBuilder when it can't construct a requested hist. 
+    Will be caught temporarily and used to remove the offending entry. 
+    """
+    def __init__(self, message, tagger_tuple = None): 
+        super(BadTaggerError,self).__init__(message)
+        self.id = tagger_tuple
+
 class HistBuilder(object): 
     """
     Builds hists requested in requests_pickle, which is loaded by
@@ -432,6 +441,18 @@ class HistBuilder(object):
 
     def __init__(self,requests_pickle, 
                  tagger_bounds = _tagger_bounds): 
+        try: 
+            self._initialize(requests_pickle, tagger_bounds)
+        except HistBuilder.BadTaggerError as bad: 
+            with open(requests_pickle,'r') as pkl: 
+                pk_dict = cPickle.load(pkl)
+                
+            pk_dict['requested'].remove(bad.id)
+            with open(requests_pickle,'w') as pkl: 
+                cPickle.dump(pk_dict,pkl)
+            raise
+
+    def _initialize(self, requests_pickle, tagger_bounds): 
         with open(requests_pickle) as pkl: 
             status_dict = cPickle.load(pkl)
 
@@ -467,8 +488,8 @@ class HistBuilder(object):
                         tagger_matches.append(t)
     
                 if len(tagger_matches) != 1: 
-                    raise LookupError("taggers {} all match {}".format(
-                            tagger_matches, short_tagger))
+                    raise BadTaggerError("taggers {} all match {}".format(
+                            tagger_matches, short_tagger), id_tuple)
                 full_tagger = tagger_matches[0]
                 bounds = tagger_bounds[full_tagger]
                 tagger_tuple = (full_tagger, bins, bounds[0],bounds[1])
@@ -486,8 +507,10 @@ class HistBuilder(object):
                     if 'log' + y_chars in t and short_tagger in t: 
                         y_matches.append(t)
                 if len(x_matches) != 1 or len(y_matches) != 1: 
-                    raise LookupError("taggers {} {} match {}".format(
-                            x_matches, y_matches, short_tagger, signal))
+                    raise BadTaggerError(
+                        "taggers {} {} match {}".format(
+                            x_matches, y_matches, short_tagger, signal), 
+                        id_tuple)
                 x_tagger = x_matches[0]
                 y_tagger = y_matches[0]
                 x_bounds = tagger_bounds[x_tagger]
@@ -602,15 +625,19 @@ class RejRejPlot(object):
     -Does not make plots. 
     -Does not store lots of info internally. 
 
+    Uses: _get_rejrej_array, _get_bins, _get_integrals_fast
+
     """
     def __init__(self, tagger = 'JetFitterCOMBNN', signal = 'charm', 
-                 bins = 2000, x_range = 'auto', y_range = 'auto', 
+                 bins = 2000, x_range = None, y_range = None, 
                  window_discrim = False, cache = 'cache', 
                  hist_list = 'hist_list.pkl', 
                  parent_ntuple = 'perf_ntuple.root'): 
 
         win_dir = 'window' if window_discrim else 'twocut'
-        cache_path = os.path.join(cache, tagger, signal, win_dir)
+        bins_name = 'bins{}'.format(bins)
+        integrals_dir = os.path.join(cache, tagger, win_dir, bins_name )
+        cache_path = os.path.join(integrals_dir, signal)
         if not os.path.isdir(cache_path): 
             os.makedirs(cache_path)
 
@@ -629,7 +656,7 @@ class RejRejPlot(object):
 
         # bins things
         integrals_name = 'integrals_{bins}bins.pkl'.format(bins = bins)
-        integral_pkl = os.path.join(cache, tagger, integrals_name)
+        integral_pkl = os.path.join(integrals_dir, integrals_name)
         self._integrals_pickle = integral_pkl
         self._bins = bins
 
@@ -649,12 +676,47 @@ class RejRejPlot(object):
 
     def compute(self):
         """
-        Build the plot. 
-        Returns False if another run over the ntuple is needed. 
-        Returns True if everything is ok. 
+        Build the plot. Returns the path to the .pkl file where it's stored.
+        
+        Make sure you've called HistBuilder on the hist_list. 
         """
         if not os.path.isfile(self._rejrej_pickle): 
             self._build_rejrej()
+        else: 
+            mismatch = self._check_plot_mismatch()
+            if mismatch > 1e-3: 
+                print 'found range mismatch in {}, rebinning'.format(
+                    self._rejrej_pickle)
+                self._build_rejrej()
+
+        return self._rejrej_pickle
+
+    def _check_plot_mismatch(self): 
+        
+        with open(self._rejrej_pickle) as pkl: 
+            old_plot = cPickle.load(pkl)
+        ranges = [ 
+            [self._x_range, old_plot['x_range']], 
+            [self._y_range, old_plot['y_range']], 
+            ]
+        
+        total_diff = 0
+        total_sum = 0
+        for r in ranges: 
+            if r[0] is None: 
+                continue
+            for pt in zip(*r): 
+                if (pt[0] is None) != (pt[1] is None): 
+                    return True
+                diff = (max(pt) - min(pt))**2
+                add = sum(pt)**2
+                total_diff += diff
+                total_sum += add
+
+        if not total_diff: 
+            return False
+        return float(total_diff) / float(total_sum) 
+
 
     def _check_hist_list(self): 
         list_file = self._root_hists_listing_pkl
@@ -668,7 +730,6 @@ class RejRejPlot(object):
                 'built': {}, 
                 }
             
-                
         this_hist_index = (self._tagger, self._bins, self._signal, 
                            self._window_discrim)
         if this_hist_index in hist_listing['built']: 
@@ -682,15 +743,68 @@ class RejRejPlot(object):
         return False
 
     def _build_rejrej(self): 
-        print "I'm fuucking buliding this shit"
         if not os.path.isfile(self._integrals_pickle): 
             self._build_integrals()
+        print 'building rejrej plot for', self._tagger
+        
+        with open(self._integrals_pickle) as pkl: 
+            integrals = cPickle.load(pkl)
+        
+        sig = self._signal
+        eff = integrals[sig] / integrals[sig].max()
+
+        flav_x, flav_y = [t for t in _tags if t != sig]
+
+        old_warn_set = np.seterr(divide = 'ignore') 
+        rej_x = integrals[flav_x].max() / integrals[flav_x]
+        rej_y = integrals[flav_y].max() / integrals[flav_y]
+        np.seterr(**old_warn_set)
+        
+        eff = eff.flatten()
+        rej_x = rej_x.flatten()
+        rej_y = rej_y.flatten()
+        
+        eff_array, x_range, y_range = _get_rejrej_array(
+            eff,rej_x, rej_y, 
+            x_range=self._x_range, y_range=self._y_range)
+
+        out_dict = { 
+            'eff': eff_array, 
+            'x_range': x_range, 
+            'y_range': y_range, 
+            'signal': sig, 
+            'x_bg': flav_x, 
+            'y_bg': flav_y, 
+            'tagger': self._tagger, 
+            'bins': self._bins, 
+            }
+        
+        with open(self._rejrej_pickle,'w') as pkl: 
+            print 'saving {}'.format(self._rejrej_pickle)
+            cPickle.dump(out_dict,pkl)
     
     def _build_integrals(self): 
         """
         this should read in a root file and create the integrals cache
         """
-        print "and more shit!"
+
+        the_root_file, hists = self._check_hist_list()
+            
+        # bins = _get_bins(
+
+        int_dict = {}
+        for hist in hists: 
+            print 'loading {} in {}'.format(hist, the_root_file)
+            bins = _get_bins(the_root_file, hist)
+            integral = _get_integrals_fast(bins)
+            
+            tag = hist.split('_')[-1]
+            assert tag in _tags, '{} not found in {}'.format(tag, _tags)
+            int_dict[tag] = integral
+
+        with open(self._integrals_pickle,'w') as pkl: 
+            print 'saving {}'.format(self._integrals_pickle)
+            cPickle.dump(int_dict, pkl)
         # if not os.path.isfile(self._root_cache): 
         #     self._raise_ntuple_run_flag()
 
@@ -702,7 +816,11 @@ class RejRejPlot(object):
         print 'these should be tuples to be collected'
         self.hist_d2_requests = True
         self.hist_1d_requests = True 
-    
+
+def plot_pickle(pickle, output_name, use_contour = True): 
+    with open(pickle) as pkl: 
+        pdict = cPickle.load(pkl)
+        _plot_eff_array(pdict, use_contour=use_contour,out_name=output_name)
 
 def _plot_eff_array(array_dict, use_contour = True, 
                     out_name = 'rejrej.pdf'):     

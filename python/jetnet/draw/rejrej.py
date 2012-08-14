@@ -1,5 +1,6 @@
 import numpy as np
 import os, sys, warnings, cPickle, itertools
+import glob
 import matplotlib.pyplot as plt
 import matplotlib as mp
 from matplotlib.gridspec import GridSpec
@@ -406,12 +407,192 @@ def _build_plots_from_integrals(integrals, tagger = 'COMBNN_SVPlus',
 
     return out_dict
 
+# TODO: autogenerate this? 
+_tagger_bounds = {
+    'discriminatorMV1': (0,1), 
+    'logBcCOMBNN_SVPlus_rapLxy':(-5, 10), 
+    'logBuCOMBNN_SVPlus_rapLxy':(-6, 12) , 
+    'logCbCOMBNN_SVPlus_rapLxy':(-8, 4), # should just be Bc reversed?
+    'logCuCOMBNN_SVPlus_rapLxy':(-5, 8),  
+    'logBcJetFitterCOMBNN': (-5, 10), 
+    'logBuJetFitterCOMBNN': (-6, 12), 
+    'logCbJetFitterCOMBNN': (-8, 4), 
+    'logCuJetFitterCOMBNN': (-5, 8) , 
+    }
+
+class HistBuilder(object): 
+    """
+    Builds hists requested in requests_pickle, which is loaded by
+    the constructor. 
+    Updates the pickle with locations and names of the built histograms. 
+    
+    The 'built' entry of the requests pickle contains a dictionary of 
+    (file, {flavor:name}) tuples. 
+    """
+
+    def __init__(self,requests_pickle, 
+                 tagger_bounds = _tagger_bounds): 
+        with open(requests_pickle) as pkl: 
+            status_dict = cPickle.load(pkl)
+
+        self._requests_pickle = requests_pickle
+            
+        requested = status_dict['requested']
+        built = set(status_dict['built'].keys())
+    
+        unbuilt = requested - built
+        
+        flavor_to_char = {
+            'light':'u', 
+            'charm':'c', 
+            'bottom':'b'
+            }
+    
+        onedim_inputs = {}
+        twodim_inputs = {}
+        for id_tuple in unbuilt: 
+            print 'booking {} to build'.format(id_tuple)
+            short_tagger, bins, signal, window_discrim = id_tuple
+
+            all_taggers = tagger_bounds.keys()
+            rej_flavors = [f for f in _tags if f != signal]
+            signal_char = flavor_to_char[signal]
+    
+            if window_discrim: 
+                tagger_matches = []
+                for t in all_taggers: 
+                    if not short_tagger in t: 
+                        continue
+                    elif 'logBu' in t or 'discriminator' in t: 
+                        tagger_matches.append(t)
+    
+                if len(tagger_matches) != 1: 
+                    raise LookupError("taggers {} all match {}".format(
+                            tagger_matches, short_tagger))
+                full_tagger = tagger_matches[0]
+                bounds = tagger_bounds[full_tagger]
+                tagger_tuple = (full_tagger, bins, bounds[0],bounds[1])
+                onedim_inputs[id_tuple] = tagger_tuple
+            else: 
+                rej_chars = [flavor_to_char[f] for f in rej_flavors]
+                x_chars = signal_char.upper() + rej_chars[0]
+                y_chars = signal_char.upper() + rej_chars[1]
+                
+                x_matches = []
+                y_matches = []
+                for t in all_taggers: 
+                    if 'log' + x_chars in t and short_tagger in t: 
+                        x_matches.append(t)
+                    if 'log' + y_chars in t and short_tagger in t: 
+                        y_matches.append(t)
+                if len(x_matches) != 1 or len(y_matches) != 1: 
+                    raise LookupError("taggers {} {} match {}".format(
+                            x_matches, y_matches, short_tagger, signal))
+                x_tagger = x_matches[0]
+                y_tagger = y_matches[0]
+                x_bounds = tagger_bounds[x_tagger]
+                y_bounds = tagger_bounds[y_tagger]
+                x_tagger_tuple = (x_tagger, bins, x_bounds[0], x_bounds[1])
+                y_tagger_tuple = (y_tagger, bins, y_bounds[0], y_bounds[1])
+                twodim_inputs[id_tuple] = (x_tagger_tuple, y_tagger_tuple) 
+                                      
+        self._onedim_inputs = onedim_inputs
+        self._twodim_inputs = twodim_inputs
+    
+    def build_1d_hists(self, input_ntuple, out_dir = ''): 
+        """
+        Call profiling routines to build the histogram files. 
+        Record the hists as built in the requests_tuple
+        """
+        if not self._onedim_inputs: 
+            return False
+        built_1d_hists = {}
+        onedim_input_list = []
+        if not out_dir: 
+            out_dir = os.path.split(self._requests_pickle)[0]
+
+        cache_files = glob.glob(out_dir + '/*')
+        onedim_out_file = ''
+        for x in xrange(100): 
+            f_name = 'onedim_cache{}.root'.format(x)
+            onedim_out_file = os.path.join(out_dir, f_name)
+            if not onedim_out_file in cache_files: 
+                break
+        assert onedim_out_file, 'could not name output file'
+
+        for id_tuple, inputs in self._onedim_inputs.items(): 
+            onedim_input_list.append(inputs)
+            hist_base_name = inputs[0] 
+            all_hists = [hist_base_name + '_' + t for t in _tags]
+            built_1d_hists[id_tuple] = (onedim_out_file, all_hists)
+        
+        print 'profiling 1d hists'
+        profile_fast(input_ntuple, tree = 'SVTree', 
+                     out_file = onedim_out_file, 
+                     doubles = onedim_input_list, 
+                     tags = _tags, 
+                     show_progress = True)
+            
+        with open(self._requests_pickle) as pkl: 
+            status_dict = cPickle.load(pkl)
+
+        status_dict['built'].update(built_1d_hists)
+        with open(self._requests_pickle,'w') as pkl: 
+            cPickle.dump(status_dict, pkl)
+
+    def build_2d_hists(self, input_ntuple, out_dir = ''): 
+        """
+        Call profiling routines to build the histogram files. 
+        Record the hists as built in the requests_tuple
+        """
+        if not self._twodim_inputs: 
+            return False
+        built_hists = {}
+        input_list = []
+        if not out_dir: 
+            out_dir = os.path.split(self._requests_pickle)[0]
+
+        cache_files = glob.glob(out_dir + '/*')
+
+        out_file = ''
+        for x in xrange(100): 
+            f_name = 'twodim_cache{}.root'.format(x)
+            out_file = os.path.join(out_dir, f_name)
+            if not out_file in cache_files: 
+                break
+        assert out_file, 'could not name output file'
+
+        for id_tuple, inputs in self._twodim_inputs.items(): 
+            input_list.append(inputs)
+            first_hist_name = inputs[1][0]
+            second_hist_name = inputs[0][0]
+            compound_hist_name = first_hist_name + '_vs_' + second_hist_name
+            all_hists = [compound_hist_name + '_' + t for t in _tags]
+            built_hists[id_tuple] = (out_file, all_hists)
+        
+        print 'profiling 2d hists'
+        reported_out, reported_hists = pro2d(
+            input_ntuple, tree = 'SVTree', 
+            out_file = out_file, 
+            plots = input_list, 
+            tags = _tags, 
+            show_progress = True)
+        
+            
+        with open(self._requests_pickle) as pkl: 
+            status_dict = cPickle.load(pkl)
+
+        status_dict['built'].update(built_hists)
+        with open(self._requests_pickle,'w') as pkl: 
+            cPickle.dump(status_dict, pkl)
+
+
 class RejRejPlot(object): 
     """
     Keeps track of the data (and cache) files associated with a given 
     rejecton plot.
 
-    Adds an entry for the needed root histograms to a pickle when created, 
+    Adds an entry for the needed root histograms to hist_list when created, 
     under the 'requested' entry. If the same entry is not found under 
     'built' in the same pickle, the 'trigger_recalc' member is set to true. 
 
@@ -425,6 +606,7 @@ class RejRejPlot(object):
     def __init__(self, tagger = 'JetFitterCOMBNN', signal = 'charm', 
                  bins = 2000, x_range = 'auto', y_range = 'auto', 
                  window_discrim = False, cache = 'cache', 
+                 hist_list = 'hist_list.pkl', 
                  parent_ntuple = 'perf_ntuple.root'): 
 
         win_dir = 'window' if window_discrim else 'twocut'
@@ -458,10 +640,10 @@ class RejRejPlot(object):
 
         self.trigger_recalc = False
 
-        root_hists_listing_pkl = os.path.join(cache, 'hist_list.pkl')
+        root_hists_listing_pkl = os.path.join(cache, hist_list)
         self._root_hists_listing_pkl = root_hists_listing_pkl
         hist_location = self._check_hist_list()
-        if not in_hist_list: 
+        if not hist_location: 
             self.trigger_recalc = True
         
 

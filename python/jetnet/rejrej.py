@@ -9,20 +9,6 @@ routine to draw b-rejection vs c- or l-rejection plots
 
 _tags = ['bottom','charm','light']
 
-def print_overlay_plots(in_ntuple='perf_ntuple.root', bins=600, 
-                        range_dict = {}): 
-    """
-    run on in_ntuple, produce bins^2 cuts
-    """
-
-    rej_plots = build_rej_plots(in_ntuple, bins, range_dict)
-
-    for signal in ['bottom','charm']: 
-        jfc = rej_plots['COMBNN_SVPlus'][signal]
-        mv1 = rej_plots['discriminatorMV1'][signal]
-        cnn = rej_plots['JetFitterCOMBNN'][signal]
-        _overlay_rejrej(jfc,mv1, out_name = 'jfc-mv1-{}.pdf'.format(signal))
-        _overlay_rejrej(jfc,cnn, out_name = 'jfc-cnn-{}.pdf'.format(signal))
 
 ###### TODO: move these into RejRejPlot ######
 
@@ -50,8 +36,6 @@ def _get_integrals_fast(bins):
     """
     much faster and simpler way to compute integrals, uses numpy cumsum
     """
-    # ****** work do here *******
-    # check if bins are a 1d array, if so use top-bottom cuts
 
     if min(bins.shape) == 1: 
         flatsum = np.cumsum(bins.flat[::-1])[::-1]
@@ -144,195 +128,6 @@ _tagger_bounds = {
     'logCuJetFitterCOMBNN': (-5, 8) , 
     }
 
-class BadTaggerError(LookupError): 
-    """
-    Exception used by HistBuilder when it can't construct a requested hist. 
-    Will be caught temporarily and used to remove the offending entry. 
-    """
-    def __init__(self, message, tagger_tuple = None): 
-        super(BadTaggerError,self).__init__(message)
-        self.id = tagger_tuple
-
-class HistBuilder(object): 
-    """
-    Builds hists requested in requests_pickle, which is loaded by
-    the constructor. 
-    Updates the pickle with locations and names of the built histograms. 
-    
-    The 'built' entry of the requests pickle contains a dictionary of 
-    (file, {flavor:name}) tuples. 
-    """
-
-    def __init__(self,requests_pickle, 
-                 tagger_bounds = _tagger_bounds): 
-        try: 
-            self._initialize(requests_pickle, tagger_bounds)
-        except HistBuilder.BadTaggerError as bad: 
-            with open(requests_pickle,'r') as pkl: 
-                pk_dict = cPickle.load(pkl)
-                
-            pk_dict['requested'].remove(bad.id)
-            with open(requests_pickle,'w') as pkl: 
-                cPickle.dump(pk_dict,pkl)
-            raise
-
-    def _initialize(self, requests_pickle, tagger_bounds): 
-        with open(requests_pickle) as pkl: 
-            status_dict = cPickle.load(pkl)
-
-        self._requests_pickle = requests_pickle
-            
-        requested = status_dict['requested']
-        built = set(status_dict['built'].keys())
-    
-        unbuilt = requested - built
-        
-        flavor_to_char = {
-            'light':'u', 
-            'charm':'c', 
-            'bottom':'b'
-            }
-    
-        onedim_inputs = {}
-        twodim_inputs = {}
-        for id_tuple in unbuilt: 
-            print 'booking {} to build'.format(id_tuple)
-            short_tagger, bins, signal, window_discrim = id_tuple
-
-            all_taggers = tagger_bounds.keys()
-            rej_flavors = [f for f in _tags if f != signal]
-            signal_char = flavor_to_char[signal]
-    
-            if window_discrim: 
-                tagger_matches = []
-                for t in all_taggers: 
-                    if not short_tagger in t: 
-                        continue
-                    elif 'logBu' in t or 'discriminator' in t: 
-                        tagger_matches.append(t)
-    
-                if len(tagger_matches) != 1: 
-                    raise BadTaggerError("taggers {} all match {}".format(
-                            tagger_matches, short_tagger), id_tuple)
-                full_tagger = tagger_matches[0]
-                bounds = tagger_bounds[full_tagger]
-                tagger_tuple = (full_tagger, bins, bounds[0],bounds[1])
-                onedim_inputs[id_tuple] = tagger_tuple
-            else: 
-                rej_chars = [flavor_to_char[f] for f in rej_flavors]
-                x_chars = signal_char.upper() + rej_chars[0]
-                y_chars = signal_char.upper() + rej_chars[1]
-                
-                x_matches = []
-                y_matches = []
-                for t in all_taggers: 
-                    if 'log' + x_chars in t and short_tagger in t: 
-                        x_matches.append(t)
-                    if 'log' + y_chars in t and short_tagger in t: 
-                        y_matches.append(t)
-                if len(x_matches) != 1 or len(y_matches) != 1: 
-                    raise BadTaggerError(
-                        "taggers {} {} match {}".format(
-                            x_matches, y_matches, short_tagger, signal), 
-                        id_tuple)
-                x_tagger = x_matches[0]
-                y_tagger = y_matches[0]
-                x_bounds = tagger_bounds[x_tagger]
-                y_bounds = tagger_bounds[y_tagger]
-                x_tagger_tuple = (x_tagger, bins, x_bounds[0], x_bounds[1])
-                y_tagger_tuple = (y_tagger, bins, y_bounds[0], y_bounds[1])
-                twodim_inputs[id_tuple] = (x_tagger_tuple, y_tagger_tuple) 
-                                      
-        self._onedim_inputs = onedim_inputs
-        self._twodim_inputs = twodim_inputs
-    
-    def build_1d_hists(self, input_ntuple, out_dir = ''): 
-        """
-        Call profiling routines to build the histogram files. 
-        Record the hists as built in the requests_tuple
-        """
-        if not self._onedim_inputs: 
-            return False
-        built_1d_hists = {}
-        onedim_input_list = []
-        if not out_dir: 
-            out_dir = os.path.split(self._requests_pickle)[0]
-
-        cache_files = glob.glob(out_dir + '/*')
-        onedim_out_file = ''
-        for x in xrange(100): 
-            f_name = 'onedim_cache{}.root'.format(x)
-            onedim_out_file = os.path.join(out_dir, f_name)
-            if not onedim_out_file in cache_files: 
-                break
-        assert onedim_out_file, 'could not name output file'
-
-        for id_tuple, inputs in self._onedim_inputs.items(): 
-            onedim_input_list.append(inputs)
-            hist_base_name = inputs[0] 
-            all_hists = [hist_base_name + '_' + t for t in _tags]
-            built_1d_hists[id_tuple] = (onedim_out_file, all_hists)
-        
-        print 'profiling 1d hists'
-        profile_fast(input_ntuple, tree = 'SVTree', 
-                     out_file = onedim_out_file, 
-                     doubles = onedim_input_list, 
-                     tags = _tags, 
-                     show_progress = True)
-            
-        with open(self._requests_pickle) as pkl: 
-            status_dict = cPickle.load(pkl)
-
-        status_dict['built'].update(built_1d_hists)
-        with open(self._requests_pickle,'w') as pkl: 
-            cPickle.dump(status_dict, pkl)
-
-    def build_2d_hists(self, input_ntuple, out_dir = ''): 
-        """
-        Call profiling routines to build the histogram files. 
-        Record the hists as built in the requests_tuple
-        """
-        if not self._twodim_inputs: 
-            return False
-        built_hists = {}
-        input_list = []
-        if not out_dir: 
-            out_dir = os.path.split(self._requests_pickle)[0]
-
-        cache_files = glob.glob(out_dir + '/*')
-
-        out_file = ''
-        for x in xrange(100): 
-            f_name = 'twodim_cache{}.root'.format(x)
-            out_file = os.path.join(out_dir, f_name)
-            if not out_file in cache_files: 
-                break
-        assert out_file, 'could not name output file'
-
-        for id_tuple, inputs in self._twodim_inputs.items(): 
-            input_list.append(inputs)
-            first_hist_name = inputs[1][0]
-            second_hist_name = inputs[0][0]
-            compound_hist_name = first_hist_name + '_vs_' + second_hist_name
-            all_hists = [compound_hist_name + '_' + t for t in _tags]
-            built_hists[id_tuple] = (out_file, all_hists)
-        
-        print 'profiling 2d hists'
-        reported_out, reported_hists = pro2d(
-            input_ntuple, tree = 'SVTree', 
-            out_file = out_file, 
-            plots = input_list, 
-            tags = _tags, 
-            show_progress = True)
-        
-            
-        with open(self._requests_pickle) as pkl: 
-            status_dict = cPickle.load(pkl)
-
-        status_dict['built'].update(built_hists)
-        with open(self._requests_pickle,'w') as pkl: 
-            cPickle.dump(status_dict, pkl)
-
 
 class RejRejPlot(object): 
     """
@@ -340,10 +135,10 @@ class RejRejPlot(object):
     rejecton plot.
 
     Adds an entry for the needed root histograms to hist_list when created, 
-    under the 'requested' entry. If the same entry is not found under 
-    'built' in the same pickle, the 'trigger_recalc' member is set to true. 
+    under the 'requested' entry. 
 
-    When compute() is called, stuff computes. 
+    When compute() is called, will look for the  entry under 'built' in
+    the same pickle. 
 
     -Does not build hists from ntuple. 
     -Does not make plots. 
@@ -530,3 +325,192 @@ class RejRejPlot(object):
             print 'saving {}'.format(self._integrals_pickle)
             cPickle.dump(int_dict, pkl)
 
+
+class HistBuilder(object): 
+    """
+    Builds hists requested in requests_pickle, which is loaded by
+    the constructor. 
+    Updates the pickle with locations and names of the built histograms. 
+    
+    The 'built' entry of the requests pickle contains a dictionary of 
+    (file, {flavor:name}) tuples. 
+    """
+
+    def __init__(self,requests_pickle, 
+                 tagger_bounds = _tagger_bounds): 
+        try: 
+            self._initialize(requests_pickle, tagger_bounds)
+        except HistBuilder.BadTaggerError as bad: 
+            with open(requests_pickle,'r') as pkl: 
+                pk_dict = cPickle.load(pkl)
+                
+            pk_dict['requested'].remove(bad.id)
+            with open(requests_pickle,'w') as pkl: 
+                cPickle.dump(pk_dict,pkl)
+            raise
+
+    def _initialize(self, requests_pickle, tagger_bounds): 
+        with open(requests_pickle) as pkl: 
+            status_dict = cPickle.load(pkl)
+
+        self._requests_pickle = requests_pickle
+            
+        requested = status_dict['requested']
+        built = set(status_dict['built'].keys())
+    
+        unbuilt = requested - built
+        
+        flavor_to_char = {
+            'light':'u', 
+            'charm':'c', 
+            'bottom':'b'
+            }
+    
+        onedim_inputs = {}
+        twodim_inputs = {}
+        for id_tuple in unbuilt: 
+            print 'booking {} to build'.format(id_tuple)
+            short_tagger, bins, signal, window_discrim = id_tuple
+
+            all_taggers = tagger_bounds.keys()
+            rej_flavors = [f for f in _tags if f != signal]
+            signal_char = flavor_to_char[signal]
+    
+            if window_discrim: 
+                tagger_matches = []
+                for t in all_taggers: 
+                    if not short_tagger in t: 
+                        continue
+                    elif 'logBu' in t or 'discriminator' in t: 
+                        tagger_matches.append(t)
+    
+                if len(tagger_matches) != 1: 
+                    raise BadTaggerError("taggers {} all match {}".format(
+                            tagger_matches, short_tagger), id_tuple)
+                full_tagger = tagger_matches[0]
+                bounds = tagger_bounds[full_tagger]
+                tagger_tuple = (full_tagger, bins, bounds[0],bounds[1])
+                onedim_inputs[id_tuple] = tagger_tuple
+            else: 
+                rej_chars = [flavor_to_char[f] for f in rej_flavors]
+                x_chars = signal_char.upper() + rej_chars[0]
+                y_chars = signal_char.upper() + rej_chars[1]
+                
+                x_matches = []
+                y_matches = []
+                for t in all_taggers: 
+                    if 'log' + x_chars in t and short_tagger in t: 
+                        x_matches.append(t)
+                    if 'log' + y_chars in t and short_tagger in t: 
+                        y_matches.append(t)
+                if len(x_matches) != 1 or len(y_matches) != 1: 
+                    raise BadTaggerError(
+                        "taggers {} {} match {}".format(
+                            x_matches, y_matches, short_tagger, signal), 
+                        id_tuple)
+                x_tagger = x_matches[0]
+                y_tagger = y_matches[0]
+                x_bounds = tagger_bounds[x_tagger]
+                y_bounds = tagger_bounds[y_tagger]
+                x_tagger_tuple = (x_tagger, bins, x_bounds[0], x_bounds[1])
+                y_tagger_tuple = (y_tagger, bins, y_bounds[0], y_bounds[1])
+                twodim_inputs[id_tuple] = (x_tagger_tuple, y_tagger_tuple) 
+                                      
+        self._onedim_inputs = onedim_inputs
+        self._twodim_inputs = twodim_inputs
+    
+    def build_1d_hists(self, input_ntuple, out_dir = ''): 
+        """
+        Call profiling routines to build the histogram files. 
+        Record the hists as built in the requests_tuple
+        """
+        if not self._onedim_inputs: 
+            return False
+        built_1d_hists = {}
+        onedim_input_list = []
+        if not out_dir: 
+            out_dir = os.path.split(self._requests_pickle)[0]
+
+        cache_files = glob.glob(out_dir + '/*')
+        onedim_out_file = ''
+        for x in xrange(100): 
+            f_name = 'onedim_cache{}.root'.format(x)
+            onedim_out_file = os.path.join(out_dir, f_name)
+            if not onedim_out_file in cache_files: 
+                break
+        assert onedim_out_file, 'could not name output file'
+
+        for id_tuple, inputs in self._onedim_inputs.items(): 
+            onedim_input_list.append(inputs)
+            hist_base_name = inputs[0] 
+            all_hists = [hist_base_name + '_' + t for t in _tags]
+            built_1d_hists[id_tuple] = (onedim_out_file, all_hists)
+        
+        print 'profiling 1d hists'
+        profile_fast(input_ntuple, tree = 'SVTree', 
+                     out_file = onedim_out_file, 
+                     doubles = onedim_input_list, 
+                     tags = _tags, 
+                     show_progress = True)
+            
+        with open(self._requests_pickle) as pkl: 
+            status_dict = cPickle.load(pkl)
+
+        status_dict['built'].update(built_1d_hists)
+        with open(self._requests_pickle,'w') as pkl: 
+            cPickle.dump(status_dict, pkl)
+
+    def build_2d_hists(self, input_ntuple, out_dir = ''): 
+        """
+        Call profiling routines to build the histogram files. 
+        Record the hists as built in the requests_tuple
+        """
+        if not self._twodim_inputs: 
+            return False
+        built_hists = {}
+        input_list = []
+        if not out_dir: 
+            out_dir = os.path.split(self._requests_pickle)[0]
+
+        cache_files = glob.glob(out_dir + '/*')
+
+        out_file = ''
+        for x in xrange(100): 
+            f_name = 'twodim_cache{}.root'.format(x)
+            out_file = os.path.join(out_dir, f_name)
+            if not out_file in cache_files: 
+                break
+        assert out_file, 'could not name output file'
+
+        for id_tuple, inputs in self._twodim_inputs.items(): 
+            input_list.append(inputs)
+            first_hist_name = inputs[1][0]
+            second_hist_name = inputs[0][0]
+            compound_hist_name = first_hist_name + '_vs_' + second_hist_name
+            all_hists = [compound_hist_name + '_' + t for t in _tags]
+            built_hists[id_tuple] = (out_file, all_hists)
+        
+        print 'profiling 2d hists'
+        reported_out, reported_hists = pro2d(
+            input_ntuple, tree = 'SVTree', 
+            out_file = out_file, 
+            plots = input_list, 
+            tags = _tags, 
+            show_progress = True)
+        
+            
+        with open(self._requests_pickle) as pkl: 
+            status_dict = cPickle.load(pkl)
+
+        status_dict['built'].update(built_hists)
+        with open(self._requests_pickle,'w') as pkl: 
+            cPickle.dump(status_dict, pkl)
+
+class BadTaggerError(LookupError): 
+    """
+    Exception used by HistBuilder when it can't construct a requested hist. 
+    Will be caught temporarily and used to remove the offending entry. 
+    """
+    def __init__(self, message, tagger_tuple = None): 
+        super(BadTaggerError,self).__init__(message)
+        self.id = tagger_tuple

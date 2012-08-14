@@ -10,9 +10,10 @@ from matplotlib.colorbar import Colorbar
 routine to draw b-rejection vs c- or l-rejection plots
 """
 
-_tags = ['bottom','charm','light']
-
 def plot_pickle(pickle, output_name, use_contour = True): 
+    """
+    draw rejrej plot in pickle
+    """
     with open(pickle) as pkl: 
         pdict = cPickle.load(pkl)
         _plot_eff_array(pdict, use_contour=use_contour,out_name=output_name)
@@ -105,10 +106,24 @@ def _check_sig_bg_match(*plots):
     bgy_match = all(bgy == s['y_bg'] for s in plots)
     return sig_match and bgx_match and bgy_match
     
+def plot_overlay(new_pickle, old_pickle , out_name, 
+                 do_rel = False, z_range=None): 
+    """
+    overlay two rejrej plots. The difference shown will be the first 
+    plot relative to the second. 
+    """
+    with open(old_pickle) as pkl: 
+        old_plot = cPickle.load(pkl)
+    with open(new_pickle) as pkl: 
+        new_plot = cPickle.load(pkl)
+
+    _overlay_rejrej(
+        array_one=new_plot, array_two=old_plot, 
+        do_rel=do_rel, out_name=out_name, z_range=z_range)
 
 def _overlay_rejrej(array_one, array_two,
                     out_name = 'rejrej.pdf', 
-                    do_rel = False, do_contour = False):     
+                    do_rel = False, do_contour = False, z_range = None):     
 
     diff_array = array_one['eff'] - array_two['eff']
 
@@ -123,7 +138,9 @@ def _overlay_rejrej(array_one, array_two,
         diff_array[blank_cells] = -1e3
 
     if do_rel: 
+        old_warn_set = np.seterr(divide = 'ignore') 
         eff_array = eff_array / array_two['eff']
+        np.seterr(**old_warn_set)
 
     for a in arrays: 
         if not 'tagger' in a: 
@@ -152,6 +169,9 @@ def _overlay_rejrej(array_one, array_two,
 
     plt_min = np.min(eff_array[np.nonzero(eff_array > -2)])
     plt_max = np.max(eff_array[np.nonzero(eff_array > -2)]) 
+
+    if z_range: 
+        plt_min, plt_max = z_range
 
     print 'plot range: {: .4f}--{:.4f}'.format(plt_min, plt_max)
 
@@ -183,7 +203,8 @@ def _overlay_rejrej(array_one, array_two,
 
 
     im.get_cmap().set_under(alpha=0)
-    im.get_cmap().set_over(alpha=0)
+    if not do_rel: 
+        im.get_cmap().set_over(alpha=0)
 
     ax.set_xticks([])
     ax.set_yticks([])

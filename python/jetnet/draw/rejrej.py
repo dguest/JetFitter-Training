@@ -24,6 +24,7 @@ def _plot_eff_array(array_dict, use_contour = True,
     eff_array = array_dict['eff']
     x_min, x_max = array_dict['x_range']
     y_min, y_max = array_dict['y_range']
+    eff_array[np.nonzero(eff_array < 0.0)] = np.nan
 
     fig = plt.figure()
     gs = GridSpec(20,21)
@@ -36,6 +37,8 @@ def _plot_eff_array(array_dict, use_contour = True,
         extent = (x_min,x_max, y_min, y_max), 
         aspect = aspect, 
         interpolation = 'nearest', 
+        vmin = 0, 
+        vmax = 1, 
         )
 
     if use_contour: 
@@ -49,6 +52,8 @@ def _plot_eff_array(array_dict, use_contour = True,
             linewidths = 2, 
             levels = np.arange(0.1,1.0,0.1),
             )
+
+    im.get_cmap().set_bad(alpha=0)
 
     ax.set_xticks([])
     ax.set_yticks([])
@@ -131,11 +136,9 @@ def _overlay_rejrej(array_one, array_two,
 
     arrays = array_one, array_two
 
-    # TODO: this is a bit messy, should find a more robust way to mask out
-    # the no-entry cells
     for a in arrays: 
-        blank_cells = np.nonzero(a['eff'] < 1e-6)
-        diff_array[blank_cells] = -1e3
+        blank_cells = np.nonzero(a['eff'] <= 0.0 )
+        diff_array[blank_cells] = np.NaN
 
     if do_rel: 
         old_warn_set = np.seterr(divide = 'ignore') 
@@ -167,8 +170,8 @@ def _overlay_rejrej(array_one, array_two,
 
     # cmap = mp.colors.Colormap('rainbow')
 
-    plt_min = np.min(eff_array[np.nonzero(eff_array > -2)])
-    plt_max = np.max(eff_array[np.nonzero(eff_array > -2)]) 
+    plt_min = np.min(eff_array[np.nonzero(np.isfinite(eff_array))])
+    plt_max = np.max(eff_array[np.nonzero(np.isfinite(eff_array))]) 
 
     if z_range: 
         plt_min, plt_max = z_range
@@ -183,7 +186,6 @@ def _overlay_rejrej(array_one, array_two,
         interpolation = 'nearest', 
         vmin = plt_min, 
         vmax = plt_max, 
-        # cmap = cmap, 
         )
 
     
@@ -201,10 +203,7 @@ def _overlay_rejrej(array_one, array_two,
             levels = c_lines,
             )
 
-
-    im.get_cmap().set_under(alpha=0)
-    if not do_rel: 
-        im.get_cmap().set_over(alpha=0)
+    im.get_cmap().set_bad(alpha=0)
 
     ax.set_xticks([])
     ax.set_yticks([])

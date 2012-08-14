@@ -69,7 +69,7 @@ def _loop_over_entries(x_bins, y_bins, used_eff, n_out_bins):
     y_bins = y_bins[valid_indices]
     used_eff = used_eff[valid_indices]
 
-    eff_array = np.zeros((n_out_bins,n_out_bins))
+    eff_array = np.ones((n_out_bins,n_out_bins)) * -1
     for x_bin, y_bin, z in zip(x_bins, y_bins, used_eff): 
         # y_bin comes first because that's what imshow wants... 
         eff_array[y_bin,x_bin] = max(z, eff_array[y_bin,x_bin])

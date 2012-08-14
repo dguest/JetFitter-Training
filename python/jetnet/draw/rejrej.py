@@ -410,6 +410,17 @@ class RejRejPlot(object):
     """
     Keeps track of the data (and cache) files associated with a given 
     rejecton plot.
+
+    Adds an entry for the needed root histograms to a pickle when created, 
+    under the 'requested' entry. If the same entry is not found under 
+    'built' in the same pickle, the 'trigger_recalc' member is set to true. 
+
+    When compute() is called, stuff computes. 
+
+    -Does not build hists from ntuple. 
+    -Does not make plots. 
+    -Does not store lots of info internally. 
+
     """
     def __init__(self, tagger = 'JetFitterCOMBNN', signal = 'charm', 
                  bins = 2000, x_range = 'auto', y_range = 'auto', 
@@ -434,19 +445,59 @@ class RejRejPlot(object):
         remain_flavs = [f for f in _tags if f != signal]
         self._x_flav, self._y_flav = remain_flavs
 
+        # bins things
         integrals_name = 'integrals_{bins}bins.pkl'.format(bins = bins)
         integral_pkl = os.path.join(cache, tagger, integrals_name)
         self._integrals_pickle = integral_pkl
+        self._bins = bins
 
         root_file_name = 'root_{}_hists.root'.format(
             '1d' if window_discrim else '2d')
         self._root_cache = os.path.join(cache, root_file_name)
 
-        self.hist_1d_requests = None
-        self.hist_d2_requests = None
 
-        if not os.path.isfile(rejrej_pickle): 
+        self.trigger_recalc = False
+
+        root_hists_listing_pkl = os.path.join(cache, 'hist_list.pkl')
+        self._root_hists_listing_pkl = root_hists_listing_pkl
+        hist_location = self._check_hist_list()
+        if not in_hist_list: 
+            self.trigger_recalc = True
+        
+
+    def compute(self):
+        """
+        Build the plot. 
+        Returns False if another run over the ntuple is needed. 
+        Returns True if everything is ok. 
+        """
+        if not os.path.isfile(self._rejrej_pickle): 
             self._build_rejrej()
+
+    def _check_hist_list(self): 
+        list_file = self._root_hists_listing_pkl
+
+        if os.path.isfile(list_file): 
+            with open(list_file) as pkl: 
+                hist_listing = cPickle.load(pkl)
+        else: 
+            hist_listing = { 
+                'requested': set(), 
+                'built': {}, 
+                }
+            
+                
+        this_hist_index = (self._tagger, self._bins, self._signal, 
+                           self._window_discrim)
+        if this_hist_index in hist_listing['built']: 
+            return hist_listing['built'][this_hist_index]
+        
+        if not this_hist_index in hist_listing['requested']: 
+            hist_listing['requested'].add(this_hist_index)
+
+        with open(list_file,'w') as pkl: 
+            cPickle.dump(hist_listing, pkl)
+        return False
 
     def _build_rejrej(self): 
         print "I'm fuucking buliding this shit"
@@ -454,11 +505,18 @@ class RejRejPlot(object):
             self._build_integrals()
     
     def _build_integrals(self): 
+        """
+        this should read in a root file and create the integrals cache
+        """
         print "and more shit!"
-        if not os.path.isfile(self._root_cache): 
-            self._raise_ntuple_run_flag()
+        # if not os.path.isfile(self._root_cache): 
+        #     self._raise_ntuple_run_flag()
 
     def _raise_ntuple_run_flag(self):
+        """
+        this may have been designed out... now just returning 
+        flase if a new ntuple is needed. 
+        """
         print 'these should be tuples to be collected'
         self.hist_d2_requests = True
         self.hist_1d_requests = True 

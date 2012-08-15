@@ -189,23 +189,25 @@ def _overlay_rejrej(array_one, array_two,
     plt_min = np.min(eff_array[np.nonzero(np.isfinite(eff_array))])
     plt_max = np.max(eff_array[np.nonzero(np.isfinite(eff_array))]) 
 
-    plt_range = plt_max - plt_min
-    plt_order = math.trunc(math.log10(plt_range))
-    
-    new_min = round(plt_min - 0.5*10**(plt_order),-plt_order)
-    new_max = round(plt_max + 0.5*10**(plt_order),-plt_order)
-    new_range = new_max - new_min
-    n_subdiv = new_range * 10**math.floor(math.log10(new_range) )
-    if n_subdiv <= 5: 
-        n_subdiv *= 2
-
-    plt_min = new_min
-    plt_max = new_max
-
     if z_range: 
         plt_min, plt_max = z_range
 
-    print 'plot range: {: .4f}--{:.4f}'.format(plt_min, plt_max)
+    plt_range = plt_max - plt_min
+    plt_order = math.trunc(math.log10(plt_range))
+
+    c_min = round(plt_min + 0.4*10**(plt_order),-plt_order)
+    c_max = round(plt_max - 0.4*10**(plt_order),-plt_order)
+
+    if not z_range: 
+        plt_min = c_min
+        plt_max = c_max
+
+    c_range = c_max - c_min
+
+    n_subdiv = c_range * 5**math.floor( - math.log(c_range,5) + 1.5 )
+
+    print 'plot range: {: .4f}--{:.4f}, {} div'.format(
+        plt_min, plt_max, n_subdiv)
 
     im = ax.imshow(
         eff_array, 
@@ -218,7 +220,7 @@ def _overlay_rejrej(array_one, array_two,
         )
 
     
-    c_lines = np.linspace(plt_min, plt_max, n_subdiv + 1)
+    c_lines = np.linspace(c_min, c_max, n_subdiv + 1)
     if len(c_lines) == 0: 
         do_contour = False
     if do_contour: 
@@ -232,7 +234,7 @@ def _overlay_rejrej(array_one, array_two,
             colors = 'k', 
             )
         plt.clabel(ct, fontsize=9, inline=1, 
-                   fmt = '%.{}f'.format(-plt_order + 1))
+                   fmt = '%.{}f'.format(-plt_order + 2))
 
     im.get_cmap().set_bad(alpha=0)
 

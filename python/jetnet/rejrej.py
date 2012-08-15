@@ -340,7 +340,7 @@ class HistBuilder(object):
                  tagger_bounds = _tagger_bounds): 
         try: 
             self._initialize(requests_pickle, tagger_bounds)
-        except HistBuilder.BadTaggerError as bad: 
+        except BadTaggerError as bad: 
             with open(requests_pickle,'r') as pkl: 
                 pk_dict = cPickle.load(pkl)
                 

@@ -1,5 +1,5 @@
 import numpy as np
-import os, sys, warnings, cPickle, itertools
+import os, sys, warnings, cPickle, itertools, math
 import glob
 import matplotlib.pyplot as plt
 import matplotlib as mp
@@ -9,6 +9,20 @@ from matplotlib.colorbar import Colorbar
 """
 routine to draw b-rejection vs c- or l-rejection plots
 """
+
+def _simplify_tagger_name(name): 
+    if name == 'JetFitterCOMBNN': 
+        return 'COMBNN'
+    elif 'COMBNN' in name and 'SV' in name: 
+        return 'JetFitterCharm'
+    else: 
+        return name
+
+_flav_to_char = {
+    'light':'u', 
+    'charm':'c', 
+    'bottom':'b', 
+    }
 
 def plot_pickle(pickle, output_name, use_contour = True): 
     """
@@ -112,7 +126,7 @@ def _check_sig_bg_match(*plots):
     return sig_match and bgx_match and bgy_match
     
 def plot_overlay(new_pickle, old_pickle , out_name, 
-                 do_rel = False, z_range=None): 
+                 do_rel = False, z_range=None, do_contour=False): 
     """
     overlay two rejrej plots. The difference shown will be the first 
     plot relative to the second. 
@@ -124,26 +138,28 @@ def plot_overlay(new_pickle, old_pickle , out_name,
 
     _overlay_rejrej(
         array_one=new_plot, array_two=old_plot, 
-        do_rel=do_rel, out_name=out_name, z_range=z_range)
+        do_rel=do_rel, out_name=out_name, z_range=z_range, 
+        do_contour=do_contour)
 
 def _overlay_rejrej(array_one, array_two,
                     out_name = 'rejrej.pdf', 
                     do_rel = False, do_contour = False, z_range = None):     
 
-    diff_array = array_one['eff'] - array_two['eff']
-
-    eff_array = diff_array 
 
     arrays = array_one, array_two
 
     for a in arrays: 
         blank_cells = np.nonzero(a['eff'] <= 0.0 )
-        diff_array[blank_cells] = np.NaN
+        array_one['eff'][blank_cells] = np.NaN
 
+        
     if do_rel: 
         old_warn_set = np.seterr(divide = 'ignore') 
-        eff_array = eff_array / array_two['eff']
+        eff_array = array_one['eff'] / array_two['eff']
         np.seterr(**old_warn_set)
+    else: 
+        eff_array = array_one['eff'] - array_two['eff']
+
 
     for a in arrays: 
         if not 'tagger' in a: 
@@ -173,6 +189,19 @@ def _overlay_rejrej(array_one, array_two,
     plt_min = np.min(eff_array[np.nonzero(np.isfinite(eff_array))])
     plt_max = np.max(eff_array[np.nonzero(np.isfinite(eff_array))]) 
 
+    plt_range = plt_max - plt_min
+    plt_order = math.trunc(math.log10(plt_range))
+    
+    new_min = round(plt_min - 0.5*10**(plt_order),-plt_order)
+    new_max = round(plt_max + 0.5*10**(plt_order),-plt_order)
+    new_range = new_max - new_min
+    n_subdiv = new_range * 10**math.floor(math.log10(new_range) )
+    if n_subdiv <= 5: 
+        n_subdiv *= 2
+
+    plt_min = new_min
+    plt_max = new_max
+
     if z_range: 
         plt_min, plt_max = z_range
 
@@ -189,11 +218,10 @@ def _overlay_rejrej(array_one, array_two,
         )
 
     
-    c_lines = np.arange(0.05, plt_max, 0.05)
+    c_lines = np.linspace(plt_min, plt_max, n_subdiv + 1)
     if len(c_lines) == 0: 
         do_contour = False
     if do_contour: 
-        print 'clines', c_lines
         ct = ax.contour(
             eff_array, 
             origin = 'upper', 
@@ -201,7 +229,10 @@ def _overlay_rejrej(array_one, array_two,
             aspect = aspect, 
             linewidths = 2, 
             levels = c_lines,
+            colors = 'k', 
             )
+        plt.clabel(ct, fontsize=9, inline=1, 
+                   fmt = '%.{}f'.format(-plt_order + 1))
 
     im.get_cmap().set_bad(alpha=0)
 
@@ -213,9 +244,11 @@ def _overlay_rejrej(array_one, array_two,
     plt.subplots_adjust(left = 0.25) # FIXME: use OO call here
     # cb = plt.colorbar()
     cb = Colorbar(ax = cb_ax, mappable = im)
-    taggers = [x['tagger'] for x in arrays]
-    sig_label = array_one['signal']
-    cb.set_label('{}-{} {s} efficiency'.format(*taggers, s = sig_label ))
+    taggers = [_simplify_tagger_name(x['tagger']) for x in arrays]
+    flav_char = _flav_to_char[array_one['signal']]
+    sig_label = '$\epsilon_\mathrm{{ {} }}$'.format(flav_char)
+    cb_lab_string = '{} $/$ {} {s}' if do_rel else '{} $-$ {} {s}'
+    cb.set_label(cb_lab_string.format(*taggers, s = sig_label ))
     if do_contour: 
         cb.add_lines(ct)
 

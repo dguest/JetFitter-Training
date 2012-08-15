@@ -118,6 +118,7 @@ def _get_rejrej_array(flat_eff, flat_x, flat_y, x_range=None, y_range=None):
 # TODO: autogenerate this? 
 _tagger_bounds = {
     'discriminatorMV1': (0,1), 
+    'discriminatorMV2': (-1.5,1), 
     'logBcCOMBNN_SVPlus_rapLxy':(-5, 10), 
     'logBuCOMBNN_SVPlus_rapLxy':(-6, 12) , 
     'logCbCOMBNN_SVPlus_rapLxy':(-8, 4), # should just be Bc reversed?
@@ -167,6 +168,8 @@ class RejRejPlot(object):
         self._y_range = y_range
         self._window_discrim = window_discrim
 
+        self._id = (tagger, bins, signal, window_discrim)
+
         rejrej_pickle = os.path.join(cache_path, 'rejrej.pkl')
         self._rejrej_pickle = rejrej_pickle
 
@@ -201,6 +204,7 @@ class RejRejPlot(object):
         """
         if not os.path.isfile(self._rejrej_pickle): 
             self._build_rejrej()
+                
         else: 
             mismatch = self._check_plot_mismatch()
             if mismatch > 1e-3: 
@@ -309,12 +313,21 @@ class RejRejPlot(object):
 
         the_root_file, hists = self._check_hist_list()
             
-        # bins = _get_bins(
-
         int_dict = {}
         for hist in hists: 
             print 'loading {} in {}'.format(hist, the_root_file)
-            bins = _get_bins(the_root_file, hist)
+            try: 
+                bins = _get_bins(the_root_file, hist)
+            except IOError as error: 
+                with open(self._root_hists_listing_pkl) as pkl: 
+                    l = cPickle.load(pkl)
+                del l['built'][self._id]
+                with open(self._root_hists_listing_pkl,'w') as pkl: 
+                    cPickle.dump(l,pkl)
+                new_message = '{}, removed entry in {}, try rerunning'.format(
+                    error.message, self._root_hists_listing_pkl)
+                raise IOError(new_message)
+
             integral = _get_integrals_fast(bins)
             
             tag = hist.split('_')[-1]
@@ -447,11 +460,12 @@ class HistBuilder(object):
             built_1d_hists[id_tuple] = (onedim_out_file, all_hists)
         
         print 'profiling 1d hists'
-        profile_fast(input_ntuple, tree = 'SVTree', 
-                     out_file = onedim_out_file, 
-                     doubles = onedim_input_list, 
-                     tags = _tags, 
-                     show_progress = True)
+        p, f = profile_fast(input_ntuple, tree = 'SVTree', 
+                            out_file = onedim_out_file, 
+                            doubles = onedim_input_list, 
+                            tags = _tags, 
+                            show_progress = True)
+        print '{} in window, {} outside'.format(p,f)
             
         with open(self._requests_pickle) as pkl: 
             status_dict = cPickle.load(pkl)
@@ -511,6 +525,7 @@ class BadTaggerError(LookupError):
     Exception used by HistBuilder when it can't construct a requested hist. 
     Will be caught temporarily and used to remove the offending entry. 
     """
-    def __init__(self, message, tagger_tuple = None): 
+    def __init__(self, message, tagger_tuple = None, where = 'requested'): 
         super(BadTaggerError,self).__init__(message)
         self.id = tagger_tuple
+        self.where = where

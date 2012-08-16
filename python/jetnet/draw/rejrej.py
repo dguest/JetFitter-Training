@@ -126,7 +126,8 @@ def _check_sig_bg_match(*plots):
     return sig_match and bgx_match and bgy_match
     
 def plot_overlay(new_pickle, old_pickle , out_name, 
-                 do_rel = False, z_range=None, do_contour=False): 
+                 do_rel = False, z_range=None, do_contour=False, 
+                 do_abs_contour=False): 
     """
     overlay two rejrej plots. The difference shown will be the first 
     plot relative to the second. 
@@ -139,18 +140,26 @@ def plot_overlay(new_pickle, old_pickle , out_name,
     _overlay_rejrej(
         array_one=new_plot, array_two=old_plot, 
         do_rel=do_rel, out_name=out_name, z_range=z_range, 
-        do_contour=do_contour)
+        do_contour=do_contour, do_abs_contour=do_abs_contour)
 
 def _overlay_rejrej(array_one, array_two,
                     out_name = 'rejrej.pdf', 
-                    do_rel = False, do_contour = False, z_range = None):     
+                    do_rel = False, 
+                    do_contour = False, 
+                    do_abs_contour = False, 
+                    z_range = None):     
 
+    if do_contour and do_abs_contour: 
+        warnings.warn("can't do both abs_contour and contour, "
+                      "won't use abs_contour")
+        do_abs_contour = False
 
     arrays = array_one, array_two
 
     for a in arrays: 
         blank_cells = np.nonzero(a['eff'] <= 0.0 )
         array_one['eff'][blank_cells] = np.NaN
+        array_two['eff'][blank_cells] = np.NaN
 
         
     if do_rel: 
@@ -186,28 +195,42 @@ def _overlay_rejrej(array_one, array_two,
 
     # cmap = mp.colors.Colormap('rainbow')
 
-    plt_min = np.min(eff_array[np.nonzero(np.isfinite(eff_array))])
-    plt_max = np.max(eff_array[np.nonzero(np.isfinite(eff_array))]) 
+    rel_min = np.min(eff_array[np.nonzero(np.isfinite(eff_array))])
+    rel_max = np.max(eff_array[np.nonzero(np.isfinite(eff_array))]) 
+
+    if do_abs_contour: 
+        the_array = array_one['eff']
+        contour_min = np.min(the_array[np.nonzero(np.isfinite(the_array))])
+        contour_max = np.max(the_array[np.nonzero(np.isfinite(the_array))])
+    else: 
+        contour_min = rel_min
+        contour_max = rel_max
 
     if z_range: 
-        plt_min, plt_max = z_range
+        rel_min, rel_max = z_range
 
-    plt_range = plt_max - plt_min
-    plt_order = math.trunc(math.log10(plt_range))
+    contour_range = contour_max - contour_min
+    contour_order = math.trunc(math.log10(contour_range)) 
 
-    c_min = round(plt_min + 0.4*10**(plt_order),-plt_order)
-    c_max = round(plt_max - 0.4*10**(plt_order),-plt_order)
+    c_min = round(contour_min + 0.4*10**(contour_order),-contour_order)
+    c_max = round(contour_max - 0.4*10**(contour_order),-contour_order)
 
     if not z_range: 
-        plt_min = c_min
-        plt_max = c_max
+        rel_min = c_min
+        rel_max = c_max
 
     c_range = c_max - c_min
 
-    n_subdiv = c_range * 5**math.floor( - math.log(c_range,5) + 1.5 )
+    if not do_abs_contour: 
+        n_subdiv = c_range * 5.0**math.floor( - math.log(c_range,5) + 1.5 )
+        c_lines = np.linspace(c_min, c_max, n_subdiv + 1)
+    else: 
+        n_subdiv = 10
+        c_lines = np.linspace(0, 1, n_subdiv + 1)
+        contour_order = 0
 
     print 'plot range: {: .4f}--{:.4f}, {} div'.format(
-        plt_min, plt_max, n_subdiv)
+        rel_min, rel_max, n_subdiv)
 
     im = ax.imshow(
         eff_array, 
@@ -215,17 +238,16 @@ def _overlay_rejrej(array_one, array_two,
         extent = (x_min,x_max, y_min, y_max), 
         aspect = aspect, 
         interpolation = 'nearest', 
-        vmin = plt_min, 
-        vmax = plt_max, 
+        vmin = rel_min, 
+        vmax = rel_max, 
         )
 
     
-    c_lines = np.linspace(c_min, c_max, n_subdiv + 1)
     if len(c_lines) == 0: 
         do_contour = False
-    if do_contour: 
+    if do_contour or do_abs_contour: 
         ct = ax.contour(
-            eff_array, 
+            the_array if do_abs_contour else eff_array, 
             origin = 'upper', 
             extent = (x_min,x_max, y_min, y_max), 
             aspect = aspect, 
@@ -234,7 +256,7 @@ def _overlay_rejrej(array_one, array_two,
             colors = 'k', 
             )
         plt.clabel(ct, fontsize=9, inline=1, 
-                   fmt = '%.{}f'.format(-plt_order + 2))
+                   fmt = '%.{}f'.format(-contour_order + 2))
 
     im.get_cmap().set_bad(alpha=0)
 

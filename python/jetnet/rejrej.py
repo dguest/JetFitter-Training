@@ -300,6 +300,7 @@ class RejRejPlot(object):
             'y_bg': flav_y, 
             'tagger': self._tagger, 
             'bins': self._bins, 
+            'window_cut': self._window_discrim, 
             }
         
         with open(self._rejrej_pickle,'w') as pkl: 

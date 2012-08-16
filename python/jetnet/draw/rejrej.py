@@ -42,6 +42,7 @@ def _plot_eff_array(array_dict, use_contour = True,
                     out_name = 'rejrej.pdf'):     
 
     eff_array = array_dict['eff']
+    eff_array = _maximize_efficiency(eff_array)
     x_min, x_max = array_dict['x_range']
     y_min, y_max = array_dict['y_range']
     eff_array[np.nonzero(eff_array < 0.0)] = np.nan
@@ -130,6 +131,14 @@ def _check_sig_bg_match(*plots):
     bgx_match = all(bgx == s['x_bg'] for s in plots)
     bgy_match = all(bgy == s['y_bg'] for s in plots)
     return sig_match and bgx_match and bgy_match
+
+def _maximize_efficiency(eff_array): 
+    """
+    It's not reasonable to take less than the efficiency 
+    """
+    temp = np.maximum.accumulate(eff_array[::-1,:], 0)[::-1,:]
+    temp = np.maximum.accumulate(temp[:,::-1], 1)[:,::-1]
+    return temp
     
 def plot_overlay(new_pickle, old_pickle , out_name, 
                  do_rel = False, z_range=None, do_contour=False, 
@@ -196,13 +205,13 @@ def _overlay_rejrej(array_one, array_two,
                       "won't use abs_contour")
         do_abs_contour = False
 
+    array_one['eff'] = _maximize_efficiency(array_one['eff'])
+    array_two['eff'] = _maximize_efficiency(array_two['eff'])
+
     arrays = array_one, array_two
 
-    # for a in arrays: 
-    #     blank_cells = np.nonzero(a['eff'] <= 0.0 )
-    #     array_one['eff'][blank_cells] = np.NaN
-    #     array_two['eff'][blank_cells] = np.NaN
-    # blank_cells = np.nonzero( )
+    
+
     array_one['eff'][np.nonzero(array_one['eff'] <= 0.0)] = np.NaN
     array_two['eff'][np.nonzero(array_two['eff'] <= 0.0)] = np.NaN
 

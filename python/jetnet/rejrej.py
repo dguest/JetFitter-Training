@@ -156,8 +156,7 @@ class RejRejPlot(object):
 
         win_dir = 'window' if window_discrim else 'twocut'
         bins_name = 'bins{}'.format(bins)
-        integrals_dir = os.path.join(cache, tagger, win_dir, bins_name )
-        cache_path = os.path.join(integrals_dir, signal)
+        cache_path = os.path.join(cache, tagger, win_dir, bins_name, signal)
         if not os.path.isdir(cache_path): 
             os.makedirs(cache_path)
 
@@ -178,7 +177,7 @@ class RejRejPlot(object):
 
         # bins things
         integrals_name = 'integrals_{bins}bins.pkl'.format(bins = bins)
-        integral_pkl = os.path.join(integrals_dir, integrals_name)
+        integral_pkl = os.path.join(cache_path, integrals_name)
         self._integrals_pickle = integral_pkl
         self._bins = bins
 

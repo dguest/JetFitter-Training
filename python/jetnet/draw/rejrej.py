@@ -142,6 +142,7 @@ def _maximize_efficiency(eff_array):
     
 def plot_overlay(new_pickle, old_pickle , out_name, 
                  do_rel = False, z_range=None, do_contour=False, 
+                 do_equal_contour=False, 
                  do_abs_contour=False): 
     """
     overlay two rejrej plots. The difference shown will be the first 
@@ -155,7 +156,8 @@ def plot_overlay(new_pickle, old_pickle , out_name,
     _overlay_rejrej(
         array_one=new_plot, array_two=old_plot, 
         do_rel=do_rel, out_name=out_name, z_range=z_range, 
-        do_contour=do_contour, do_abs_contour=do_abs_contour)
+        do_contour=do_contour, do_abs_contour=do_abs_contour, 
+        do_equal_contour=do_equal_contour)
 
 def _get_contour_order_and_lines(z_range): 
     """
@@ -198,12 +200,14 @@ def _overlay_rejrej(array_one, array_two,
                     do_rel = False, 
                     do_contour = False, 
                     do_abs_contour = False, 
+                    do_equal_contour = False, 
                     z_range = None):     
 
     if do_contour and do_abs_contour: 
         warnings.warn("can't do both abs_contour and contour, "
                       "won't use abs_contour")
         do_abs_contour = False
+
 
     array_one['eff'] = _maximize_efficiency(array_one['eff'])
     array_two['eff'] = _maximize_efficiency(array_two['eff'])
@@ -277,7 +281,7 @@ def _overlay_rejrej(array_one, array_two,
         vmax = rel_max, 
         )
 
-    
+
     if len(c_lines) == 0: 
         do_contour = False
     if do_contour or do_abs_contour: 
@@ -292,6 +296,20 @@ def _overlay_rejrej(array_one, array_two,
             )
         plt.clabel(ct, fontsize=9, inline=1, 
                    fmt = '%.{}f'.format(-contour_order + 1 ))
+
+    equal_contour_level = 1.0 if do_rel else 0.0
+    if do_equal_contour: 
+        equal_ct = ax.contour(
+            eff_array, 
+            origin = 'upper', 
+            extent = (x_min,x_max, y_min, y_max), 
+            aspect = aspect, 
+            linewidths = 2, 
+            levels = [equal_contour_level],
+            colors = 'r', 
+            )
+        plt.clabel(equal_ct, fontsize=9, inline=True, 
+                   fmt={equal_contour_level:'equal'})
 
     im.get_cmap().set_bad(alpha=0)
 
@@ -310,6 +328,10 @@ def _overlay_rejrej(array_one, array_two,
     cb.set_label(cb_lab_string.format(*taggers, s = sig_label ))
     if do_contour: 
         cb.add_lines(ct)
+        
+    if do_equal_contour: 
+        if rel_min < equal_contour_level < rel_max: 
+            cb.add_lines(equal_ct)
 
     position = ax.get_position()
     new_aspect = ax.get_aspect()

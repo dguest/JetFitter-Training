@@ -10,13 +10,19 @@ from matplotlib.colorbar import Colorbar
 routine to draw b-rejection vs c- or l-rejection plots
 """
 
-def _simplify_tagger_name(name): 
+def _simplify_tagger_name(tagger_dict): 
+    name = tagger_dict['tagger']
     if name == 'JetFitterCOMBNN': 
-        return 'COMBNN'
+        simple_name = 'COMBNN'
     elif 'COMBNN' in name and 'SV' in name: 
-        return 'JetFitterCharm'
+        simple_name = 'JetFitterCharm'
     else: 
-        return name
+        simple_name = name
+
+    if tagger_dict['window_cut'] and 'MV' not in name: 
+        simple_name += ' window'
+
+    return simple_name
 
 _flav_to_char = {
     'light':'u', 
@@ -142,6 +148,42 @@ def plot_overlay(new_pickle, old_pickle , out_name,
         do_rel=do_rel, out_name=out_name, z_range=z_range, 
         do_contour=do_contour, do_abs_contour=do_abs_contour)
 
+def _get_contour_order_and_lines(z_range): 
+    """
+    returns (order, lines), where order is an int, lines an array
+
+    we want somewhere between 6 and 15 contour lines in z_range, 
+    there's a messy way to do this, and it's not worth thinking about the 
+    cleaner way
+    """
+
+    z_min = min(z_range)
+    z_max = max(z_range)
+    contour_range = z_max - z_min
+    contour_order = math.trunc(math.log10(contour_range)) - 1
+    
+    c_min = round(z_min,-contour_order)
+    c_max = round(z_max,-contour_order)
+    round_range = c_max - c_min
+
+    base_increment = 10**contour_order
+    n_increments = round_range / base_increment
+    
+    if n_increments > 40: 
+        base_increment *= 5
+    elif n_increments > 15: 
+        base_increment *= 2
+    elif n_increments < 6: 
+        base_increment *= 0.5
+
+    n_increments = round_range / base_increment
+
+    the_lines = np.arange(c_min, c_max, base_increment)
+    
+    subset_in_range = (the_lines > z_min) & (the_lines < z_max)
+    return contour_order, the_lines[np.nonzero( subset_in_range)]
+    
+
 def _overlay_rejrej(array_one, array_two,
                     out_name = 'rejrej.pdf', 
                     do_rel = False, 
@@ -156,10 +198,8 @@ def _overlay_rejrej(array_one, array_two,
 
     arrays = array_one, array_two
 
-    for a in arrays: 
-        blank_cells = np.nonzero(a['eff'] <= 0.0 )
-        array_one['eff'][blank_cells] = np.NaN
-        array_two['eff'][blank_cells] = np.NaN
+    array_one['eff'][np.nonzero(array_one['eff'] <= 0.0)] = np.NaN
+    array_two['eff'][np.nonzero(array_two['eff'] <= 0.0)] = np.NaN
 
         
     if do_rel: 
@@ -197,40 +237,21 @@ def _overlay_rejrej(array_one, array_two,
 
     rel_min = np.min(eff_array[np.nonzero(np.isfinite(eff_array))])
     rel_max = np.max(eff_array[np.nonzero(np.isfinite(eff_array))]) 
-
-    if do_abs_contour: 
-        the_array = array_one['eff']
-        contour_min = np.min(the_array[np.nonzero(np.isfinite(the_array))])
-        contour_max = np.max(the_array[np.nonzero(np.isfinite(the_array))])
-    else: 
-        contour_min = rel_min
-        contour_max = rel_max
-
     if z_range: 
         rel_min, rel_max = z_range
 
-    contour_range = contour_max - contour_min
-    contour_order = math.trunc(math.log10(contour_range)) 
-
-    c_min = round(contour_min + 0.4*10**(contour_order),-contour_order)
-    c_max = round(contour_max - 0.4*10**(contour_order),-contour_order)
-
-    if not z_range: 
-        rel_min = c_min
-        rel_max = c_max
-
-    c_range = c_max - c_min
-
-    if not do_abs_contour: 
-        n_subdiv = c_range * 5.0**math.floor( - math.log(c_range,5) + 1.5 )
-        c_lines = np.linspace(c_min, c_max, n_subdiv + 1)
+    if do_abs_contour: 
+        contour_array = array_one['eff']
+        signal = array_one['signal']
+        contour_range = (0,0.5) if signal == 'charm' else (0.5,1)
     else: 
-        n_subdiv = 10
-        c_lines = np.linspace(0, 1, n_subdiv + 1)
-        contour_order = 0
+        contour_array = eff_array
+        contour_range = (rel_min, rel_max)
 
-    print 'plot range: {: .4f}--{:.4f}, {} div'.format(
-        rel_min, rel_max, n_subdiv)
+    contour_order, c_lines = _get_contour_order_and_lines(contour_range)
+
+    print 'plot range: {: .2f}--{:.2f}'.format(
+        rel_min, rel_max)
 
     im = ax.imshow(
         eff_array, 
@@ -247,7 +268,7 @@ def _overlay_rejrej(array_one, array_two,
         do_contour = False
     if do_contour or do_abs_contour: 
         ct = ax.contour(
-            the_array if do_abs_contour else eff_array, 
+            contour_array, 
             origin = 'upper', 
             extent = (x_min,x_max, y_min, y_max), 
             aspect = aspect, 
@@ -256,7 +277,7 @@ def _overlay_rejrej(array_one, array_two,
             colors = 'k', 
             )
         plt.clabel(ct, fontsize=9, inline=1, 
-                   fmt = '%.{}f'.format(-contour_order + 2))
+                   fmt = '%.{}f'.format(-contour_order + 1 ))
 
     im.get_cmap().set_bad(alpha=0)
 
@@ -268,7 +289,7 @@ def _overlay_rejrej(array_one, array_two,
     plt.subplots_adjust(left = 0.25) # FIXME: use OO call here
     # cb = plt.colorbar()
     cb = Colorbar(ax = cb_ax, mappable = im)
-    taggers = [_simplify_tagger_name(x['tagger']) for x in arrays]
+    taggers = [_simplify_tagger_name(x) for x in arrays]
     flav_char = _flav_to_char[array_one['signal']]
     sig_label = '$\epsilon_\mathrm{{ {} }}$'.format(flav_char)
     cb_lab_string = '{} $/$ {} {s}' if do_rel else '{} $-$ {} {s}'

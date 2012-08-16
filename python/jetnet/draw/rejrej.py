@@ -198,6 +198,11 @@ def _overlay_rejrej(array_one, array_two,
 
     arrays = array_one, array_two
 
+    # for a in arrays: 
+    #     blank_cells = np.nonzero(a['eff'] <= 0.0 )
+    #     array_one['eff'][blank_cells] = np.NaN
+    #     array_two['eff'][blank_cells] = np.NaN
+    # blank_cells = np.nonzero( )
     array_one['eff'][np.nonzero(array_one['eff'] <= 0.0)] = np.NaN
     array_two['eff'][np.nonzero(array_two['eff'] <= 0.0)] = np.NaN
 

@@ -26,6 +26,7 @@ int augment_tree(std::string file_name,
 		 std::set<std::string> subset, 
 		 std::string extension, 
 		 int max_entries, 
+		 int start_entry, 
 		 const unsigned options) 
 { 
 
@@ -126,16 +127,19 @@ int augment_tree(std::string file_name,
   if (max_entries < 0) max_entries = n_entries; 
   else max_entries = std::min(max_entries, n_entries); 
 
-  int one_percent = max_entries / 100; 
+  int n_used_entries = max_entries - start_entry; 
 
-  for (int entry_n = 0; entry_n < max_entries; entry_n++) { 
+  int one_percent = n_used_entries / 100; 
 
+  for (int entry_n = start_entry; entry_n < max_entries; entry_n++) { 
+
+    int n_processed = entry_n - start_entry; 
     if (options & augment::show_progress && 
-	(entry_n % one_percent == 0 || entry_n + 1 == max_entries) ) {
+	(n_processed % one_percent == 0 || entry_n + 1 == max_entries) ) {
       std::cout << boost::format
 	("\r%.1fM of %.1fM entries processed (%.0f%%)") 
-	% (float(entry_n) / 1e6) % (float(max_entries) / 1e6) 
-	% (float(entry_n) * 100 / float(max_entries) ); 
+	% (float(n_processed) / 1e6) % (float(n_used_entries) / 1e6) 
+	% (float(n_processed) * 100 / float(n_used_entries) ); 
       std::cout.flush(); 
     }
     tree->GetEntry(entry_n); 

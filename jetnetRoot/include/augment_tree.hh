@@ -24,6 +24,7 @@ int augment_tree(std::string file_name,
 		 std::set<std::string> subset, 
 		 std::string extension, 
 		 int max_entries = -1, 
+		 int start_entry = 0, 
 		 const unsigned options = augment::default_opts); 
 
 boost::shared_ptr<TFlavorNetwork> get_nn(std::string file_name); 

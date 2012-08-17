@@ -280,9 +280,10 @@ static const char* augment_kwlist[] = {
   "subset", 
   "extension", 
   "max_entries",
+  "start_entry", 
   "show_progress", 
   NULL};
-static const std::string augment_argtypes = "ss|ssOOOsib"; 
+static const std::string augment_argtypes = "ss|ssOOOsiib"; 
 static char augment_doc[MAX_DOC_STRING_LENGTH]; 
 
 
@@ -299,6 +300,7 @@ PyObject* py_augment_tree(PyObject *self,
   PyObject* py_subset = 0; 
   const char* extension = "Aug"; 
   int max_entries = -1; 
+  int start_entry = 0; 
   bool show_progress = false; 
 
   std::string argtypes_string = augment_argtypes + ":" + augment_name; 
@@ -318,6 +320,7 @@ PyObject* py_augment_tree(PyObject *self,
      &py_subset, 
      &extension, 
      &max_entries, 
+     &start_entry, 
      &show_progress); 
 
   if (!ok) return NULL;
@@ -347,7 +350,8 @@ PyObject* py_augment_tree(PyObject *self,
        double_vec, 
        subset, 
        extension, 
-       max_entries, 
+       max_entries,
+       start_entry, 
        options); 
   }
   catch (const std::runtime_error& e) { 

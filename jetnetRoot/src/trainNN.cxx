@@ -240,7 +240,7 @@ void trainNN(const TrainingInputs inputs,
   //normalize inputvariables?
   //jn->Normalize();
 
-  jn->Shuffle(true,false);
+  // jn->Shuffle(true,false);
 
   // -- the code below the assert is almost certainly broken
   assert(inputs.restart_training_from == 0); 
@@ -478,10 +478,10 @@ int copy_testing_events(std::ostream& stream,
     
     if (i % s.dilution_factor !=1 ) continue;
 
+    testing_counter = selector.get_n_accepted(); 
     bool keep_entry = selector.try_entry(); 
     if (!keep_entry) continue; 
     
-    testing_counter = selector.get_n_accepted(); 
     
     in_tree->GetEntry(i);
 
@@ -543,10 +543,9 @@ int copy_training_events(std::ostream& stream, JetNet* jn,
 
     if (i % s.dilution_factor != 0) continue;
 
+    training_counter = selector.get_n_accepted(); 
     bool keep_entry = selector.try_entry(); 
     if (!keep_entry) continue; 
-
-    training_counter = selector.get_n_accepted(); 
 
     in_tree->GetEntry(i);
 

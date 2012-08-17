@@ -230,12 +230,12 @@ void trainNN(const TrainingInputs inputs,
 
   textout << " copying over training events " << std::endl;
   copy_training_events(verboseout, jn, in_var, teach, in_tree, 
-		       settings, flavor_weights); 
+		       settings, flavor_weights, bit_flags); 
   
   
   textout << " copying over testing events " << std::endl;
   copy_testing_events(verboseout, jn, in_var, teach, in_tree, 
-		      settings, flavor_weights); 
+		      settings, flavor_weights, bit_flags); 
 
   //normalize inputvariables?
   //jn->Normalize();
@@ -458,13 +458,17 @@ float adjusted_keep_prob(float old_prob, const FlavorWeights& w) {
 int copy_testing_events(std::ostream& stream, 
 			JetNet* jn, 
 			const InputVariableContainer& in_buffer, 
-			TeachingVariables& teach, 
+			const TeachingVariables& teach, 
 			TTree* in_tree,
 			const TrainingSettings& s, 
-			const FlavorWeights& w) { 
+			const FlavorWeights& w, 
+			const unsigned bit_flags) { 
 
-  int testing_counter=0;
   int n_entries = in_tree->GetEntries(); 
+  EntrySelector selector(s.n_testing_events, 
+			 n_entries / s.dilution_factor); 
+  selector.set_random(bit_flags & train::use_random_entries); 
+  int testing_counter = 0; 
   for (Int_t i = 0; i < n_entries; i++) {
     
     if (i % 100000 == 0 ) {
@@ -474,26 +478,16 @@ int copy_testing_events(std::ostream& stream,
     
     if (i % s.dilution_factor !=1 ) continue;
 
-    // if (inputs.n_training_events > 0) { 
-
-    float number_events_remaining = 
-      float(n_entries - i) / float(s.dilution_factor); 
-    float number_events_needed = 
-      s.n_testing_events - testing_counter; 
-    float keep_event_probibility = 
-      number_events_needed / number_events_remaining; 
-
-    keep_event_probibility = adjusted_keep_prob(keep_event_probibility, w); 
-
-    float f_rand = float(rand()) / float(RAND_MAX); 
-    if (f_rand > keep_event_probibility) continue; 
-    // }
+    bool keep_entry = selector.try_entry(); 
+    if (!keep_entry) continue; 
+    
+    testing_counter = selector.get_n_accepted(); 
     
     in_tree->GetEntry(i);
 
     float event_weight = get_entry_weight(teach, w); 
-    
-    if (event_weight < 0) continue; 
+
+    assert(event_weight >= 0.0); 
 
     for (int var_num = 0; var_num < in_buffer.size(); var_num++){ 
       jn->SetInputTestSet( testing_counter, 
@@ -529,13 +523,17 @@ int copy_testing_events(std::ostream& stream,
 
 int copy_training_events(std::ostream& stream, JetNet* jn, 
 			 const InputVariableContainer& in_buffer, 
-			 TeachingVariables& teach, 
+			 const TeachingVariables& teach, 
 			 TTree* in_tree,
 			 const TrainingSettings& s, 
-			 const FlavorWeights& w) { 
+			 const FlavorWeights& w, 
+			 const unsigned bit_flags) { 
 
   int n_entries = in_tree->GetEntries(); 
-  int training_counter=0;
+  EntrySelector selector(s.n_testing_events, 
+			 n_entries / s.dilution_factor); 
+  selector.set_random(bit_flags & train::use_random_entries); 
+  int training_counter = 0; 
   for (Int_t i = 0; i < n_entries; i++) {
     
     if (i % 100000 == 0 ) {
@@ -545,24 +543,16 @@ int copy_training_events(std::ostream& stream, JetNet* jn,
 
     if (i % s.dilution_factor != 0) continue;
 
-    float number_events_remaining = 
-      float(n_entries - i) / float(s.dilution_factor); 
-    float number_events_needed = 
-      s.n_training_events - training_counter; 
-    float keep_event_probibility = 
-      number_events_needed / number_events_remaining; 
+    bool keep_entry = selector.try_entry(); 
+    if (!keep_entry) continue; 
 
-    keep_event_probibility = adjusted_keep_prob(keep_event_probibility, w); 
-
-    float f_rand = float(rand()) / float(RAND_MAX); 
-    if (f_rand > keep_event_probibility) continue; 
-
+    training_counter = selector.get_n_accepted(); 
 
     in_tree->GetEntry(i);
 
     float event_weight = get_entry_weight(teach, w); 
 
-    if (event_weight < 0) continue;
+    assert(event_weight >= 0.0); 
 
     for (int var_num = 0; var_num < in_buffer.size(); var_num++){ 
       jn->SetInputTrainSet( training_counter, 
@@ -653,4 +643,56 @@ void dump_nn_settings(ostream& cronology, const JetNet* jn) {
 std::ostream& operator<<(std::ostream& in, const JetNet* jn) { 
   dump_nn_settings(in, jn); 
   return in; 
+}
+
+
+EntrySelector::EntrySelector(int target_entries, int total_entries): 
+  m_needed_entries(target_entries), 
+  m_target_entries(target_entries), 
+  m_total_entries(total_entries), 
+  m_tried_entries(0)
+{
+}
+
+void EntrySelector::set_random(bool do_random)
+{
+  m_is_random = do_random; 
+}
+
+int EntrySelector::get_n_accepted() const
+{ 
+  return m_target_entries - m_needed_entries; 
+}
+
+void EntrySelector::set_overbook_factor(float factor)
+{
+  assert(false); 
+  m_overbook_factor = factor; 
+}
+
+bool EntrySelector::try_entry() 
+{
+  if (!m_is_random) { 
+    m_tried_entries++; 
+    if (m_needed_entries > 0) { 
+      m_needed_entries--; 
+      return true; 
+    }
+    else { 
+      return false; 
+    }
+  }
+  
+  float n_remaining = m_total_entries - m_tried_entries; 
+  float keep_event_probibility = m_needed_entries / n_remaining; 
+  m_tried_entries++; 
+
+  float f_rand = float(rand()) / float(RAND_MAX); 
+  if (f_rand <= keep_event_probibility){ 
+    m_needed_entries--; 
+    return true; 
+  }
+  else 
+    return false; 
+  
 }

@@ -25,6 +25,7 @@ namespace train {
   const unsigned verbose              = 1u << 2; 
   const unsigned write_out_to_file    = 1u << 3; 
   const unsigned throw_on_warn        = 1u << 4; 
+  const unsigned use_random_entries   = 1u << 5; 
 
   const unsigned giacintos = push_min_to_xtest | req_training_lt_min;
 
@@ -45,6 +46,8 @@ struct TrainingInputs
 }; 
 
 // --- for internal use
+
+
 struct TrainingSettings 
 {
   int dilution_factor; 
@@ -81,18 +84,20 @@ std::ostream& operator<<(std::ostream& in, const JetNet* jn);
 int copy_testing_events(std::ostream& stream, 
 			JetNet* jn, 
 			const InputVariableContainer& in_buffer, 
-			TeachingVariables& teach, 
+			const TeachingVariables& teach, 
 			TTree* input_tree, 
 			const TrainingSettings& settings, 
-			const FlavorWeights&); 
+			const FlavorWeights&, 
+			const unsigned bit_flags); 
 
 int copy_training_events(std::ostream& stream, 
 			 JetNet* jn, 
 			 const InputVariableContainer& in_buffer, 
-			 TeachingVariables& teach, 
+			 const TeachingVariables& teach, 
 			 TTree* input_tree, 
 			 const TrainingSettings& settings, 
-			 const FlavorWeights&); 
+			 const FlavorWeights&, 
+			 const unsigned bit_flags); 
 
 void setup_jetnet(JetNet* jn, const TrainingInputs& t); 
 
@@ -103,5 +108,21 @@ void trainNN(const TrainingInputs inputs,
 	     const FlavorWeights flavor_weights = train_nn::FLAVOR_WEIGHTS,  
 	     const unsigned bit_flags = train::defaults);
 
+class EntrySelector 
+{ 
+public: 
+  EntrySelector(int target_entries, int total_entries); 
+  void set_random(bool = true); 
+  bool try_entry(); 
+  int get_n_accepted() const; 
+  void set_overbook_factor(float); 
+private: 
+  int m_needed_entries; 
+  const int m_total_entries; 
+  const int m_target_entries; 
+  int m_tried_entries; 
+  bool m_is_random; 
+  float m_overbook_factor; 
+}; 
 
 #endif // TRAIN_NN_H

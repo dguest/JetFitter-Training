@@ -195,7 +195,7 @@ class RDSProcess(multiprocessing.Process):
             all_vars_in_tree = utils.get_leaves_in_tree(the_tree)
 
             # --- filter out branches we don't care about
-            output_subset = ['bottom','light','charm']
+            output_subset = ['bottom','light','charm','JetPt','JetEta']
             subset_regex = '|'.join([
                     '^discriminator(?!Jet)', 
                     '^log[BCU][bcu]', 

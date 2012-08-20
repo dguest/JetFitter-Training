@@ -3,6 +3,7 @@
 
 #include <string> 
 #include <map>
+#include <vector> 
 #include <utility> //pair
 
 struct SubTreeIntInfo 
@@ -28,7 +29,6 @@ int simple_prune(std::string file_name,
 class SubTreeCut
 {
 public: 
-  virtual SubTreeCut() = 0; 
   virtual ~SubTreeCut() {}
   virtual bool check() = 0; 
   virtual std::string name() = 0; 
@@ -77,29 +77,11 @@ class SubTreeCuts: public std::vector<SubTreeCut*>
 {
 public: 
   ~SubTreeCuts(); 
-}
+}; 
 
 namespace opt 
 {
-  unsigned verbose = 1u << 0; 
+  const unsigned verbose = 1u << 0; 
 }
-
-// class CheckedTree
-// {
-// public: 
-//   CheckedTree(std::string name); 
-//   ~CheckedTree(); 
-//   void AddObserver(std::pair<std::string, int*>); 
-//   void AddObserver(std::pair<std::string, double*>); 
-//   void AddCut(SubTreeCut); 
-//   void write_to(TFile&); 
-//   void fill(); 
-// private: 
-//   std::vector<SubTreeCut*> m_cuts; 
-//   std::vector<int*> m_ints; 
-//   std::vector<double*> m_doubles; 
-//   TTree* m_tree; 
-//   bool m_wrote; 
-// }; 
 
 #endif // PRUNE_TREE

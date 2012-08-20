@@ -52,7 +52,7 @@ PyObject* py_simple_prune(PyObject *self,
 
   if (!ok) return NULL;
 
-  unsigned options = 0
+  unsigned options = 0; 
   if (verbose) options |= opt::verbose; 
 
   std::vector<SubTreeIntInfo> int_cuts; 
@@ -64,20 +64,23 @@ PyObject* py_simple_prune(PyObject *self,
     SubTreeIntInfo info; 
     PyObject* py_cut = PyList_GetItem(py_int_cuts, cut_n); 
     if (!PySequence_Size(py_cut) != 2) { 
-      PyErr_SetString("expect a list of tuples (name, value) for int_cuts"); 
+      PyErr_SetString(PyExc_TypeError,
+		      "expect a list of tuples (name, value) for int_cuts"); 
       return NULL; 
     }
     PyObject* py_name = PySequence_GetItem(py_cut, 0); 
     info.name = PyString_AsString(py_name); 
     if (PyErr_Occurred() ) { 
-      PyErr_SetString("expect tuples (name, value) for int_cuts, name"
+      PyErr_SetString(PyExc_TypeError,
+		      "expect tuples (name, value) for int_cuts, name"
 		      " must be a string"); 
       return NULL; 
     }
     PyObject* py_value = PySequence_GetItem(py_cut, 1); 
     info.value = PyInt_AsLong(py_value); 
     if (PyErr_Occurred() ) { 
-      PyErr_SetString("expect tuples (name, value) for int_cuts, value"
+      PyErr_SetString(PyExc_TypeError,
+		      "expect tuples (name, value) for int_cuts, value"
 		      " must be an int"); 
       return NULL; 
     }
@@ -93,14 +96,16 @@ PyObject* py_simple_prune(PyObject *self,
     SubTreeDoubleInfo info; 
     PyObject* py_cut = PyList_GetItem(py_double_cuts, cut_n); 
     if (!PySequence_Size(py_cut) != 3) { 
-      PyErr_SetString("expect a list of tuples (name, low, high)"
+      PyErr_SetString(PyExc_TypeError,
+		      "expect a list of tuples (name, low, high)"
 		      " for double_cuts"); 
       return NULL; 
     }
     PyObject* py_name = PySequence_GetItem(py_cut, 0); 
     info.name = PyString_AsString(py_name); 
     if (PyErr_Occurred() ) { 
-      PyErr_SetString("expect tuples (name, low, high) for double_cuts, name"
+      PyErr_SetString(PyExc_TypeError,
+		      "expect tuples (name, low, high) for double_cuts, name"
 		      " must be a string"); 
       return NULL; 
     }
@@ -109,7 +114,8 @@ PyObject* py_simple_prune(PyObject *self,
     PyObject* py_high = PySequence_GetItem(py_cut, 2); 
     info.high = PyFloat_AsDouble(py_high); 
     if (PyErr_Occurred() ) { 
-      PyErr_SetString("expect tuples (name, low, high) for double_cuts"
+      PyErr_SetString(PyExc_TypeError,
+		      "expect tuples (name, low, high) for double_cuts"
 		      " high and low must be floats"); 
       return NULL; 
     }

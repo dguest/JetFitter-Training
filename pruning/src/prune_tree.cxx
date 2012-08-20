@@ -15,22 +15,6 @@
 #include "TLeaf.h"
 #include "TObjArray.h"
 
-
-IntBuffer::~IntBuffer() 
-{
-  for (const_iterator itr = begin(); itr != end(); itr++) { 
-    delete itr->second; 
-  }
-}
-DoubleBuffer::~DoubleBuffer() 
-{
-  for (const_iterator itr = begin(); itr != end(); itr++) { 
-    delete itr->second; 
-  }
-}
-
-
-
 int simple_prune(std::string file_name, 
 		 std::string tree_name, 
 		 std::vector<SubTreeIntInfo> int_cuts, 
@@ -61,11 +45,11 @@ int simple_prune(std::string file_name,
   DoubleBuffer double_buffer; 
   std::vector<std::string> untypable_branches; 
 
-  TObjArray* leaflist = tree->GetListOfLeafs(); 
-  int n_leaves = leaflist.GetEntries(); 
+  TObjArray* leaflist = tree->GetListOfLeaves(); 
+  int n_leaves = leaflist->GetEntries(); 
 
   for (int leaf_n = 0; leaf_n < n_leaves; leaf_n++) { 
-    TLeaf* leaf = static_cast<TLeaf*>(leaflist.At(leaf_n)); 
+    TLeaf* leaf = static_cast<TLeaf*>(leaflist->At(leaf_n)); 
     assert(leaf); 
     std::string leaf_type = leaf->GetTypeName(); 
     std::string leaf_name = leaf->GetName(); 
@@ -105,8 +89,8 @@ int simple_prune(std::string file_name,
   // --- define cuts ---
 
   SubTreeCuts cuts; 		// owns the cuts in it
-  for (std::vector<SubTreeIntInfo>::const_iterator 
-	 itr = int_cuts.begin(); 
+  for (std::vector<SubTreeIntInfo>::const_iterator itr = int_cuts.begin(); 
+       itr != int_cuts.end(); 
        itr++) { 
     int* buffer = int_buffer[itr->name]; 
     if (!buffer) { 
@@ -167,7 +151,7 @@ int simple_prune(std::string file_name,
     for (SubTreeCuts::const_iterator itr = cuts.begin(); 
 	 itr != cuts.end(); 
 	 itr++) { 
-      if (!itr->check()) { 
+      if (!(*itr)->check()) { 
 	pass_all_cuts = false; 
 	break; 
       }
@@ -210,7 +194,7 @@ SubTreeIntCut::SubTreeIntCut(std::string name,
 			     int* ptr): 
   m_variable(name), 
   m_value(value), 
-  m_ptr(*ptr)
+  m_ptr(ptr)
 {
 }
 bool SubTreeIntCut::check()

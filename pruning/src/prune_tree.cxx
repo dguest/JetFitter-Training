@@ -9,6 +9,7 @@
 #include <utility> // pair
 #include <algorithm>
 #include <iostream>
+#include <set> 
 
 #include "TFile.h"
 #include "TTree.h"
@@ -19,6 +20,7 @@ int simple_prune(std::string file_name,
 		 std::string tree_name, 
 		 std::vector<SubTreeIntInfo> int_cuts, 
 		 std::vector<SubTreeDoubleInfo> double_cuts, 
+		 std::set<std::string> subset, 
 		 std::string output_file_name, 
 		 int max_entries, 
 		 const unsigned options){ 
@@ -118,15 +120,18 @@ int simple_prune(std::string file_name,
   }
   TTree out_tree("SVTree","SVTree"); 
 
+  
   for (IntBuffer::const_iterator itr = int_buffer.begin(); 
        itr != int_buffer.end(); 
        itr++) { 
-    out_tree.Branch(itr->first.c_str(), itr->second); 
+    if (subset.size() == 0 || subset.count(itr->first))
+      out_tree.Branch(itr->first.c_str(), itr->second); 
   }
   for (DoubleBuffer::const_iterator itr = double_buffer.begin(); 
        itr != double_buffer.end(); 
        itr++) { 
-    out_tree.Branch(itr->first.c_str(), itr->second); 
+    if (subset.size() == 0 || subset.count(itr->first))
+      out_tree.Branch(itr->first.c_str(), itr->second); 
   }
 
 

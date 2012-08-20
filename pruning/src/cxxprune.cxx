@@ -3,6 +3,7 @@
 #include <Python.h>
 #include <string> 
 #include <vector>
+#include <set> 
 #include <stdexcept>
 // #include <algorithm> // sort
 
@@ -10,10 +11,10 @@
   
 static const char* doc_string = 
   "simple_prune"
-  "(in_file, tree, out_file, int_cuts, double_cuts, "
+  "(in_file, tree, out_file, int_cuts, double_cuts, subset, "
   "max_entries, flags) "
   "--> TBD\n\n"
-  "Builds file 'out_file'.\n"
+  "Builds file 'out_file', cuts on all *_cuts, and only saves subset\n"
   "flags:\n"
   "\tv -- verbose\n"; 
 
@@ -26,6 +27,7 @@ PyObject* py_simple_prune(PyObject *self,
   const char* output_file; 
   PyObject* py_int_cuts = 0; 
   PyObject* py_double_cuts = 0; 
+  PyObject* py_subset = 0; 
   int max_entries = -1; 
   const char* flags; 
   const char* kwlist[] = {
@@ -34,13 +36,14 @@ PyObject* py_simple_prune(PyObject *self,
     "tree", 
     "int_cuts", 
     "double_cuts", 
+    "subset", 
     "max_entries",
     "flags", 
     NULL};
     
   bool ok = PyArg_ParseTupleAndKeywords
     (args, keywds, 
-     "ss|sOOis:simple_prune", 
+     "ss|sOOOis:simple_prune", 
      // I think python people argue about whether this should be 
      // a const char** or a char**
      const_cast<char**>(kwlist),
@@ -49,6 +52,7 @@ PyObject* py_simple_prune(PyObject *self,
      &tree_name, 
      &py_int_cuts, 
      &py_double_cuts, 
+     &py_subset, 
      &max_entries, 
      &flags); 
 
@@ -130,10 +134,31 @@ PyObject* py_simple_prune(PyObject *self,
     double_cuts.push_back(info); 
   }
 
+  std::set<std::string> subset; 
+  if (py_subset) { 
+    PyObject* iterator = PyObject_GetIter(py_subset); 
+    if (!iterator) return NULL; 
+
+    PyObject* item; 
+    while ( (item = PyIter_Next(iterator)) ) { 
+      
+      std::string var = PyString_AsString(item); 
+      if (PyErr_Occurred()) { 
+	PyErr_SetString(PyExc_TypeError, "subset should be strings"); 
+	return NULL; 
+      }
+      subset.insert(var); 
+
+      Py_DECREF(item); 
+    }
+    Py_DECREF(iterator); 
+  }
+
   int return_code; 
   try { 
     return_code = simple_prune(file_name, tree_name, 
 			       int_cuts, double_cuts, 
+			       subset, 
 			       output_file, 
 			       max_entries, 
 			       options); 

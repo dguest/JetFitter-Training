@@ -4,6 +4,7 @@
 #include <string> 
 #include <map>
 #include <vector> 
+#include <set> 
 #include <utility> //pair
 
 struct SubTreeIntInfo 
@@ -22,6 +23,7 @@ int simple_prune(std::string file_name,
 		 std::string tree_name, 
 		 std::vector<SubTreeIntInfo> int_cuts, 
 		 std::vector<SubTreeDoubleInfo> double_cuts, 
+		 std::set<std::string> subset, 
 		 std::string output_file_name, 
 		 int max_entries = -1, 
 		 const unsigned options = 0);

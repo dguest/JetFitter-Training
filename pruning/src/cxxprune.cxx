@@ -11,59 +11,65 @@
 static const char* doc_string = 
   "simple_prune"
   "(in_file, tree, out_file, int_cuts, double_cuts, "
-  "max_entries, verbose) "
-  "--> TBD\n"
-  "Builds file 'out_file'.\n"; 
+  "max_entries, flags) "
+  "--> TBD\n\n"
+  "Builds file 'out_file'.\n"
+  "flags:\n"
+  "\tv -- verbose\n"; 
 
 PyObject* py_simple_prune(PyObject *self, 
 			  PyObject *args, 
 			  PyObject *keywds)
 {
   const char* file_name; 
-  const char* tree_name; 
+  const char* tree_name = "SVTree"; 
   const char* output_file; 
   PyObject* py_int_cuts = 0; 
   PyObject* py_double_cuts = 0; 
   int max_entries = -1; 
-  bool verbose = false; 
+  const char* flags; 
   const char* kwlist[] = {
     "in_file",
-    "tree", 
     "out_file", 
+    "tree", 
     "int_cuts", 
     "double_cuts", 
     "max_entries",
-    "verbose", 
+    "flags", 
     NULL};
     
   bool ok = PyArg_ParseTupleAndKeywords
     (args, keywds, 
-     "sss|OOib:simple_prune", 
+     "ss|sOOis:simple_prune", 
      // I think python people argue about whether this should be 
      // a const char** or a char**
      const_cast<char**>(kwlist),
      &file_name,
-     &tree_name, 
      &output_file, 
+     &tree_name, 
      &py_int_cuts, 
      &py_double_cuts, 
      &max_entries, 
-     &verbose); 
+     &flags); 
 
   if (!ok) return NULL;
 
   unsigned options = 0; 
-  if (verbose) options |= opt::verbose; 
+
+  if (strchr(flags,'v')) options |= opt::verbose; 
 
   std::vector<SubTreeIntInfo> int_cuts; 
-  int n_int_cuts = PyList_Size(py_int_cuts); 
+  int n_int_cuts = 0; 
+  if (py_int_cuts)
+    n_int_cuts = PyList_Size(py_int_cuts); 
+
   if (PyErr_Occurred()) { 
     return NULL; 
   }
   for (int cut_n = 0; cut_n < n_int_cuts; cut_n++) { 
     SubTreeIntInfo info; 
     PyObject* py_cut = PyList_GetItem(py_int_cuts, cut_n); 
-    if (!PySequence_Size(py_cut) != 2) { 
+    if (PySequence_Size(py_cut) != 2) { 
       PyErr_SetString(PyExc_TypeError,
 		      "expect a list of tuples (name, value) for int_cuts"); 
       return NULL; 
@@ -88,7 +94,9 @@ PyObject* py_simple_prune(PyObject *self,
   }
 
   std::vector<SubTreeDoubleInfo> double_cuts; 
-  int n_double_cuts = PyList_Size(py_double_cuts); 
+  int n_double_cuts = 0; 
+  if (py_double_cuts)
+    n_double_cuts = PyList_Size(py_double_cuts); 
   if (PyErr_Occurred()) { 
     return NULL; 
   }

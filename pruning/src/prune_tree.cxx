@@ -113,6 +113,9 @@ int simple_prune(std::string file_name,
 
   // --- define outputs ----
   TFile out_file(output_file_name.c_str(), "recreate"); 
+  if (!out_file.IsOpen() || out_file.IsZombie()) { 
+    throw std::runtime_error("can't create " + output_file_name); 
+  }
   TTree out_tree("SVTree","SVTree"); 
 
   for (IntBuffer::const_iterator itr = int_buffer.begin(); 

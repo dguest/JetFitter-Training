@@ -294,7 +294,7 @@ def _overlay_rejrej(array_one, array_two,
             levels = c_lines,
             colors = 'k', 
             )
-        plt.clabel(ct, fontsize=9, inline=1, 
+        plt.clabel(ct, fontsize=12, inline=1, 
                    fmt = '%.{}f'.format(-contour_order + 1 ))
 
     equal_contour_level = 1.0 if do_rel else 0.0

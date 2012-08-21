@@ -109,7 +109,7 @@ PyObject* py_simple_prune(PyObject *self,
   for (int cut_n = 0; cut_n < n_double_cuts; cut_n++) { 
     SubTreeDoubleInfo info; 
     PyObject* py_cut = PyList_GetItem(py_double_cuts, cut_n); 
-    if (!PySequence_Size(py_cut) != 3) { 
+    if (PySequence_Size(py_cut) != 3) { 
       PyErr_SetString(PyExc_TypeError,
 		      "expect a list of tuples (name, low, high)"
 		      " for double_cuts"); 

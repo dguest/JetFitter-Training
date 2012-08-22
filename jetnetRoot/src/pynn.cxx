@@ -20,7 +20,8 @@ static const std::string train_additional =
   "flag values:\n\td: debug,\n\tg: giacintos training,"
   "\n\tt: throw on warning,"
   "\n\tv: verbose,"
-  "\n\tr: random entry selection (default takes first entries)"; 
+  "\n\tr: random entry selection (default takes first entries),"
+  "\n\ts: shuffle training entries"; 
 
 static const char *train_kwlist[] = {
   "reduced_dataset",
@@ -134,6 +135,7 @@ extern "C" PyObject* train_py(PyObject *self,
   if (strchr(flags,'t')) bit_flags |= train::throw_on_warn;
   if (strchr(flags,'v')) bit_flags |= train::verbose;
   if (strchr(flags,'r')) bit_flags |= train::use_random_entries; 
+  if (strchr(flags,'s')) bit_flags |= train::shuffle_train_set; 
 
   bool debug = strchr(flags,'d'); 
   

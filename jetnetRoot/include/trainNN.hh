@@ -26,6 +26,7 @@ namespace train {
   const unsigned write_out_to_file    = 1u << 3; 
   const unsigned throw_on_warn        = 1u << 4; 
   const unsigned use_random_entries   = 1u << 5; 
+  const unsigned shuffle_train_set    = 1u << 6; 
 
   const unsigned giacintos = push_min_to_xtest | req_training_lt_min;
 

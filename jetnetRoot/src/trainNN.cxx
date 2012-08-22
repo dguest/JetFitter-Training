@@ -240,7 +240,8 @@ void trainNN(const TrainingInputs inputs,
   //normalize inputvariables?
   //jn->Normalize();
 
-  // jn->Shuffle(true,false);
+  if (bit_flags & train::shuffle_train_set) 
+    jn->Shuffle(true,false);
 
   // -- the code below the assert is almost certainly broken
   assert(inputs.restart_training_from == 0); 

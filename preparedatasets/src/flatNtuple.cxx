@@ -346,7 +346,7 @@ void write_cat_hists(std::vector<double> pt_cat_vec,
   }
   output_file.WriteTObject(&pt_cat_config); 
 
-  TH1D eta_cat_config("eat_cat","eta_cat",eta_cat_vec.size(), 0, 1); 
+  TH1D eta_cat_config("eta_cat","eta_cat",eta_cat_vec.size(), 0, 1); 
   for (size_t category = 0; category < eta_cat_vec.size(); category++){ 
     eta_cat_config.SetBinContent(category + 1, eta_cat_vec.at(category)); 
   }

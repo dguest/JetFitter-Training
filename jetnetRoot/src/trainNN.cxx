@@ -431,7 +431,8 @@ void copy_cat_trees(TFile& dest_file, const TFile& source_file) {
     assert(key); 
     std::string name = key->GetName(); 
     std::string obj_name = key->GetClassName(); 
-    if (obj_name == "TTree" && name.find("_cat") != std::string::npos) { 
+    bool is_tree_or_hist = (obj_name == "TTree" || obj_name == "TH1D"); 
+    if (is_tree_or_hist && name.find("_cat") != std::string::npos) { 
       TTree* the_tree = static_cast<TTree*>(key->ReadObj()); 
       assert(the_tree); 
       dest_file.WriteTObject(the_tree); 

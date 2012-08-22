@@ -11,7 +11,7 @@
 // ClassImp( TNetworkToHistoTool)
 
 std::vector<TH1*> 
-NetworkToHistoTool::fromTrainedNetworkToHisto(TFlavorNetwork* trainedNetwork) const
+NetworkToHistoTool::fromTrainedNetworkToHisto(const TFlavorNetwork* trainedNetwork) const
 {
 
   std::vector<TH1*> outputHistos;
@@ -123,7 +123,8 @@ TH1* NetworkToHistoTool::findHisto(std::string nameOfHisto,
 	  inputIter=inputBegin;
 	inputIter != inputEnd; 
 	inputIter++) { 
-    if ((*inputIter)->GetName() == nameOfHisto.c_str()) {
+    std::string hist_name = (*inputIter)->GetName(); 
+    if (hist_name == nameOfHisto) {
       return (*inputIter);
     }
   }

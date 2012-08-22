@@ -6,8 +6,11 @@
 #include <ctime> 
 #include "TFlavorNetwork.h"
 #include "TTrainedNetwork.h"
+#include "NetworkToHistoTool.hh"
 #include "NNAdapters.hh"
 #include "JetNet.hh"
+#include "TH1.h"
+#include "TFile.h"
 
 int main(int narg, char* varg[]) { 
   std::vector<int> hidden_layer_sizes; 
@@ -26,6 +29,32 @@ float get_rand(float range, float offset) {
   rand_base *= range; 
   return rand_base; 
 }
+
+std::vector<double> test_histo_tool(const TFlavorNetwork* net, 
+				    std::map<std::string, double> in, 
+				    bool do_broken = false)
+{
+  NetworkToHistoTool histo_tool; 
+  std::vector<TH1*> hists = histo_tool.fromTrainedNetworkToHisto(net); 
+  if (do_broken) { 
+    hists.at(hists.size() - 1)->Fill(0.5,0.5); 
+  }
+
+  TFile* out_file = new TFile("test_hists.root","recreate"); 
+  for (std::vector<TH1*>::iterator itr = hists.begin(); itr != hists.end(); 
+       itr++){ 
+    out_file->WriteTObject(*itr); 
+  }
+  out_file->Close(); 
+
+  // TFile in_file("test_hists.root"); 
+  // std::vector<TH1*> read_hists; 
+  
+
+  TFlavorNetwork* from_hists = histo_tool.fromHistoToTrainedNetwork(hists); 
+  return from_hists->calculateWithNormalization(in); 
+}
+
 
 bool test_trained(std::vector<int> layer_sizes) { 
   srand(time(0)); 
@@ -139,12 +168,16 @@ bool test_trained(std::vector<int> layer_sizes) {
   if (v_out_size != m_out_size)
     printf("vector output size = %i, map = %i", v_out_size, m_out_size) ; 
   
+  std::vector<double> histo_out = test_histo_tool
+    (new_style_nn, input_map, false); 
+
   for (int i = 0; i < 3; i++){ 
     std::cout << "output " << i << " -- JN: " << jn->GetOutput(i) 
-	      << ", TFlavorNetwork map: " << ttrained_map_out.at(i) 
-	      << ", TFlavorNetwork vec: " << ttrained_vector_out.at(i) 
-	      << ", TTrainedNetwork vec: " << old_style_out.at(i) 
-	      << ", TFlavorNetwork from old: " << new_style_out.at(i) 
+	      << ", FlavNet map: " << ttrained_map_out.at(i) 
+	      << ", FlavNet vec: " << ttrained_vector_out.at(i) 
+	      << ", TrainedNet vec: " << old_style_out.at(i) 
+	      << ", FlavNet from old: " << new_style_out.at(i) 
+	      << ", From Histos: " << histo_out.at(i)
 	      << std::endl;
   }
   

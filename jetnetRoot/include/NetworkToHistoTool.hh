@@ -17,7 +17,7 @@ public:
 
   ~NetworkToHistoTool() {};
 
-  std::vector<TH1*> fromTrainedNetworkToHisto(TFlavorNetwork*) const;
+  std::vector<TH1*> fromTrainedNetworkToHisto(const TFlavorNetwork*) const;
   
   TFlavorNetwork* fromHistoToTrainedNetwork(std::vector<TH1*> &) const;
 

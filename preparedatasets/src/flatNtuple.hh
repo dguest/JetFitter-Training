@@ -10,7 +10,9 @@
 #include "TFile.h"
 
 namespace bf { 
-  const unsigned save_weight_ratios = 1u << 0; 
+  const unsigned save_weight_ratios  = 1u << 0; 
+  const unsigned save_category_trees = 1u << 1; 
+  const unsigned save_category_hists = 1u << 2; 
   const unsigned default_save = save_weight_ratios; 
 }
 
@@ -46,5 +48,13 @@ public:
 private: 
   boost::ptr_vector<double> m_doubles; 
 }; 
+
+void write_cat_trees(std::vector<double> pt_cat_vec, 
+		     std::vector<double> eta_cat_vec,
+		     TFile& output_file); 
+void write_cat_hists(std::vector<double> pt_cat_vec, 
+		     std::vector<double> eta_cat_vec,
+		     TFile& output_file); 
+
   
 #endif // FLAT_NTUPLE_H

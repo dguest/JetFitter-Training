@@ -1,6 +1,7 @@
 #include <TChain.h>
 #include <TFile.h>
 #include <TTree.h>
+#include <TH1D.h>
 #include <iostream>
 #include "flatNtuple.hh"
 #include "BinTool.hh"
@@ -300,12 +301,60 @@ int flatNtuple(SVector input_files,
   std::cout << "\n"; 		// the event counter doesn't add newlines
 
   // --- save configuration in tree 
+
+  if (flags & bf::save_category_trees) 
+    write_cat_trees(pt_cat_vec, eta_cat_vec, output_file); 
+  if (flags & bf::save_category_hists)
+    write_cat_hists(pt_cat_vec, eta_cat_vec, output_file); 
+
   std::cout << "done!\n";
   output_file.WriteTObject(&output_tree); 
 
   return 0; 
   
 }
+
+void write_cat_trees(std::vector<double> pt_cat_vec, 
+		     std::vector<double> eta_cat_vec,
+		     TFile& output_file) { 
+  typedef std::vector<double>::const_iterator DVecItr; 
+  TTree pt_cat_config("pt_cat","pt_cat"); 
+  double pt_val_buffer; 
+  pt_cat_config.Branch("pt_gev",&pt_val_buffer); 
+  for (DVecItr itr = pt_cat_vec.begin(); itr != pt_cat_vec.end(); itr++){ 
+    pt_val_buffer = *itr; 
+    pt_cat_config.Fill(); 
+  }
+  output_file.WriteTObject(&pt_cat_config); 
+
+  TTree eta_cat_config("eta_cat","eta_cat"); 
+  double eta_val_buffer; 
+  eta_cat_config.Branch("abs_eta",&eta_val_buffer); 
+  for (DVecItr itr = eta_cat_vec.begin(); itr != eta_cat_vec.end(); itr++){ 
+    eta_val_buffer = *itr; 
+    eta_cat_config.Fill(); 
+  }
+  output_file.WriteTObject(&eta_cat_config); 
+}
+
+void write_cat_hists(std::vector<double> pt_cat_vec, 
+		     std::vector<double> eta_cat_vec,
+		     TFile& output_file) { 
+  TH1D pt_cat_config("pt_cat","pt_cat",pt_cat_vec.size(), 0, 1); 
+  for (size_t category = 0; category < pt_cat_vec.size(); category++){ 
+    pt_cat_config.SetBinContent(category + 1, pt_cat_vec.at(category)); 
+  }
+  output_file.WriteTObject(&pt_cat_config); 
+
+  TH1D eta_cat_config("eat_cat","eta_cat",eta_cat_vec.size(), 0, 1); 
+  for (size_t category = 0; category < eta_cat_vec.size(); category++){ 
+    eta_cat_config.SetBinContent(category + 1, eta_cat_vec.at(category)); 
+  }
+  output_file.WriteTObject(&eta_cat_config); 
+
+}
+
+
   
 WtRatio::WtRatio(const double* num, const double* denom, double* prod): 
   m_num(num), 

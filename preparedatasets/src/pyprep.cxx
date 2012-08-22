@@ -233,7 +233,7 @@ static const char *flat_ntuple_kwlist[] = {
   "jet_collection", 
   "jet_tagger", 
   "output_file", 
-  "debug", 
+  "flags", 
   NULL};
 static char flat_ntuple_doc[MAX_DOC_STRING_LENGTH]; 
 
@@ -250,11 +250,11 @@ PyObject* make_flat_ntuple(PyObject *self,
   const char* jet_collection_name = "AntiKt4TopoEMJetsReTagged"; 
   const char* jet_tagger = "JetFitterCharm";
   const char* output_file_name = "nothing.root"; 
-  bool debug = false; 
+  const char* flags = "r"; 
 
     
   bool ok = PyArg_ParseTupleAndKeywords
-    (args, keywds, "O|sOOOOsssb", 
+    (args, keywds, "O|sOOOOssss", 
      // this function should take a const, and 
      // may be changed. until then we'll cast
      const_cast<char**>(flat_ntuple_kwlist),
@@ -267,7 +267,7 @@ PyObject* make_flat_ntuple(PyObject *self,
      &jet_collection_name, 
      &jet_tagger, 
      &output_file_name, 
-     &debug); 
+     &flags); 
 
   if (!ok) return NULL;
 
@@ -283,7 +283,12 @@ PyObject* make_flat_ntuple(PyObject *self,
   std::vector<double> pt_cat_vec = parse_double_list(pt_divisions); 
   if (PyErr_Occurred()) return 0; 
 
-  
+  bool debug = false; 
+  unsigned bit_flags = 0; 
+  if (strchr(flags,'r')) bit_flags |= bf::save_weight_ratios; 
+  if (strchr(flags,'t')) bit_flags |= bf::save_category_trees; 
+  if (strchr(flags,'h')) bit_flags |= bf::save_category_hists; 
+  if (strchr(flags,'d')) debug = true; 
 
   if (debug){ 
     std::cout << "files: " << std::endl;
@@ -310,7 +315,8 @@ PyObject* make_flat_ntuple(PyObject *self,
 		 jet_collection_name, 
 		 jet_tagger, 
 		 output_file_name, 
-		 weight_file); 
+		 weight_file, 
+		 bit_flags); 
     }
     catch (const std::runtime_error& e) { 
       PyErr_SetString(PyExc_IOError,e.what()); 

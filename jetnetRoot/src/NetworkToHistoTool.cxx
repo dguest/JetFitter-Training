@@ -1,5 +1,5 @@
-#include <TH1F.h>
-#include <TH2F.h>
+#include <TH1D.h>
+#include <TH2D.h>
 #include "TFlavorNetwork.h"
 #include "NetworkToHistoTool.hh"
 #include <cmath>
@@ -23,20 +23,14 @@ NetworkToHistoTool::fromTrainedNetworkToHisto(TFlavorNetwork* trainedNetwork) co
   std::vector<Int_t> nHiddenLayerSize=trainedNetwork->getnHiddenLayerSize();
   Int_t nHidden=nHiddenLayerSize.size();
 
-  // for (Int_t o=0;o<nHidden;++o)
-  // {
-  //   cout << " Hidden lay: " << o << " size: " << nHiddenLayerSize[o];
-  // }
-  
   Int_t nOutput=trainedNetwork->getnOutput();
-  // cout << " Output size: " << nOutput << endl;
   
   std::vector<TVectorD*> thresholdVectors=trainedNetwork->getThresholdVectors();
   std::vector<TMatrixD*> weightMatrices=trainedNetwork->weightMatrices();
 
   //LayersInfo
 
-  TH1F* histoLayersInfo=new TH1F("LayersInfo",
+  TH1D* histoLayersInfo=new TH1D("LayersInfo",
                                  "LayersInfo",
                                  nHidden+2,
                                  0,
@@ -62,7 +56,7 @@ NetworkToHistoTool::fromTrainedNetworkToHisto(TFlavorNetwork* trainedNetwork) co
     Int_t layerSize=(i<nHidden)?nHiddenLayerSize[i]:nOutput;
     Int_t previousLayerSize=(i==0)?nInput:nHiddenLayerSize[i-1];
     
-    TH1F* histoThreshLayer=new TH1F(threName.c_str(),
+    TH1D* histoThreshLayer=new TH1D(threName.c_str(),
                                     threName.c_str(),
                                     layerSize,
                                     0,
@@ -77,7 +71,7 @@ NetworkToHistoTool::fromTrainedNetworkToHisto(TFlavorNetwork* trainedNetwork) co
     
     outputHistos.push_back(histoThreshLayer);
 
-    TH2F* histoWeightsLayer=new TH2F(weightsName.c_str(),
+    TH2D* histoWeightsLayer=new TH2D(weightsName.c_str(),
                                      weightsName.c_str(),
                                      previousLayerSize,
                                      0,
@@ -97,7 +91,23 @@ NetworkToHistoTool::fromTrainedNetworkToHisto(TFlavorNetwork* trainedNetwork) co
     outputHistos.push_back(histoWeightsLayer);
     
   }
+
+  typedef TFlavorNetwork::Input Input; 
+  std::vector<Input> inputs = trainedNetwork->getInputs(); 
   
+  assert(inputs.size() == nInput); 
+
+  TH2D* histoInputs = new TH2D("InputsInfo", "InputsInfo",
+			       nInput, 0, 1, 
+			       2, 0, 1); 
+  
+  for (size_t input_n = 0; input_n < nInput; input_n++ ) { 
+    Input input = inputs.at(input_n); 
+    histoInputs->SetBinContent(input_n + 1, 1, input.offset); 
+    histoInputs->SetBinContent(input_n + 1, 2, input.scale); 
+    histoInputs->GetXaxis()->SetBinLabel(input_n + 1, input.name.c_str());
+  }
+  outputHistos.push_back(histoInputs); 
 
   return outputHistos;
   
@@ -191,15 +201,14 @@ NetworkToHistoTool::fromHistoToTrainedNetwork(std::vector<TH1*> & inputHistos) c
 
   }
   
-  printf("WARNING: reading in histos with no normalization "
-	 "you need to fix this\n"); 
+  TH1* histoInputs = findHisto("InputsInfo", inputHistos); 
 
   std::vector<TFlavorNetwork::Input> inputs; 
   for (int i = 0 ; i < nInput; i++) { 
     TFlavorNetwork::Input the_input; 
-    the_input.name = boost::lexical_cast<std::string>(i); 
-    the_input.offset = 0; 
-    the_input.scale = 0; 
+    the_input.name = histoInputs->GetXaxis()->GetBinLabel(i + 1); 
+    the_input.offset = histoInputs->GetBinContent(i + 1, 1); 
+    the_input.scale = histoInputs->GetBinContent(i + 1, 2); 
     inputs.push_back(the_input); 
   }
   TFlavorNetwork* trainedNetwork = 

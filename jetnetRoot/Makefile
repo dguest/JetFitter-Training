@@ -56,7 +56,7 @@ JETNET_CXX_OBJECTS := trainNN.o testNN.o
 JETNET_CXX_OBJECTS += makeTestNtuple.o augment_tree.o
 JETNET_CXX_OBJECTS += normedInput.o nnExceptions.o
 JETNET_CXX_OBJECTS += JetNet.o NNAdapters.o
-# JETNET_CXX_OBJECTS += NetworkToHistoTool.o 
+JETNET_CXX_OBJECTS += NetworkToHistoTool.o 
 JETNET_CXX_OBJECTS += $(T_OBJ) $(T_DICTS)
 
 TJETNET_OBJECTS := $(JETNET_OBJ)

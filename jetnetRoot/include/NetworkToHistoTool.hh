@@ -8,9 +8,8 @@
 class TH1;
 class TFlavorNetwork;
 
-//by Giacinto Piacquadio (19-2-2008)
 
-class NetworkToHistoTool // : public TObject 
+class NetworkToHistoTool 
 {
 public:
   
@@ -27,7 +26,6 @@ private:
   TH1* findHisto(std::string nameOfHisto,
 		 std::vector<TH1*> & inputHistos) const;
   
-  //  ClassDef( TNetworkToHistoTool, 1 );
   
 };
 

@@ -17,7 +17,9 @@
 static const std::string train_name = "trainNN"; 
 
 static const std::string train_additional = 
-  "flag values:\n\td: debug,\n\tg: giacintos training,"
+  "flag values:"
+  "\n\td: debug,"
+  "\n\tg: giacintos training,"
   "\n\tt: throw on warning,"
   "\n\tv: verbose,"
   "\n\tr: random entry selection (default takes first entries),"

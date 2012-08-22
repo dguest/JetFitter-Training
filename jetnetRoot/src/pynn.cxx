@@ -568,10 +568,16 @@ std::vector<InputVariableInfo> parse_input_variable_info(PyObject* in_dict)
 void build_doc(char* doc_array, 
 	       std::string b, const char** input_kwds, std::string a){ 
   strcat(doc_array, b.c_str()); 
+  size_t n_unwraped_cols = 0; 
   for (int n = 0; n < 20; n++) { 
     const char* this_str = input_kwds[n]; 
     if (! this_str) break; 
     if (n != 0) strcat(doc_array,", "); 
+    size_t n_cols = strlen(doc_array) - n_unwraped_cols; 
+    if (n_cols > 80) { 
+      strcat(doc_array,"\n\t"); 
+      n_unwraped_cols = n_cols; 
+    }
     strcat(doc_array, this_str); 
   }
   strcat(doc_array, a.c_str()); 

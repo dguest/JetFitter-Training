@@ -351,21 +351,37 @@ extern "C" {
 
   PyMODINIT_FUNC initpyprep(void)
   {
-    build_doc(prep_ntuple_doc, prep_ntuple_kwlist); 
-    build_doc(make_ntuple_doc, make_ntuple_kwlist); 
-    build_doc(flat_ntuple_doc, flat_ntuple_kwlist); 
+    build_doc(prep_ntuple_doc, "", prep_ntuple_kwlist, ""); 
+    build_doc(make_ntuple_doc, "", make_ntuple_kwlist, ""); 
+    build_doc(flat_ntuple_doc, 
+	      "make_flat_ntuple(", flat_ntuple_kwlist, ")\n\n"
+	      "flags:\n"
+	      "\tr: make ratios (default on)\n"
+	      "\tt: save category trees\n"
+	      "\th: save category hists\n"
+	      "\td: debug\n"); 
     
     Py_InitModule("pyprep", keywdarg_methods);
   }
 
 }
 
-void build_doc(char* doc_array, const char** input_kwds){ 
+void build_doc(char* doc_array, 
+	       std::string b, const char** input_kwds, std::string a){ 
+  strcat(doc_array, b.c_str()); 
+  size_t n_unwraped_cols = 0; 
   for (int n = 0; n < 20; n++) { 
     const char* this_str = input_kwds[n]; 
     if (! this_str) break; 
+    if (n != 0) strcat(doc_array,", "); 
+    size_t n_cols = strlen(doc_array) - n_unwraped_cols; 
+    if (n_cols > 80) { 
+      strcat(doc_array,"\n\t"); 
+      n_unwraped_cols = n_cols; 
+    }
     strcat(doc_array, this_str); 
-    strcat(doc_array,"\n"); 
-    assert(strlen(doc_array) < MAX_DOC_STRING_LENGTH); 
   }
+  strcat(doc_array, a.c_str()); 
+  assert(strlen(doc_array) < MAX_DOC_STRING_LENGTH); 
 }
+

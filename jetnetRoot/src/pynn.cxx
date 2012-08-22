@@ -9,6 +9,7 @@
 #include "testNN.hh"
 #include "augment_tree.hh"
 #include "nnExceptions.hh"
+#include "NNFileConverters.hh"
 #include "pyparse.hh"
 #include "makeTestNtuple.hh"
 #include "pynn.hh"
@@ -437,12 +438,49 @@ extern "C" PyObject* make_test_ntuple(PyObject *self,
   return Py_None;
 }
 
+
+
 static const char* ntuple_doc_string = 
   "input_weights\n"
   "input_dataset\n"
   "output_file\n"
   "output_tree\n"
   "debug";
+
+
+// ------------ makehist ------------------
+
+static const std::string makehist_name = "makehist"; 
+static const char* makehist_kwlist[] = {
+  "nn_file", 
+  "out_file", 
+  "nn_name", 
+  NULL};
+static const std::string makehist_argtypes = "ss|s"; 
+static char makehist_doc[MAX_DOC_STRING_LENGTH]; 
+
+
+PyObject* py_makehist(PyObject *self, 
+		      PyObject *args, 
+		      PyObject *keywds) 
+{
+  const char* nn_file; 
+  const char* out_file; 
+  const char* nn_name = "TFlavorNetwork"; 
+  bool ok = PyArg_ParseTupleAndKeywords
+    (args, keywds, makehist_argtypes.c_str(), 
+     // I think python people argue about whether this should be 
+     // a const char** or a char**
+     const_cast<char**>(makehist_kwlist),
+     &nn_file, 
+     &out_file, 
+     &nn_name); 
+
+  nn_file_to_hist_file(nn_file, out_file, nn_name); 
+  
+  return Py_BuildValue(""); 
+
+}
 
 
 static PyMethodDef keywdarg_methods[] = {
@@ -461,6 +499,9 @@ static PyMethodDef keywdarg_methods[] = {
   {augment_name.c_str(), (PyCFunction)py_augment_tree, 
    METH_VARARGS | METH_KEYWORDS,
    augment_doc},
+  {makehist_name.c_str(), (PyCFunction)py_makehist, 
+   METH_VARARGS | METH_KEYWORDS,
+   makehist_doc},
   {NULL, NULL, 0, NULL}   /* sentinel */
 };
 
@@ -470,6 +511,7 @@ extern "C" PyMODINIT_FUNC initpynn(void)
 	    train_name + "(", train_kwlist, ")\n" + train_additional); 
   build_doc(augment_doc, 
 	    augment_name + "(", augment_kwlist, ")"); 
+  build_doc(makehist_doc, makehist_name + "(", makehist_kwlist, ")"); 
   Py_InitModule("pynn", keywdarg_methods);
 }
 

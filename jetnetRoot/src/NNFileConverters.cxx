@@ -3,7 +3,7 @@
 #include "TFlavorNetwork.h"
 
 #include <string> 
-#include <vector> 
+#include <map> 
 #include <stdexcept> 
 
 #include "TH1.h"
@@ -26,10 +26,10 @@ void nn_file_to_hist_file(std::string nn_file,
   TFile out(out_file.c_str(), "recreate"); 
 
   NetworkToHistoTool tool; 
-  std::vector<TH1*> hists = tool.fromTrainedNetworkToHisto(net); 
-  for (std::vector<TH1*>::iterator itr = hists.begin(); 
+  std::map<std::string,TH1*> hists = tool.histsFromNetwork(net); 
+  for (std::map<std::string,TH1*>::iterator itr = hists.begin(); 
        itr != hists.end(); itr++) { 
-    out.WriteTObject(*itr); 
+    out.WriteTObject(itr->second); 
   }
   
   

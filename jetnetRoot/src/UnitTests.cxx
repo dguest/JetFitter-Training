@@ -35,15 +35,16 @@ std::vector<double> test_histo_tool(const TFlavorNetwork* net,
 				    bool do_broken = false)
 {
   NetworkToHistoTool histo_tool; 
-  std::vector<TH1*> hists = histo_tool.fromTrainedNetworkToHisto(net); 
+  std::map<std::string,TH1*> hists = histo_tool.histsFromNetwork(net); 
   if (do_broken) { 
-    hists.at(hists.size() - 1)->Fill(0.5,0.5); 
+    hists.rbegin()->second->Fill(0.5,0.5); 
   }
 
   TFile* out_file = new TFile("test_hists.root","recreate"); 
-  for (std::vector<TH1*>::iterator itr = hists.begin(); itr != hists.end(); 
+  for (std::map<std::string,TH1*>::iterator itr = hists.begin(); 
+       itr != hists.end(); 
        itr++){ 
-    out_file->WriteTObject(*itr); 
+    out_file->WriteTObject(itr->second); 
   }
   out_file->Close(); 
 
@@ -51,7 +52,7 @@ std::vector<double> test_histo_tool(const TFlavorNetwork* net,
   // std::vector<TH1*> read_hists; 
   
 
-  TFlavorNetwork* from_hists = histo_tool.fromHistoToTrainedNetwork(hists); 
+  TFlavorNetwork* from_hists = histo_tool.networkFromHists(hists); 
   return from_hists->calculateWithNormalization(in); 
 }
 

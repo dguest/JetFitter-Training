@@ -10,11 +10,12 @@
 
 // ClassImp( TNetworkToHistoTool)
 
-std::vector<TH1*> 
-NetworkToHistoTool::fromTrainedNetworkToHisto(const TFlavorNetwork* trainedNetwork) const
+std::map<std::string,TH1*> 
+NetworkToHistoTool::histsFromNetwork(const TFlavorNetwork* trainedNetwork) 
+  const
 {
 
-  std::vector<TH1*> outputHistos;
+  std::map<std::string,TH1*> outputHistos;
 
 
   assert(trainedNetwork->getActivationFunction() == 1); 
@@ -45,7 +46,7 @@ NetworkToHistoTool::fromTrainedNetworkToHisto(const TFlavorNetwork* trainedNetwo
 
   histoLayersInfo->SetBinContent(2+nHidden,nOutput);
 
-  outputHistos.push_back(histoLayersInfo);
+  outputHistos[histoLayersInfo->GetName()] = histoLayersInfo;
 
   
   //ThresholdInfo
@@ -69,7 +70,7 @@ NetworkToHistoTool::fromTrainedNetworkToHisto(const TFlavorNetwork* trainedNetwo
 
     std::string weightsName = (boost::format("Layer%i_weights") % i).str();
     
-    outputHistos.push_back(histoThreshLayer);
+    outputHistos[histoThreshLayer->GetName()] = histoThreshLayer;
 
     TH2D* histoWeightsLayer=new TH2D(weightsName.c_str(),
                                      weightsName.c_str(),
@@ -88,7 +89,7 @@ NetworkToHistoTool::fromTrainedNetworkToHisto(const TFlavorNetwork* trainedNetwo
       }
     }
     
-    outputHistos.push_back(histoWeightsLayer);
+    outputHistos[histoWeightsLayer->GetName()] = histoWeightsLayer;
     
   }
 
@@ -107,39 +108,21 @@ NetworkToHistoTool::fromTrainedNetworkToHisto(const TFlavorNetwork* trainedNetwo
     histoInputs->SetBinContent(input_n + 1, 2, input.scale); 
     histoInputs->GetXaxis()->SetBinLabel(input_n + 1, input.name.c_str());
   }
-  outputHistos.push_back(histoInputs); 
+  outputHistos[histoInputs->GetName()] = histoInputs; 
 
   return outputHistos;
   
 }
 
-TH1* NetworkToHistoTool::findHisto(std::string nameOfHisto,
-				   std::vector<TH1*> & inputHistos) const
-{
-  std::vector<TH1*>::const_iterator inputBegin=inputHistos.begin();
-  std::vector<TH1*>::const_iterator inputEnd=inputHistos.end();
-  
-  for ( std::vector<TH1*>::const_iterator 
-	  inputIter=inputBegin;
-	inputIter != inputEnd; 
-	inputIter++) { 
-    std::string hist_name = (*inputIter)->GetName(); 
-    if (hist_name == nameOfHisto) {
-      return (*inputIter);
-    }
-  }
-  throw std::runtime_error(" Could not find " + nameOfHisto + " histogram"); 
-}
-
-
 
 TFlavorNetwork* 
-NetworkToHistoTool::fromHistoToTrainedNetwork(std::vector<TH1*> & inputHistos) const
+NetworkToHistoTool::networkFromHists(std::map<std::string,TH1*>& 
+				     inputHistos) const
 {
 
   
 
-  TH1* histoLayersInfo = findHisto("LayersInfo",inputHistos);
+  TH1* histoLayersInfo = inputHistos["LayersInfo"]; 
 
   if (histoLayersInfo==0)
   {
@@ -156,13 +139,8 @@ NetworkToHistoTool::fromHistoToTrainedNetwork(std::vector<TH1*> & inputHistos) c
     nHiddenLayerSize.push_back( (Int_t)std::floor(histoLayersInfo->GetBinContent(2+i)+0.5));
   }
 
-  // for (Int_t o=0;o<nHidden;++o)
-  // {
-  //   cout << " Hidden lay: " << o << " size: " << nHiddenLayerSize[o];
-  // }
-
   Int_t nOutput=(Int_t)std::floor(histoLayersInfo->GetBinContent(2+nHidden)+0.5);
-  // cout << " Output size: " << nOutput << endl;
+
   
   std::vector<TVectorD*> thresholdVectors;
   std::vector<TMatrixD*> weightMatrices;
@@ -179,7 +157,9 @@ NetworkToHistoTool::fromHistoToTrainedNetwork(std::vector<TH1*> & inputHistos) c
     TVectorD* thresholdVector=new TVectorD(layerSize);
     TMatrixD* weightMatrix=new TMatrixD(previousLayerSize,layerSize);
    
-    TH1* histoThreshLayer = findHisto(threName,inputHistos);
+    TH1* histoThreshLayer = inputHistos[threName]; 
+    if (!histoThreshLayer)
+      throw std::runtime_error("could not find " + threName); 
 
     for (Int_t s=0;s<layerSize;s++)
     {
@@ -188,7 +168,9 @@ NetworkToHistoTool::fromHistoToTrainedNetwork(std::vector<TH1*> & inputHistos) c
 
     std::string weightsName = (boost::format("Layer%i_weights") % i).str();
 
-    TH1* histoWeightsLayer = findHisto(weightsName, inputHistos);
+    TH1* histoWeightsLayer = inputHistos[weightsName]; 
+    if (!histoWeightsLayer) 
+      throw std::runtime_error("could not find " + weightsName); 
     for (Int_t s=0;s<layerSize;s++)
     {
       for (Int_t p=0;p<previousLayerSize;++p)
@@ -202,7 +184,9 @@ NetworkToHistoTool::fromHistoToTrainedNetwork(std::vector<TH1*> & inputHistos) c
 
   }
   
-  TH1* histoInputs = findHisto("InputsInfo", inputHistos); 
+  TH1* histoInputs = inputHistos["InputsInfo"]; 
+  if (!histoInputs) 
+    throw std::runtime_error("could not find InputsInfo"); 
 
   std::vector<TFlavorNetwork::Input> inputs; 
   for (int i = 0 ; i < nInput; i++) { 

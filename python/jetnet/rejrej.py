@@ -269,20 +269,22 @@ class RejRejPlot(object):
         if not os.path.isfile(self._integrals_cache): 
             self._build_integrals()
         print 'building rejrej plot for', self._tagger
-        
-        # with open(self._integrals_cache) as pkl: 
-        #     integrals = cPickle.load(pkl)
 
-        with h5py.File(self._integrals_cache) as integrals: 
-            sig = self._signal
-            eff = integrals[sig] / integrals[sig].max()
+        integrals = {}
 
-            flav_x, flav_y = [t for t in _tags if t != sig]
+        with h5py.File(self._integrals_cache) as data: 
+            for name in data: 
+                integrals[name] = np.array(data[name])
 
-            old_warn_set = np.seterr(divide = 'ignore') 
-            rej_x = integrals[flav_x].max() / integrals[flav_x]
-            rej_y = integrals[flav_y].max() / integrals[flav_y]
-            np.seterr(**old_warn_set)
+        sig = self._signal
+        eff = integrals[sig] / integrals[sig].max()
+
+        flav_x, flav_y = [t for t in _tags if t != sig]
+
+        old_warn_set = np.seterr(divide = 'ignore') 
+        rej_x = integrals[flav_x].max() / integrals[flav_x]
+        rej_y = integrals[flav_y].max() / integrals[flav_y]
+        np.seterr(**old_warn_set)
         
         eff = eff.flatten()
         rej_x = rej_x.flatten()
@@ -336,9 +338,6 @@ class RejRejPlot(object):
             assert tag in _tags, '{} not found in {}'.format(tag, _tags)
             int_dict[tag] = integral
 
-        # with open(self._integrals_cache,'w') as pkl: 
-        #     print 'saving {}'.format(self._integrals_cache)
-        #     cPickle.dump(int_dict, pkl)
         with h5py.File(self._integrals_cache,'w') as hfile: 
             for name, hist in int_dict.iteritems(): 
                 hfile[name] = hist

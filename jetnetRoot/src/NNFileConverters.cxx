@@ -5,9 +5,12 @@
 #include <string> 
 #include <map> 
 #include <stdexcept> 
+#include <cassert>
 
 #include "TH1.h"
 #include "TFile.h"
+#include "TList.h"
+#include "TKey.h"
 
 void nn_file_to_hist_file(std::string nn_file, 
 			  std::string out_file, 
@@ -31,6 +34,17 @@ void nn_file_to_hist_file(std::string nn_file,
        itr != hists.end(); itr++) { 
     out.WriteTObject(itr->second); 
   }
-  
+
+  // also copy over any remaining histograms
+  TList* key_list = in_file.GetListOfKeys(); 
+  int n_keys = key_list->GetEntries(); 
+  for (int n = 0; n < n_keys; n++) { 
+    TKey* key = dynamic_cast<TKey*>(key_list->At(n)); 
+    assert(key); 
+    TObject* the_object = key->ReadObj(); 
+    if (the_object->InheritsFrom("TH1")) { 
+      out.WriteTObject(the_object); 
+    }
+  }
   
 }

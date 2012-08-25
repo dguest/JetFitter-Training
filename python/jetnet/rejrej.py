@@ -340,8 +340,8 @@ class RejRejPlot(object):
 
         with h5py.File(self._integrals_cache,'w') as hfile: 
             for name, hist in int_dict.iteritems(): 
-                hfile[name] = hist
-            
+                hfile.create_dataset(name, data=hist, compression='gzip')
+                                     
 
 
 class HistBuilder(object): 

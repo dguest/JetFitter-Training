@@ -2,6 +2,7 @@ import numpy as np
 import os, sys, warnings, cPickle, itertools
 import glob
 from jetnet.cxxprofile import pro2d, profile_fast
+import h5py
 
 """
 routine to draw b-rejection vs c- or l-rejection plots
@@ -176,9 +177,9 @@ class RejRejPlot(object):
         self._x_flav, self._y_flav = remain_flavs
 
         # bins things
-        integrals_name = 'integrals_{bins}bins.pkl'.format(bins = bins)
+        integrals_name = 'integrals_{bins}bins.h5'.format(bins = bins)
         integral_pkl = os.path.join(cache_path, integrals_name)
-        self._integrals_pickle = integral_pkl
+        self._integrals_cache = integral_pkl
         self._bins = bins
 
         root_file_name = 'root_{}_hists.root'.format(
@@ -265,22 +266,23 @@ class RejRejPlot(object):
         return False
 
     def _build_rejrej(self): 
-        if not os.path.isfile(self._integrals_pickle): 
+        if not os.path.isfile(self._integrals_cache): 
             self._build_integrals()
         print 'building rejrej plot for', self._tagger
         
-        with open(self._integrals_pickle) as pkl: 
-            integrals = cPickle.load(pkl)
-        
-        sig = self._signal
-        eff = integrals[sig] / integrals[sig].max()
+        # with open(self._integrals_cache) as pkl: 
+        #     integrals = cPickle.load(pkl)
 
-        flav_x, flav_y = [t for t in _tags if t != sig]
+        with h5py.File(self._integrals_cache) as integrals: 
+            sig = self._signal
+            eff = integrals[sig] / integrals[sig].max()
 
-        old_warn_set = np.seterr(divide = 'ignore') 
-        rej_x = integrals[flav_x].max() / integrals[flav_x]
-        rej_y = integrals[flav_y].max() / integrals[flav_y]
-        np.seterr(**old_warn_set)
+            flav_x, flav_y = [t for t in _tags if t != sig]
+
+            old_warn_set = np.seterr(divide = 'ignore') 
+            rej_x = integrals[flav_x].max() / integrals[flav_x]
+            rej_y = integrals[flav_y].max() / integrals[flav_y]
+            np.seterr(**old_warn_set)
         
         eff = eff.flatten()
         rej_x = rej_x.flatten()
@@ -334,9 +336,13 @@ class RejRejPlot(object):
             assert tag in _tags, '{} not found in {}'.format(tag, _tags)
             int_dict[tag] = integral
 
-        with open(self._integrals_pickle,'w') as pkl: 
-            print 'saving {}'.format(self._integrals_pickle)
-            cPickle.dump(int_dict, pkl)
+        # with open(self._integrals_cache,'w') as pkl: 
+        #     print 'saving {}'.format(self._integrals_cache)
+        #     cPickle.dump(int_dict, pkl)
+        with h5py.File(self._integrals_cache,'w') as hfile: 
+            for name, hist in int_dict.iteritems(): 
+                hfile[name] = hist
+            
 
 
 class HistBuilder(object): 

@@ -13,7 +13,6 @@ ROOT.PyConfig.IgnoreCommandLineOptions = True
 
 
 from jetnet import training, pyprep, profile, rds, process
-from jetnet.perf import rejection, performance
 import os, sys
 from math import log, exp
 from warnings import warn

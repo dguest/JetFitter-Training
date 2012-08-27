@@ -486,6 +486,39 @@ PyObject* py_makehist(PyObject *self,
 
 }
 
+static const std::string makenn_name = "makenn"; 
+static const char* makenn_kwlist[] = {
+  "nn_file", 
+  "out_file", 
+  "nn_name", 
+  NULL};
+static const std::string makenn_argtypes = "ss|s"; 
+static char makenn_doc[MAX_DOC_STRING_LENGTH]; 
+
+
+PyObject* py_makenn(PyObject *self, 
+		    PyObject *args, 
+		    PyObject *keywds) 
+{
+  const char* nn_file; 
+  const char* out_file; 
+  const char* nn_name = "TFlavorNetwork"; 
+  bool ok = PyArg_ParseTupleAndKeywords
+    (args, keywds, makehist_argtypes.c_str(), 
+     // I think python people argue about whether this should be 
+     // a const char** or a char**
+     const_cast<char**>(makehist_kwlist),
+     &nn_file, 
+     &out_file, 
+     &nn_name); 
+
+  nn_from_hist(nn_file, out_file, nn_name); 
+  
+  return Py_BuildValue(""); 
+
+}
+
+
 
 static PyMethodDef keywdarg_methods[] = {
   // The cast of the function is necessary since PyCFunction values
@@ -506,6 +539,9 @@ static PyMethodDef keywdarg_methods[] = {
   {makehist_name.c_str(), (PyCFunction)py_makehist, 
    METH_VARARGS | METH_KEYWORDS,
    makehist_doc},
+  {makenn_name.c_str(), (PyCFunction)py_makenn, 
+   METH_VARARGS | METH_KEYWORDS,
+   makenn_doc},
   {NULL, NULL, 0, NULL}   /* sentinel */
 };
 
@@ -516,6 +552,7 @@ extern "C" PyMODINIT_FUNC initpynn(void)
   build_doc(augment_doc, 
 	    augment_name + "(", augment_kwlist, ")"); 
   build_doc(makehist_doc, makehist_name + "(", makehist_kwlist, ")"); 
+  build_doc(makenn_doc, makenn_name + "(", makenn_kwlist, ")"); 
   Py_InitModule("pynn", keywdarg_methods);
 }
 

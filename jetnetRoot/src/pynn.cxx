@@ -454,7 +454,7 @@ static const char* ntuple_doc_string =
 
 // ------------ makehist ------------------
 
-static const std::string makehist_name = "makehist"; 
+static const std::string makehist_name = "hists_from_nn"; 
 static const char* makehist_kwlist[] = {
   "nn_file", 
   "out_file", 
@@ -486,7 +486,7 @@ PyObject* py_makehist(PyObject *self,
 
 }
 
-static const std::string makenn_name = "makenn"; 
+static const std::string makenn_name = "nn_from_hists"; 
 static const char* makenn_kwlist[] = {
   "nn_file", 
   "out_file", 

@@ -12,9 +12,9 @@
 #include "TList.h"
 #include "TKey.h"
 
-void nn_file_to_hist_file(std::string nn_file, 
-			  std::string out_file, 
-			  std::string nn_name) { 
+void hist_from_nn(std::string nn_file, 
+		  std::string out_file, 
+		  std::string nn_name) { 
 
   TFile in_file(nn_file.c_str()); 
   if (in_file.IsZombie()) { 

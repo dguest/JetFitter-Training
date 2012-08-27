@@ -24,6 +24,7 @@ from ConfigParser import SafeConfigParser
 
 class UglyWarning(UserWarning): pass
 
+# TODO: this thing should be a context manager or something...
 _hold_name = 'HOLD_JOBS'
 def hold_job(working_dir): 
     sleep_for = 5

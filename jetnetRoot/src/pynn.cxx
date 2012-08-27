@@ -480,7 +480,7 @@ PyObject* py_makehist(PyObject *self,
      &out_file, 
      &nn_name); 
 
-  nn_file_to_hist_file(nn_file, out_file, nn_name); 
+  hist_from_nn(nn_file, out_file, nn_name); 
   
   return Py_BuildValue(""); 
 

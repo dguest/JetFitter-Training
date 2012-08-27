@@ -3,8 +3,8 @@
 
 #include <string> 
 
-void nn_file_to_hist_file(std::string nn_file, 
-			  std::string out_file, 
-			  std::string nn_name); 
+void hist_from_nn(std::string nn_file, 
+		  std::string out_file, 
+		  std::string nn_name); 
 
 #endif //NN_FILE_CONVERTERS

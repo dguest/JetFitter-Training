@@ -188,6 +188,7 @@ TFlavorNetwork::calculateWithNormalization(TFlavorNetwork::DMapI begin,
 					    TFlavorNetwork::DMapI end) 
   const { 
   std::vector<Double_t> inputs(mnInput); 
+  int n_filled = 0; 
   for (std::map<std::string,double>::const_iterator itr = begin; 
        itr != end; 
        itr++){ 
@@ -206,11 +207,12 @@ TFlavorNetwork::calculateWithNormalization(TFlavorNetwork::DMapI begin,
 
     // store in the inputs vector
     inputs.at(node_n) = raw_value; 
+    n_filled++; 
   }
 
   // make sure all nodes are filled
-  if (inputs.size() != inputStringToNode.size() ) { 
-    assert(inputs.size() < inputStringToNode.size() ); 
+  if (n_filled != inputStringToNode.size() ) { 
+    assert(n_filled < inputStringToNode.size() ); 
     std::set<std::string> input_set;
     for (DMapI itr = begin; itr != end; itr++) { 
       input_set.insert(itr->first); 

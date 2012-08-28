@@ -22,12 +22,13 @@ _color_dict = {
     'MV1': 'magenta', 
     }
 
+_backup_colors = iter(['purple','orange','black',])
 def _get_color(id_tuple): 
     for k in _color_dict.keys(): 
         if any((k in st) for st in id_tuple): 
             return _color_dict[k]
 
-    return 'black'
+    return next(_backup_colors)
 
 
 if __name__ == '__main__': 

@@ -90,7 +90,6 @@ public:
 
 private:
 
-  const static unsigned MAX_LAYER_LENGTH = 1000; 
 
   Int_t mnInput;
   Int_t mnHidden;

@@ -7,6 +7,20 @@
 #include <cstring>
 #include <stdexcept>
 
+
+//Since we are single-threaded and never calls outself recursively, we
+//can use a global data area to do our work.
+//FIXME: We do it like this to avoid adding new member data (because I
+//am not 100% sure this class is not persistified somewhere). 
+//{Thomas Kittelmann}
+namespace TTN_internal {
+  const static unsigned MAX_LAYER_LENGTH = 1000; 
+  static double tmpdata[2*MAX_LAYER_LENGTH];
+  static double * tmp_array[2] = { 
+    &(tmpdata[0]), &(tmpdata[MAX_LAYER_LENGTH]) };
+}
+
+
 TFlavorNetwork::TFlavorNetwork()
 {
   mnInput=0;
@@ -89,7 +103,7 @@ TFlavorNetwork::TFlavorNetwork(std::vector<TFlavorNetwork::Input> inputs,
   int nlayer_max(mnOutput);
   for (unsigned i = 0; i < mnHiddenLayerSize.size(); ++i)
     nlayer_max = std::max(nlayer_max, mnHiddenLayerSize[i]);
-  if (nlayer_max>=MAX_LAYER_LENGTH) {
+  if (nlayer_max >= TTN_internal::MAX_LAYER_LENGTH) { 
     std::cout<<"TFlavorNetwork ERROR Maximal layer size exceeded"<<std::endl;
     assert(false);
   }
@@ -238,16 +252,7 @@ TFlavorNetwork::calculateOutputValues(std::vector<Double_t> & input) const
   // anything here since it is used heavily in reconstruction during
   // Pixel clusterization - Thomas Kittelmann, Oct 2011.
 
-  // I changed someting: these arrays (tmpdata, tmp_array) were global. 
-  // This may be slower, but we don't need the speed (and thread safety 
-  // is good )  -- Dan Guest, May 2012
-
-  double tmpdata[2*MAX_LAYER_LENGTH];
-  double * tmp_array[2] = { 
-    &(tmpdata[0]), 
-    &(tmpdata[MAX_LAYER_LENGTH]) 
-  };
-
+  using namespace TTN_internal; 
 
   if (static_cast<int>(input.size()) != mnInput)
   {

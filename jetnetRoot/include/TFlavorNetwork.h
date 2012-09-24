@@ -79,10 +79,11 @@ public:
     return mWeightMatrices;
   };
 
-  DVec calculateOutputValues(DVec & input) const;
+  DVec calculateOutputValues(const DVec & input) const;
   // DVec calculateWithNormalization(DVec & input) const; 
   DVec calculateWithNormalization(DMap & input) const;
   DVec calculateWithNormalization(DMapI begin, DMapI end) const;
+  DVec calculateWithNormalization(const DVec& input) const;
 
   bool getIfLinearOutput() const { return mLinearOutput; };
 
@@ -96,7 +97,7 @@ private:
   Int_t mnOutput;
 
   // in an ideal world these would be one object in a vector, but 
-  // this is a ROOT world where persistence could never be that easy  
+  // storing classes within classes in root is ugly
   std::vector<Double_t> m_input_node_offset; 
   std::vector<Double_t> m_input_node_scale; 
     

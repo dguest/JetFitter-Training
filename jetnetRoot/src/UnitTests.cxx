@@ -128,6 +128,7 @@ bool test_trained(std::vector<int> layer_sizes) {
 
   std::map<std::string,double> input_map; 
   std::vector<double> input_vector; 
+  std::vector<double> raw_vector; 
   for (int i = 0; i < inputs.size(); i++){ 
     double value = float(rand()) / float(RAND_MAX) - 0.5; 
     double normed_value = 
@@ -137,6 +138,7 @@ bool test_trained(std::vector<int> layer_sizes) {
     jn->SetInputs(i,normed_value); 
     input_map[inputs.at(i).name] = value; 
     input_vector.push_back(normed_value); 
+    raw_vector.push_back(value); 
   }
 
   jn->Evaluate(); 
@@ -156,6 +158,9 @@ bool test_trained(std::vector<int> layer_sizes) {
       input_map.size() << std::endl; 
     throw; 
   }
+  std::vector<double> ttrained_normvec_out = 
+    jn_trained_out->calculateWithNormalization(raw_vector); 
+  
   TTrainedNetwork* old_style_nn = convertNewToOld(jn_trained_out); 
   std::vector<double> old_style_out = old_style_nn->calculateOutputValues
     (input_vector); 
@@ -176,6 +181,7 @@ bool test_trained(std::vector<int> layer_sizes) {
     std::cout << "output " << i << " -- JN: " << jn->GetOutput(i) 
 	      << ", FlavNet map: " << ttrained_map_out.at(i) 
 	      << ", FlavNet vec: " << ttrained_vector_out.at(i) 
+	      << ", FlavNet normvec: " << ttrained_normvec_out.at(i)
 	      << ", TrainedNet vec: " << old_style_out.at(i) 
 	      << ", FlavNet from old: " << new_style_out.at(i) 
 	      << ", From Histos: " << histo_out.at(i)

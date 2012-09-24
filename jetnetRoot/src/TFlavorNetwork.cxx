@@ -57,12 +57,12 @@ TFlavorNetwork::TFlavorNetwork(Int_t nInput,
 }
 
 TFlavorNetwork::TFlavorNetwork(std::vector<TFlavorNetwork::Input> inputs, 
-                                 Int_t nOutput,
-                                 std::vector<TVectorD*> & thresholdVectors,
-                                 std::vector<TMatrixD*> & weightMatrices,
-                                 Int_t activationFunction,
-                                 bool linearOutput,
-                                 bool normalizeOutput)
+			       Int_t nOutput,
+			       std::vector<TVectorD*> & thresholdVectors,
+			       std::vector<TMatrixD*> & weightMatrices,
+			       Int_t activationFunction,
+			       bool linearOutput,
+			       bool normalizeOutput)
 {
   mnInput = inputs.size(); 
   mnHidden = thresholdVectors.size() - 1;
@@ -199,7 +199,7 @@ TFlavorNetwork::calculateWithNormalization(TFlavorNetwork::DMap& in)
 
 std::vector<Double_t> 
 TFlavorNetwork::calculateWithNormalization(TFlavorNetwork::DMapI begin, 
-					    TFlavorNetwork::DMapI end) 
+					   TFlavorNetwork::DMapI end) 
   const { 
   std::vector<Double_t> inputs(mnInput); 
   int n_filled = 0; 
@@ -244,8 +244,25 @@ TFlavorNetwork::calculateWithNormalization(TFlavorNetwork::DMapI begin,
   return calculateOutputValues(inputs); 
 }
 
+std::vector<Double_t>
+TFlavorNetwork::calculateWithNormalization(const TFlavorNetwork::DVec& input)
+  const 
+{
+  // asserts can be turned off in optomized code anyway, 
+  // use them to be safe without having to call vector.at()
+  assert(mnInput == input.size()); 
+  assert(mnInput == m_input_node_scale.size()); 
+  assert(mnInput == m_input_node_offset.size()); 
+  std::vector<double> transformed_inputs(input); 
+  for (int input_n = 0; input_n < mnInput; input_n++) { 
+    transformed_inputs[input_n] += m_input_node_offset[input_n]; 
+    transformed_inputs[input_n] *= m_input_node_scale[input_n]; 
+  }
+  return calculateOutputValues(transformed_inputs); 
+}
 std::vector<Double_t>  
-TFlavorNetwork::calculateOutputValues(std::vector<Double_t> & input) const 
+TFlavorNetwork::calculateOutputValues(const std::vector<Double_t>& input) 
+  const 
 {
   // This method is now highly optimised (apart from the potential use
   // of a cheaper sigmoid function). Please be very careful changing

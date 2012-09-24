@@ -20,7 +20,7 @@ class TFlavorNetwork : public TObject
 {
 public:
   struct Input { 
-    std::string name; 
+    std::string name; //<- requires unique strings or none at all
     double offset; //<- this value is added to the input before giving to nn
     double scale; //<- after offset is added, input is scaled by this value 
   }; 

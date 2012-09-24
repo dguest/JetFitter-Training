@@ -21,8 +21,8 @@ class TFlavorNetwork : public TObject
 public:
   struct Input { 
     std::string name; 
-    double offset; 
-    double scale; 
+    double offset; //<- this value is added to the input before giving to nn
+    double scale; //<- after offset is added, input is scaled by this value 
   }; 
 
   typedef std::vector<Double_t> DVec; 
@@ -31,26 +31,31 @@ public:
 
   TFlavorNetwork();
 
+  //NOTE: class takes ownership of all pointers.
+
   // old-school constructor (for compatability)
   TFlavorNetwork(Int_t nInput, 
-		  Int_t nHidden, 
-		  Int_t nOutput,
-		  std::vector<Int_t> & nHiddenLayerSize, 
-		  std::vector<TVectorD*> & thresholdVectors,
-		  std::vector<TMatrixD*> & weightMatrices,
-		  Int_t activationFunction,
-		  bool linearOutput = false,
-		  bool normalizeOutput = false); 
+		 Int_t nHidden, 
+		 Int_t nOutput,
+		 std::vector<Int_t> & nHiddenLayerSize, 
+		 std::vector<TVectorD*> & thresholdVectors,
+		 std::vector<TMatrixD*> & weightMatrices,
+		 Int_t activationFunction,
+		 bool linearOutput = false,
+		 bool normalizeOutput = false); 
 
 
-  //class takes ownership of all pointers...
+  // new constructor for normalized nn. 
+  // This avoids some chances for logical inconsistency by constructing 
+  // the hidden layer size from the thresholdVectors and weightMatrices. 
+  // Also runs a consistency check on thresholdVectors and weightMatrices. 
   TFlavorNetwork(std::vector<TFlavorNetwork::Input> inputs,
-		  Int_t nOutput,
-		  std::vector<TVectorD*> & thresholdVectors,
-		  std::vector<TMatrixD*> & weightMatrices,
-		  Int_t activationFunction = 1,
-                  bool linearOutput=false,
-                  bool normalizeOutput=false);
+		 Int_t nOutput,
+		 std::vector<TVectorD*> & thresholdVectors,
+		 std::vector<TMatrixD*> & weightMatrices,
+		 Int_t activationFunction = 1,
+		 bool linearOutput=false,
+		 bool normalizeOutput=false);
 
   ~TFlavorNetwork();
 
@@ -79,11 +84,16 @@ public:
     return mWeightMatrices;
   };
 
+  // these methods should be optimized. 
   DVec calculateOutputValues(const DVec & input) const;
-  // DVec calculateWithNormalization(DVec & input) const; 
-  DVec calculateWithNormalization(DMap & input) const;
-  DVec calculateWithNormalization(DMapI begin, DMapI end) const;
   DVec calculateWithNormalization(const DVec& input) const;
+
+  // these are intentionally slow: the NN must 
+  // rearrange the inputs each time these functions are called. 
+  // They are designed for robustness and ease of use, not for highly
+  // optimized code. 
+  DVec calculateWithNormalization(const DMap & input) const;
+  DVec calculateWithNormalization(DMapI begin, DMapI end) const;
 
   bool getIfLinearOutput() const { return mLinearOutput; };
 

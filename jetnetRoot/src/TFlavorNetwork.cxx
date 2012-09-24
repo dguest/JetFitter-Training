@@ -190,7 +190,7 @@ void TFlavorNetwork::setNewWeights(std::vector<TVectorD*> & thresholdVectors,
 }
 
 std::vector<Double_t> 
-TFlavorNetwork::calculateWithNormalization(TFlavorNetwork::DMap& in) 
+TFlavorNetwork::calculateWithNormalization(const TFlavorNetwork::DMap& in) 
   const { 
   DMapI begin = in.begin(); 
   DMapI end = in.end(); 

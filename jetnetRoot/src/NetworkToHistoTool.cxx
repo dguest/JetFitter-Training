@@ -116,8 +116,8 @@ NetworkToHistoTool::histsFromNetwork(const TFlavorNetwork* trainedNetwork)
 
 
 TFlavorNetwork* 
-NetworkToHistoTool::networkFromHists(std::map<std::string,TH1*>& 
-				     inputHistos) const
+NetworkToHistoTool::networkFromHists(std::map<std::string,TH1*>& inputHistos,
+				     unsigned options) const
 {
 
   
@@ -198,9 +198,10 @@ NetworkToHistoTool::networkFromHists(std::map<std::string,TH1*>&
   }
   TFlavorNetwork* trainedNetwork = 
     new TFlavorNetwork(inputs,
-			nOutput,
-			thresholdVectors,
-			weightMatrices);
+		       nOutput,
+		       thresholdVectors,
+		       weightMatrices, 
+		       options);
   return trainedNetwork;
   
 }

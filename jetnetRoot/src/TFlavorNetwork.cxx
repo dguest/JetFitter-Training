@@ -7,7 +7,6 @@
 #include <cstring>
 #include <stdexcept>
 
-
 //Since we are single-threaded and never calls outself recursively, we
 //can use a global data area to do our work.
 //FIXME: We do it like this to avoid adding new member data (because I
@@ -60,9 +59,8 @@ TFlavorNetwork::TFlavorNetwork(std::vector<TFlavorNetwork::Input> inputs,
 			       Int_t nOutput,
 			       std::vector<TVectorD*> & thresholdVectors,
 			       std::vector<TMatrixD*> & weightMatrices,
-			       Int_t activationFunction,
-			       bool linearOutput,
-			       bool normalizeOutput)
+			       int activationFunction,
+			       unsigned options)
 {
   mnInput = inputs.size(); 
   mnHidden = thresholdVectors.size() - 1;
@@ -70,8 +68,8 @@ TFlavorNetwork::TFlavorNetwork(std::vector<TFlavorNetwork::Input> inputs,
   mThresholdVectors = thresholdVectors;
   mWeightMatrices = weightMatrices;
   mActivationFunction = activationFunction;
-  mLinearOutput = linearOutput;
-  mNormalizeOutput = normalizeOutput;
+  mLinearOutput = options & linearOutput;
+  mNormalizeOutput = options & normalizeOutput;
   maxExpValue = log(std::numeric_limits<double>::max());
 
   std::vector<TVectorD*>::const_iterator hidden_layer_threshold_vector_end = 

@@ -16,9 +16,20 @@
   @author Giacinto Piacquadio (giacinto.piacquadio AT physik.uni-freiburg.de)
 ********************************************************/
 
+namespace nnopt { 
+}
+
 class TFlavorNetwork : public TObject
 {
 public:
+
+  static const unsigned linearOutput = 1u << 0; 
+  static const unsigned normalizeOutput = 1u << 1; 
+
+  enum ActivationFunction { 
+    SIGMOID = 1
+  }; 
+
   struct Input { 
     std::string name; //<- requires unique strings or none at all
     double offset; //<- this value is added to the input before giving to nn
@@ -53,9 +64,8 @@ public:
 		 Int_t nOutput,
 		 std::vector<TVectorD*> & thresholdVectors,
 		 std::vector<TMatrixD*> & weightMatrices,
-		 Int_t activationFunction = 1,
-		 bool linearOutput=false,
-		 bool normalizeOutput=false);
+		 int activationFunction = SIGMOID,
+		 unsigned options = 0);
 
   ~TFlavorNetwork();
 

@@ -19,7 +19,8 @@ public:
 
   std::map<std::string,TH1*> histsFromNetwork(const TFlavorNetwork*) const;
   
-  TFlavorNetwork* networkFromHists(std::map<std::string,TH1*>&) const;
+  TFlavorNetwork* networkFromHists(std::map<std::string,TH1*>&, 
+				   unsigned options = 0) const;
 
 private:
   

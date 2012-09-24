@@ -111,7 +111,7 @@ private:
   std::vector<Double_t> m_input_node_offset; 
   std::vector<Double_t> m_input_node_scale; 
     
-  std::map<std::string,int> inputStringToNode; 
+  std::map<std::string,int> m_inputStringToNode; 
 
   std::vector<Int_t> mnHiddenLayerSize;
 

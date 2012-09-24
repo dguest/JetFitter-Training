@@ -91,14 +91,21 @@ TFlavorNetwork::TFlavorNetwork(std::vector<TFlavorNetwork::Input> inputs,
        itr++) { 
     m_input_node_offset.push_back(itr->offset); 
     m_input_node_scale.push_back(itr->scale); 
-    inputStringToNode[itr->name] = node_n; 
+    if (itr->name.size() > 0) { 
+      m_inputStringToNode[itr->name] = node_n; 
+    }
     node_n++; 
   }
 
   int n_node = node_n; 
-  assert(n_node == inputStringToNode.size()); 
   assert(n_node == m_input_node_offset.size()); 
   assert(n_node == m_input_node_scale.size()); 
+
+  // mapping should either be unique or non-existent
+  size_t n_mapped = m_inputStringToNode.size(); 
+  if (n_node != n_mapped && n_mapped != 0) { 
+    throw std::runtime_error("Names for NN inputs must be unique (if given)");
+  }
 
   int nlayer_max(mnOutput);
   for (unsigned i = 0; i < mnHiddenLayerSize.size(); ++i)
@@ -138,8 +145,8 @@ TFlavorNetwork::~TFlavorNetwork()
 std::vector<TFlavorNetwork::Input> TFlavorNetwork::getInputs() const { 
   std::map<int,Input> inputs; 
   for (std::map<std::string,int>::const_iterator itr = 
-	 inputStringToNode.begin(); 
-       itr != inputStringToNode.end(); 
+	 m_inputStringToNode.begin(); 
+       itr != m_inputStringToNode.end(); 
        itr++){ 
     Input the_input; 
     the_input.name = itr->first; 
@@ -147,7 +154,7 @@ std::vector<TFlavorNetwork::Input> TFlavorNetwork::getInputs() const {
     the_input.scale = m_input_node_scale.at(itr->second);
     inputs[itr->second] = the_input; 
   }
-  assert(inputs.size() == inputStringToNode.size()); 
+  assert(inputs.size() == m_inputStringToNode.size()); 
 
   std::vector<Input> inputs_vector; 
   for (std::map<int,Input>::const_iterator itr = inputs.begin(); 
@@ -201,14 +208,15 @@ std::vector<Double_t>
 TFlavorNetwork::calculateWithNormalization(TFlavorNetwork::DMapI begin, 
 					   TFlavorNetwork::DMapI end) 
   const { 
+
   std::vector<Double_t> inputs(mnInput); 
   int n_filled = 0; 
   for (std::map<std::string,double>::const_iterator itr = begin; 
        itr != end; 
        itr++){ 
     std::map<std::string,int>::const_iterator input_node_ptr = 
-      inputStringToNode.find(itr->first); 
-    if (input_node_ptr == inputStringToNode.end()) { 
+      m_inputStringToNode.find(itr->first); 
+    if (input_node_ptr == m_inputStringToNode.end()) { 
       throw std::runtime_error(itr->first + "not found in NN"); 
     }
 
@@ -225,16 +233,16 @@ TFlavorNetwork::calculateWithNormalization(TFlavorNetwork::DMapI begin,
   }
 
   // make sure all nodes are filled
-  if (n_filled != inputStringToNode.size() ) { 
-    assert(n_filled < inputStringToNode.size() ); 
+  if (n_filled != m_inputStringToNode.size() ) { 
+    assert(n_filled < m_inputStringToNode.size() ); 
     std::set<std::string> input_set;
     for (DMapI itr = begin; itr != end; itr++) { 
       input_set.insert(itr->first); 
     }
     std::string err = "nodes not filled in NN: "; 
     for (std::map<std::string,int>::const_iterator itr = 
-	   inputStringToNode.begin(); 
-	 itr != inputStringToNode.end(); 
+	   m_inputStringToNode.begin(); 
+	 itr != m_inputStringToNode.end(); 
 	 itr++){
       if (input_set.find(itr->first) == input_set.end() ) 
 	err.append(itr->first + " "); 

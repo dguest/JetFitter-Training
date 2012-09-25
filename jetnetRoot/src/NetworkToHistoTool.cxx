@@ -185,16 +185,23 @@ NetworkToHistoTool::networkFromHists(std::map<std::string,TH1*>& inputHistos,
   }
   
   TH1* histoInputs = inputHistos["InputsInfo"]; 
-  if (!histoInputs) 
-    throw std::runtime_error("could not find InputsInfo"); 
-
   std::vector<TFlavorNetwork::Input> inputs; 
-  for (int i = 0 ; i < nInput; i++) { 
-    TFlavorNetwork::Input the_input; 
-    the_input.name = histoInputs->GetXaxis()->GetBinLabel(i + 1); 
-    the_input.offset = histoInputs->GetBinContent(i + 1, 1); 
-    the_input.scale = histoInputs->GetBinContent(i + 1, 2); 
-    inputs.push_back(the_input); 
+  if (!histoInputs) { 
+    for (int i = 0 ; i < nInput; i++) { 
+      TFlavorNetwork::Input the_input; 
+      the_input.offset = 0; 
+      the_input.scale = 1; 
+      inputs.push_back(the_input); 
+    }
+  }
+  else { 
+    for (int i = 0 ; i < nInput; i++) { 
+      TFlavorNetwork::Input the_input; 
+      the_input.name = histoInputs->GetXaxis()->GetBinLabel(i + 1); 
+      the_input.offset = histoInputs->GetBinContent(i + 1, 1); 
+      the_input.scale = histoInputs->GetBinContent(i + 1, 2); 
+      inputs.push_back(the_input); 
+    }
   }
   TFlavorNetwork* trainedNetwork = 
     new TFlavorNetwork(inputs,

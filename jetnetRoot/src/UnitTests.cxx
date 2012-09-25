@@ -32,7 +32,8 @@ float get_rand(float range, float offset) {
 
 std::vector<double> test_histo_tool(const TFlavorNetwork* net, 
 				    std::map<std::string, double> in, 
-				    bool do_broken = false)
+				    bool do_broken = false, 
+				    std::string out_fname = "test_hists.root")
 {
   NetworkToHistoTool histo_tool; 
   std::map<std::string,TH1*> hists = histo_tool.histsFromNetwork(net); 
@@ -40,7 +41,7 @@ std::vector<double> test_histo_tool(const TFlavorNetwork* net,
     hists.rbegin()->second->Fill(0.5,0.5); 
   }
 
-  TFile* out_file = new TFile("test_hists.root","recreate"); 
+  TFile* out_file = new TFile(out_fname.c_str(),"recreate"); 
   for (std::map<std::string,TH1*>::iterator itr = hists.begin(); 
        itr != hists.end(); 
        itr++){ 
@@ -48,9 +49,30 @@ std::vector<double> test_histo_tool(const TFlavorNetwork* net,
   }
   out_file->Close(); 
 
-  // TFile in_file("test_hists.root"); 
-  // std::vector<TH1*> read_hists; 
-  
+  TFlavorNetwork* from_hists = histo_tool.networkFromHists(hists); 
+  return from_hists->calculateWithNormalization(in); 
+}
+
+std::vector<double> test_histo_tool(const TFlavorNetwork* net, 
+				    std::vector<double> in, 
+				    bool do_broken = false, 
+				    std::string out_fname = "stripped.root")
+{
+  NetworkToHistoTool histo_tool; 
+  std::map<std::string,TH1*> hists = histo_tool.histsFromNetwork(net); 
+  if (do_broken) { 
+    hists.rbegin()->second->Fill(0.5,0.5); 
+  }
+
+  hists.erase("InputsInfo"); 
+
+  TFile* out_file = new TFile(out_fname.c_str(),"recreate"); 
+  for (std::map<std::string,TH1*>::iterator itr = hists.begin(); 
+       itr != hists.end(); 
+       itr++){ 
+    out_file->WriteTObject(itr->second); 
+  }
+  out_file->Close(); 
 
   TFlavorNetwork* from_hists = histo_tool.networkFromHists(hists); 
   return from_hists->calculateWithNormalization(in); 
@@ -177,6 +199,9 @@ bool test_trained(std::vector<int> layer_sizes) {
   std::vector<double> histo_out = test_histo_tool
     (new_style_nn, input_map, false); 
 
+  std::vector<double> stripped_hist_out = test_histo_tool
+    (new_style_nn, input_vector, false); 
+
   for (int i = 0; i < 3; i++){ 
     std::cout << "output " << i << " -- JN: " << jn->GetOutput(i) 
 	      << ", FlavNet map: " << ttrained_map_out.at(i) 
@@ -185,6 +210,7 @@ bool test_trained(std::vector<int> layer_sizes) {
 	      << ", TrainedNet vec: " << old_style_out.at(i) 
 	      << ", FlavNet from old: " << new_style_out.at(i) 
 	      << ", From Histos: " << histo_out.at(i)
+	      << ", From stripped hists: " << stripped_hist_out.at(i)
 	      << std::endl;
   }
   

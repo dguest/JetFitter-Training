@@ -102,7 +102,7 @@ NetworkToHistoTool::histsFromNetwork(const TFlavorNetwork* trainedNetwork)
 			       nInput, 0, 1, 
 			       2, 0, 1); 
   
-  for (size_t input_n = 0; input_n < nInput; input_n++ ) { 
+  for (int input_n = 0; input_n < nInput; input_n++ ) { 
     Input input = inputs.at(input_n); 
     histoInputs->SetBinContent(input_n + 1, 1, input.offset); 
     histoInputs->SetBinContent(input_n + 1, 2, input.scale); 

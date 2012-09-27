@@ -46,6 +46,16 @@ NetworkToHistoTool::histsFromNetwork(const TNeuralNetwork* trainedNetwork)
 
   histoLayersInfo->SetBinContent(2+nHidden,nOutput);
 
+  //underflow for linear output
+  if (trainedNetwork->getIfLinearOutput()){
+    histoLayersInfo->SetBinContent(0,1);
+  }
+  //overflow for normalized output (Pott nodes)
+  if (trainedNetwork->getIfNormalizeOutput()){
+    histoLayersInfo->SetBinContent(nHidden+3,1);
+  }
+
+
   outputHistos[histoLayersInfo->GetName()] = histoLayersInfo;
 
   
@@ -116,8 +126,8 @@ NetworkToHistoTool::histsFromNetwork(const TNeuralNetwork* trainedNetwork)
 
 
 TNeuralNetwork* 
-NetworkToHistoTool::networkFromHists(std::map<std::string,TH1*>& inputHistos,
-				     unsigned options) const
+NetworkToHistoTool::networkFromHists(std::map<std::string,TH1*>& inputHistos) 
+  const
 {
 
   
@@ -140,6 +150,16 @@ NetworkToHistoTool::networkFromHists(std::map<std::string,TH1*>& inputHistos,
   }
 
   Int_t nOutput=(Int_t)std::floor(histoLayersInfo->GetBinContent(2+nHidden)+0.5);
+
+  unsigned options = 0; 
+  if (histoLayersInfo->GetBinContent(0)>0.5)
+  {
+    options |= TNeuralNetwork::linearOutput;
+  }
+  if (histoLayersInfo->GetBinContent(nHidden+3)>0.5)
+  {
+    options |= TNeuralNetwork::normalizeOutput;
+  }
 
   
   std::vector<TVectorD*> thresholdVectors;

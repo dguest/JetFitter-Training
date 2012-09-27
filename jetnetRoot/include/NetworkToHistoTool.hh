@@ -19,8 +19,7 @@ public:
 
   std::map<std::string,TH1*> histsFromNetwork(const TNeuralNetwork*) const;
   
-  TNeuralNetwork* networkFromHists(std::map<std::string,TH1*>&, 
-				   unsigned options = 0) const;
+  TNeuralNetwork* networkFromHists(std::map<std::string,TH1*>&) const;
 
 private:
   

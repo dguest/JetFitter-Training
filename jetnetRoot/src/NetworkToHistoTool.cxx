@@ -20,7 +20,7 @@ NetworkToHistoTool::histsFromNetwork(const TNeuralNetwork* trainedNetwork)
 
   assert(trainedNetwork->getActivationFunction() == 1); 
 
-  Int_t nInput=trainedNetwork->getnInput();
+  unsigned nInput=trainedNetwork->getnInput();
   std::vector<Int_t> nHiddenLayerSize=trainedNetwork->getnHiddenLayerSize();
   Int_t nHidden=nHiddenLayerSize.size();
 
@@ -112,7 +112,7 @@ NetworkToHistoTool::histsFromNetwork(const TNeuralNetwork* trainedNetwork)
 			       nInput, 0, 1, 
 			       2, 0, 1); 
   
-  for (int input_n = 0; input_n < nInput; input_n++ ) { 
+  for (unsigned input_n = 0; input_n < nInput; input_n++ ) { 
     Input input = inputs.at(input_n); 
     histoInputs->SetBinContent(input_n + 1, 1, input.offset); 
     histoInputs->SetBinContent(input_n + 1, 2, input.scale); 
@@ -141,7 +141,8 @@ NetworkToHistoTool::networkFromHists(std::map<std::string,TH1*>& inputHistos)
 
 
   Int_t nHidden=histoLayersInfo->GetNbinsX()-2;
-  Int_t nInput=(Int_t)std::floor(histoLayersInfo->GetBinContent(1)+0.5);
+  unsigned nInput = static_cast<unsigned>
+    (std::floor(histoLayersInfo->GetBinContent(1)+0.5));
 
   std::vector<Int_t> nHiddenLayerSize;
   for (Int_t i=0;i<nHidden;++i)
@@ -207,7 +208,7 @@ NetworkToHistoTool::networkFromHists(std::map<std::string,TH1*>& inputHistos)
   TH1* histoInputs = inputHistos["InputsInfo"]; 
   std::vector<TNeuralNetwork::Input> inputs; 
   if (!histoInputs) { 
-    for (int i = 0 ; i < nInput; i++) { 
+    for (unsigned i = 0 ; i < nInput; i++) { 
       TNeuralNetwork::Input the_input; 
       the_input.offset = 0; 
       the_input.scale = 1; 
@@ -215,7 +216,7 @@ NetworkToHistoTool::networkFromHists(std::map<std::string,TH1*>& inputHistos)
     }
   }
   else { 
-    for (int i = 0 ; i < nInput; i++) { 
+    for (unsigned i = 0 ; i < nInput; i++) { 
       TNeuralNetwork::Input the_input; 
       the_input.name = histoInputs->GetXaxis()->GetBinLabel(i + 1); 
       the_input.offset = histoInputs->GetBinContent(i + 1, 1); 

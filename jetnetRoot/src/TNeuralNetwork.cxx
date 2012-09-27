@@ -13,7 +13,7 @@
 //am not 100% sure this class is not persistified somewhere). 
 //{Thomas Kittelmann}
 namespace TTN_internal {
-  const static unsigned MAX_LAYER_LENGTH = 1000; 
+  const static int MAX_LAYER_LENGTH = 1000; 
   static double tmpdata[2*MAX_LAYER_LENGTH];
   static double * tmp_array[2] = { 
     &(tmpdata[0]), &(tmpdata[MAX_LAYER_LENGTH]) };
@@ -56,7 +56,7 @@ TNeuralNetwork::TNeuralNetwork(Int_t nInput,
 }
 
 TNeuralNetwork::TNeuralNetwork(std::vector<TNeuralNetwork::Input> inputs, 
-			       Int_t nOutput,
+			       unsigned nOutput,
 			       std::vector<TVectorD*> & thresholdVectors,
 			       std::vector<TMatrixD*> & weightMatrices,
 			       int activationFunction,
@@ -83,7 +83,7 @@ TNeuralNetwork::TNeuralNetwork(std::vector<TNeuralNetwork::Input> inputs,
     mnHiddenLayerSize.push_back((*tr_itr)->GetNrows()); 
   }
 
-  int node_n = 0; 
+  unsigned node_n = 0; 
   for (std::vector<Input>::const_iterator itr = inputs.begin(); 
        itr != inputs.end(); 
        itr++) { 
@@ -95,12 +95,12 @@ TNeuralNetwork::TNeuralNetwork(std::vector<TNeuralNetwork::Input> inputs,
     node_n++; 
   }
 
-  int n_node = node_n; 
+  unsigned n_node = node_n; 
   assert(n_node == m_input_node_offset.size()); 
   assert(n_node == m_input_node_scale.size()); 
 
   // mapping should either be unique or non-existent
-  size_t n_mapped = m_inputStringToNode.size(); 
+  unsigned n_mapped = m_inputStringToNode.size(); 
   if (n_node != n_mapped && n_mapped != 0) { 
     throw std::runtime_error("Names for NN inputs must be unique (if given)");
   }
@@ -208,7 +208,7 @@ TNeuralNetwork::calculateWithNormalization(TNeuralNetwork::DMapI begin,
   const { 
 
   std::vector<Double_t> inputs(mnInput); 
-  int n_filled = 0; 
+  size_t n_filled = 0;
   for (std::map<std::string,double>::const_iterator itr = begin; 
        itr != end; 
        itr++){ 
@@ -260,7 +260,7 @@ TNeuralNetwork::calculateWithNormalization(const TNeuralNetwork::DVec& input)
   assert(mnInput == m_input_node_scale.size()); 
   assert(mnInput == m_input_node_offset.size()); 
   std::vector<double> transformed_inputs(input); 
-  for (int input_n = 0; input_n < mnInput; input_n++) { 
+  for (unsigned input_n = 0; input_n < mnInput; input_n++) { 
     transformed_inputs[input_n] += m_input_node_offset[input_n]; 
     transformed_inputs[input_n] *= m_input_node_scale[input_n]; 
   }
@@ -277,7 +277,7 @@ TNeuralNetwork::calculateOutputValues(const std::vector<Double_t>& input)
 
   using namespace TTN_internal; 
 
-  if (static_cast<int>(input.size()) != mnInput)
+  if (input.size() != mnInput)
   {
     std::cerr << "TNeuralNetwork WARNING Input size: " << input.size()
 	      << " does not match with network: " << mnInput << std::endl;

@@ -61,7 +61,7 @@ public:
   // the hidden layer size from the thresholdVectors and weightMatrices. 
   // Also runs a consistency check on thresholdVectors and weightMatrices. 
   TNeuralNetwork(std::vector<TNeuralNetwork::Input> inputs,
-		 Int_t nOutput,
+		 unsigned nOutput,
 		 std::vector<TVectorD*> & thresholdVectors,
 		 std::vector<TMatrixD*> & weightMatrices,
 		 int activationFunction = SIGMOID,
@@ -112,9 +112,9 @@ public:
 private:
 
 
-  Int_t mnInput;
-  Int_t mnHidden;
-  Int_t mnOutput;
+  unsigned mnInput;
+  unsigned mnHidden;
+  unsigned mnOutput;
 
   // in an ideal world these would be one object in a vector, but 
   // storing classes within classes in root is ugly

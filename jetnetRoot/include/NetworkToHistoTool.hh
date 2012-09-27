@@ -1,6 +1,6 @@
 //-*-c++-*-
-#ifndef __TNetworkToHistoTool_
-#define __TNetworkToHistoTool_
+#ifndef NETWORK_TO_HISTO_TOOL_H
+#define NETWORK_TO_HISTO_TOOL_H
 
 #include <string>
 #include <map>

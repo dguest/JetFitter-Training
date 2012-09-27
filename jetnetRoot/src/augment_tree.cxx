@@ -6,7 +6,7 @@
 #include <utility> // pair
 #include <cstdlib> // rand, srand
 #include <iostream> // for debugging
-#include "TFlavorNetwork.h"
+#include "TNeuralNetwork.h"
 #include <boost/shared_ptr.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <boost/ptr_container/ptr_vector.hpp>
@@ -39,8 +39,8 @@ int augment_tree(std::string file_name,
     output_file = file_name + output_file_ext; 
   }
 
-  boost::shared_ptr<TFlavorNetwork> nn(get_nn(nn_file)); 
-  typedef std::vector<TFlavorNetwork::Input> NNInputs; 
+  boost::shared_ptr<TNeuralNetwork> nn(get_nn(nn_file)); 
+  typedef std::vector<TNeuralNetwork::Input> NNInputs; 
   NNInputs nn_inputs = nn->getInputs(); 
   std::set<std::string> input_name_set; 
   for (NNInputs::const_iterator itr = nn_inputs.begin(); 
@@ -185,22 +185,22 @@ int augment_tree(std::string file_name,
 
 }
 
-boost::shared_ptr<TFlavorNetwork> get_nn(std::string file_name) { 
+boost::shared_ptr<TNeuralNetwork> get_nn(std::string file_name) { 
   TFile file(file_name.c_str()); 
   if (file.IsZombie() || !file.IsOpen() ) { 
     std::string err = " cannot be opened"; 
     throw std::runtime_error(file.GetName() + err); 
   }
 
-  TFlavorNetwork* the_network = dynamic_cast<TFlavorNetwork*>
-    (file.Get("TFlavorNetwork")); 
+  TNeuralNetwork* the_network = dynamic_cast<TNeuralNetwork*>
+    (file.Get("TNeuralNetwork")); 
 
   if (!the_network) 
-    throw std::runtime_error("no TFlavorNetwork in " + file_name); 
+    throw std::runtime_error("no TNeuralNetwork in " + file_name); 
 
   // take ownership
   gROOT->cd(); 
-  boost::shared_ptr<TFlavorNetwork> export_net
-    (dynamic_cast<TFlavorNetwork*>(the_network->Clone())); 
+  boost::shared_ptr<TNeuralNetwork> export_net
+    (dynamic_cast<TNeuralNetwork*>(the_network->Clone())); 
   return export_net; 
 }

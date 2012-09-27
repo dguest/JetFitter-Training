@@ -49,7 +49,7 @@ LIBS += -L$(COMMON_LIBS) -Wl,-rpath,$(COMMON_LIBS)
 JETNET_OBJ := jetnet.o
 JETNET_SRC := jetnet_35.f
 
-T_OBJ := TNeuralDataSet.o TFlavorNetwork.o TTrainedNetwork.o
+T_OBJ := TNeuralDataSet.o TNeuralNetwork.o TTrainedNetwork.o
 T_DICTS := $(T_OBJ:.o=Dict.o)
 
 JETNET_CXX_OBJECTS := trainNN.o testNN.o 

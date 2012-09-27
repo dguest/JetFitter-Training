@@ -1,5 +1,5 @@
 #include "TTrainedNetwork.h"
-#include "TFlavorNetwork.h"
+#include "TNeuralNetwork.h"
 #include "TFile.h"
 #include "NNAdapters.hh"
 #include <iostream>
@@ -16,7 +16,7 @@ int main(int narg, char* varg[]) {
   if (narg > 3) { 
     std::cerr << "too many args\n"; 
   }
-  TFlavorNetwork* converted = getOldTrainedNetwork(varg[1]);
+  TNeuralNetwork* converted = getOldTrainedNetwork(varg[1]);
   TFile output(out_file.c_str(),"recreate"); 
   output.WriteTObject(converted); 
 }

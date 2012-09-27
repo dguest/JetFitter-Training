@@ -1,6 +1,6 @@
 #include <TH1D.h>
 #include <TH2D.h>
-#include "TFlavorNetwork.h"
+#include "TNeuralNetwork.h"
 #include "NetworkToHistoTool.hh"
 #include <cmath>
 #include <stdexcept> 
@@ -11,7 +11,7 @@
 // ClassImp( TNetworkToHistoTool)
 
 std::map<std::string,TH1*> 
-NetworkToHistoTool::histsFromNetwork(const TFlavorNetwork* trainedNetwork) 
+NetworkToHistoTool::histsFromNetwork(const TNeuralNetwork* trainedNetwork) 
   const
 {
 
@@ -93,7 +93,7 @@ NetworkToHistoTool::histsFromNetwork(const TFlavorNetwork* trainedNetwork)
     
   }
 
-  typedef TFlavorNetwork::Input Input; 
+  typedef TNeuralNetwork::Input Input; 
   std::vector<Input> inputs = trainedNetwork->getInputs(); 
   
   assert(inputs.size() == nInput); 
@@ -115,7 +115,7 @@ NetworkToHistoTool::histsFromNetwork(const TFlavorNetwork* trainedNetwork)
 }
 
 
-TFlavorNetwork* 
+TNeuralNetwork* 
 NetworkToHistoTool::networkFromHists(std::map<std::string,TH1*>& inputHistos,
 				     unsigned options) const
 {
@@ -185,10 +185,10 @@ NetworkToHistoTool::networkFromHists(std::map<std::string,TH1*>& inputHistos,
   }
   
   TH1* histoInputs = inputHistos["InputsInfo"]; 
-  std::vector<TFlavorNetwork::Input> inputs; 
+  std::vector<TNeuralNetwork::Input> inputs; 
   if (!histoInputs) { 
     for (int i = 0 ; i < nInput; i++) { 
-      TFlavorNetwork::Input the_input; 
+      TNeuralNetwork::Input the_input; 
       the_input.offset = 0; 
       the_input.scale = 1; 
       inputs.push_back(the_input); 
@@ -196,15 +196,15 @@ NetworkToHistoTool::networkFromHists(std::map<std::string,TH1*>& inputHistos,
   }
   else { 
     for (int i = 0 ; i < nInput; i++) { 
-      TFlavorNetwork::Input the_input; 
+      TNeuralNetwork::Input the_input; 
       the_input.name = histoInputs->GetXaxis()->GetBinLabel(i + 1); 
       the_input.offset = histoInputs->GetBinContent(i + 1, 1); 
       the_input.scale = histoInputs->GetBinContent(i + 1, 2); 
       inputs.push_back(the_input); 
     }
   }
-  TFlavorNetwork* trainedNetwork = 
-    new TFlavorNetwork(inputs,
+  TNeuralNetwork* trainedNetwork = 
+    new TNeuralNetwork(inputs,
 		       nOutput,
 		       thresholdVectors,
 		       weightMatrices, 

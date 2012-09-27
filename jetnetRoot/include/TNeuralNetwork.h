@@ -1,6 +1,6 @@
 //-*-c++-*-
-#ifndef __TFlavorNetwork_
-#define __TFlavorNetwork_
+#ifndef __TNeuralNetwork_
+#define __TNeuralNetwork_
 
 #include "TObject.h"
 #include "TMatrixD.h"
@@ -11,7 +11,7 @@
 #include <map>
 
 /******************************************************
-  @class TFlavorNetwork
+  @class TNeuralNetwork
   Created : 18-02-2008
   @author Giacinto Piacquadio (giacinto.piacquadio AT physik.uni-freiburg.de)
 ********************************************************/
@@ -19,7 +19,7 @@
 namespace nnopt { 
 }
 
-class TFlavorNetwork : public TObject
+class TNeuralNetwork : public TObject
 {
 public:
 
@@ -40,12 +40,12 @@ public:
   typedef std::map<std::string, double> DMap; 
   typedef DMap::const_iterator DMapI; 
 
-  TFlavorNetwork();
+  TNeuralNetwork();
 
   //NOTE: class takes ownership of all pointers.
 
   // old-school constructor (for compatability)
-  TFlavorNetwork(Int_t nInput, 
+  TNeuralNetwork(Int_t nInput, 
 		 Int_t nHidden, 
 		 Int_t nOutput,
 		 std::vector<Int_t> & nHiddenLayerSize, 
@@ -60,14 +60,14 @@ public:
   // This avoids some chances for logical inconsistency by constructing 
   // the hidden layer size from the thresholdVectors and weightMatrices. 
   // Also runs a consistency check on thresholdVectors and weightMatrices. 
-  TFlavorNetwork(std::vector<TFlavorNetwork::Input> inputs,
+  TNeuralNetwork(std::vector<TNeuralNetwork::Input> inputs,
 		 Int_t nOutput,
 		 std::vector<TVectorD*> & thresholdVectors,
 		 std::vector<TMatrixD*> & weightMatrices,
 		 int activationFunction = SIGMOID,
 		 unsigned options = 0);
 
-  ~TFlavorNetwork();
+  ~TNeuralNetwork();
 
   std::vector<Input> getInputs() const; 
 
@@ -140,7 +140,7 @@ private:
 
   bool is_consistent() const; 
 
-  ClassDef( TFlavorNetwork, 3 )
+  ClassDef( TNeuralNetwork, 3 )
   
 };
 

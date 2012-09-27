@@ -32,7 +32,7 @@
 #include <vector>
 #include <string>
 
-class TFlavorNetwork;
+class TNeuralNetwork;
 
 
 //typedef ActivationFunction  TActivationFunction;

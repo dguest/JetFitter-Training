@@ -1,7 +1,7 @@
 #ifndef AUGMENT_TREE_H
 #define AUGMENT_TREE_H
 
-class TFlavorNetwork; 
+class TNeuralNetwork; 
 
 #include <string> 
 #include <vector> 
@@ -27,6 +27,6 @@ int augment_tree(std::string file_name,
 		 int start_entry = 0, 
 		 const unsigned options = augment::default_opts); 
 
-boost::shared_ptr<TFlavorNetwork> get_nn(std::string file_name); 
+boost::shared_ptr<TNeuralNetwork> get_nn(std::string file_name); 
 
 #endif // AUGMENT_TREE_H

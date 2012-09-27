@@ -1,4 +1,4 @@
-#include "TFlavorNetwork.h"
+#include "TNeuralNetwork.h"
 #include <iostream>
 #include <set> 
 #include <limits>
@@ -20,7 +20,7 @@ namespace TTN_internal {
 }
 
 
-TFlavorNetwork::TFlavorNetwork()
+TNeuralNetwork::TNeuralNetwork()
 {
   mnInput=0;
   mnHidden=0;
@@ -32,7 +32,7 @@ TFlavorNetwork::TFlavorNetwork()
   
 }
 
-TFlavorNetwork::TFlavorNetwork(Int_t nInput, 
+TNeuralNetwork::TNeuralNetwork(Int_t nInput, 
 				 Int_t nHidden, 
                                  Int_t nOutput,
 				 std::vector<Int_t> & nHiddenLayerSize, 
@@ -55,7 +55,7 @@ TFlavorNetwork::TFlavorNetwork(Int_t nInput,
   
 }
 
-TFlavorNetwork::TFlavorNetwork(std::vector<TFlavorNetwork::Input> inputs, 
+TNeuralNetwork::TNeuralNetwork(std::vector<TNeuralNetwork::Input> inputs, 
 			       Int_t nOutput,
 			       std::vector<TVectorD*> & thresholdVectors,
 			       std::vector<TMatrixD*> & weightMatrices,
@@ -109,14 +109,14 @@ TFlavorNetwork::TFlavorNetwork(std::vector<TFlavorNetwork::Input> inputs,
   for (unsigned i = 0; i < mnHiddenLayerSize.size(); ++i)
     nlayer_max = std::max(nlayer_max, mnHiddenLayerSize[i]);
   if (nlayer_max >= TTN_internal::MAX_LAYER_LENGTH) { 
-    std::cout<<"TFlavorNetwork ERROR Maximal layer size exceeded"<<std::endl;
+    std::cout<<"TNeuralNetwork ERROR Maximal layer size exceeded"<<std::endl;
     assert(false);
   }
 
   assert(is_consistent()); 
 }
 
-TFlavorNetwork::~TFlavorNetwork()
+TNeuralNetwork::~TNeuralNetwork()
 {
   std::vector<TVectorD*>::const_iterator vectBegin=mThresholdVectors.begin();
   std::vector<TVectorD*>::const_iterator vectEnd=mThresholdVectors.end();
@@ -140,7 +140,7 @@ TFlavorNetwork::~TFlavorNetwork()
 
 }
 
-std::vector<TFlavorNetwork::Input> TFlavorNetwork::getInputs() const { 
+std::vector<TNeuralNetwork::Input> TNeuralNetwork::getInputs() const { 
   std::map<int,Input> inputs; 
   for (std::map<std::string,int>::const_iterator itr = 
 	 m_inputStringToNode.begin(); 
@@ -162,7 +162,7 @@ std::vector<TFlavorNetwork::Input> TFlavorNetwork::getInputs() const {
   return inputs_vector; 
 }
 
-void TFlavorNetwork::setNewWeights(std::vector<TVectorD*> & thresholdVectors,
+void TNeuralNetwork::setNewWeights(std::vector<TVectorD*> & thresholdVectors,
 				    std::vector<TMatrixD*> & weightMatrices)
 {
 
@@ -195,7 +195,7 @@ void TFlavorNetwork::setNewWeights(std::vector<TVectorD*> & thresholdVectors,
 }
 
 std::vector<Double_t> 
-TFlavorNetwork::calculateWithNormalization(const TFlavorNetwork::DMap& in) 
+TNeuralNetwork::calculateWithNormalization(const TNeuralNetwork::DMap& in) 
   const { 
   DMapI begin = in.begin(); 
   DMapI end = in.end(); 
@@ -203,8 +203,8 @@ TFlavorNetwork::calculateWithNormalization(const TFlavorNetwork::DMap& in)
 }
 
 std::vector<Double_t> 
-TFlavorNetwork::calculateWithNormalization(TFlavorNetwork::DMapI begin, 
-					   TFlavorNetwork::DMapI end) 
+TNeuralNetwork::calculateWithNormalization(TNeuralNetwork::DMapI begin, 
+					   TNeuralNetwork::DMapI end) 
   const { 
 
   std::vector<Double_t> inputs(mnInput); 
@@ -251,7 +251,7 @@ TFlavorNetwork::calculateWithNormalization(TFlavorNetwork::DMapI begin,
 }
 
 std::vector<Double_t>
-TFlavorNetwork::calculateWithNormalization(const TFlavorNetwork::DVec& input)
+TNeuralNetwork::calculateWithNormalization(const TNeuralNetwork::DVec& input)
   const 
 {
   // asserts can be turned off in optomized code anyway, 
@@ -267,7 +267,7 @@ TFlavorNetwork::calculateWithNormalization(const TFlavorNetwork::DVec& input)
   return calculateOutputValues(transformed_inputs); 
 }
 std::vector<Double_t>  
-TFlavorNetwork::calculateOutputValues(const std::vector<Double_t>& input) 
+TNeuralNetwork::calculateOutputValues(const std::vector<Double_t>& input) 
   const 
 {
   // This method is now highly optimised (apart from the potential use
@@ -279,7 +279,7 @@ TFlavorNetwork::calculateOutputValues(const std::vector<Double_t>& input)
 
   if (static_cast<int>(input.size()) != mnInput)
   {
-    std::cerr << "TFlavorNetwork WARNING Input size: " << input.size()
+    std::cerr << "TNeuralNetwork WARNING Input size: " << input.size()
 	      << " does not match with network: " << mnInput << std::endl;
     return std::vector<double>();
   }
@@ -340,14 +340,14 @@ TFlavorNetwork::calculateOutputValues(const std::vector<Double_t>& input)
 }
 
 
-Double_t TFlavorNetwork::sigmoid(Double_t x) const { 
+Double_t TNeuralNetwork::sigmoid(Double_t x) const { 
   if (-2*x >= maxExpValue){
     return 0.;
   }
   return 1./(1.+exp(-2*x)); 
 }
 
-bool TFlavorNetwork::is_consistent() const { 
+bool TNeuralNetwork::is_consistent() const { 
   if (mThresholdVectors.size() != mWeightMatrices.size()) 
     return false; 
   int nodes_last_layer = mnInput; 
@@ -370,7 +370,7 @@ bool TFlavorNetwork::is_consistent() const {
   return true; 
 }
 
-ClassImp( TFlavorNetwork)
+ClassImp( TNeuralNetwork)
 
 
 

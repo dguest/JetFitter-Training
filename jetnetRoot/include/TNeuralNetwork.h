@@ -55,6 +55,11 @@ public:
 		 bool linearOutput = false,
 		 bool normalizeOutput = false); 
 
+  // You can also add offsets and scales. 
+  // This is intended as a workaround for older code that didn't include 
+  // normalization. 
+  void setOffsets(const std::vector<double>& offsets); 
+  void setScales(const std::vector<double>& scales); 
 
   // new constructor for normalized nn. 
   // This avoids some chances for logical inconsistency by constructing 
@@ -70,6 +75,8 @@ public:
   ~TNeuralNetwork();
 
   std::vector<Input> getInputs() const; 
+
+
 
   void setNewWeights(std::vector<TVectorD*> & thresholdVectors,
 		     std::vector<TMatrixD*> & weightMatrices);

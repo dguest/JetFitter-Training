@@ -55,6 +55,17 @@ TNeuralNetwork::TNeuralNetwork(Int_t nInput,
   
 }
 
+void TNeuralNetwork::setOffsets(const std::vector<double>& offsets) 
+{ 
+  assert(offsets.size() == mnInput); 
+  m_input_node_offset = offsets; 
+}
+void TNeuralNetwork::setScales(const std::vector<double>& scales) 
+{ 
+  assert(scales.size() == mnInput); 
+  m_input_node_scale = scales; 
+}
+
 TNeuralNetwork::TNeuralNetwork(std::vector<TNeuralNetwork::Input> inputs, 
 			       unsigned nOutput,
 			       std::vector<TVectorD*> & thresholdVectors,

@@ -33,7 +33,7 @@ void hist_from_nn(std::string nn_file,
   std::map<std::string,TH1*> hists = tool.histsFromNetwork(net); 
   for (std::map<std::string,TH1*>::iterator itr = hists.begin(); 
        itr != hists.end(); itr++) { 
-    out.WriteTObject(itr->second); 
+    out.WriteTObject(itr->second, itr->first.c_str()); 
   }
 
   // also copy over any remaining histograms

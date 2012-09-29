@@ -71,6 +71,9 @@ std::vector<double> test_histo_tool(const TTrainedNetwork* net,
   if (flags & bf::scramble) { 
     hists["Layer0_weights"]->Fill(0.5,0.5); 
   }
+  if (flags & bf::broken) { 
+    hists["LayersInfo"]->Fill(1.5); 
+  }
 
   typedef std::vector<TTrainedNetwork::Input> Inputs; 
 
@@ -241,7 +244,7 @@ bool test_trained(std::vector<int> layer_sizes) {
   std::vector<double> normed_hist_out = test_histo_tool
     (new_style_nn, raw_vector, bf::normalized, "normed.root"); 
   std::vector<double> renormed_hist_out = test_histo_tool
-    (new_style_nn, raw_vector, bf::renormalized , "renormed.root"); 
+    (new_style_nn, raw_vector, bf::renormalized  , "renormed.root"); 
 
   for (int i = 0; i < 3; i++){ 
     std::cout << "output " << i << " -- JN: " << jn->GetOutput(i) 

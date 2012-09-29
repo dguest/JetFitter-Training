@@ -147,10 +147,12 @@ NetworkToHistoTool::networkFromHists(std::map<std::string,TH1*>& inputHistos)
   std::vector<Int_t> nHiddenLayerSize;
   for (Int_t i=0;i<nHidden;++i)
   {
-    nHiddenLayerSize.push_back( (Int_t)std::floor(histoLayersInfo->GetBinContent(2+i)+0.5));
+    nHiddenLayerSize.push_back( (Int_t)std::floor
+				(histoLayersInfo->GetBinContent(2+i)+0.5));
   }
 
-  Int_t nOutput=(Int_t)std::floor(histoLayersInfo->GetBinContent(2+nHidden)+0.5);
+  Int_t nOutput=(Int_t)std::floor
+    (histoLayersInfo->GetBinContent(2+nHidden)+0.5);
 
   unsigned options = 0; 
   if (histoLayersInfo->GetBinContent(0)>0.5)
@@ -182,6 +184,15 @@ NetworkToHistoTool::networkFromHists(std::map<std::string,TH1*>& inputHistos)
     if (!histoThreshLayer)
       throw std::runtime_error("could not find " + threName); 
 
+    std::string er_tpl = "inconsistency between LayersInfo and %s found: "
+      "LayersInfo reports %i layers, %s has %i bins"; 
+
+    if (layerSize != histoThreshLayer->GetNbinsX()) { 
+      std::string err = (boost::format(er_tpl) % threName % layerSize % 
+			 threName % histoThreshLayer->GetNbinsX()).str(); 
+      throw std::runtime_error(err); 
+    }
+
     for (Int_t s=0;s<layerSize;s++)
     {
       (*thresholdVector)(s) = histoThreshLayer->GetBinContent(s+1);
@@ -190,8 +201,17 @@ NetworkToHistoTool::networkFromHists(std::map<std::string,TH1*>& inputHistos)
     std::string weightsName = (boost::format("Layer%i_weights") % i).str();
 
     TH1* histoWeightsLayer = inputHistos[weightsName]; 
-    if (!histoWeightsLayer) 
+    if (!histoWeightsLayer) { 
       throw std::runtime_error("could not find " + weightsName); 
+    }
+
+    if (layerSize != histoWeightsLayer->GetNbinsY()) { 
+      std::string err = (boost::format(er_tpl) % weightsName % layerSize % 
+			 weightsName % histoWeightsLayer->GetNbinsY()).str(); 
+      throw std::runtime_error(err); 
+    }
+
+
     for (Int_t s=0;s<layerSize;s++)
     {
       for (Int_t p=0;p<previousLayerSize;++p)

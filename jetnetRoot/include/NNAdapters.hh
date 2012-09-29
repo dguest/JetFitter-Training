@@ -2,7 +2,7 @@
 #define NN_ADAPTERS
 
 class JetNet; 
-class TTrainedNetwork; 
+class TOldNetwork; 
 
 #include "TNeuralNetwork.h"
 
@@ -14,9 +14,9 @@ TNeuralNetwork* getTrainedNetwork(const JetNet&);
 void setTrainedNetwork(JetNet&, const TNeuralNetwork* trainedNetwork); 
 
 TNeuralNetwork* getOldTrainedNetwork(std::string file_name); 
-TNeuralNetwork* convertOldToNew(const TTrainedNetwork* old,
+TNeuralNetwork* convertOldToNew(const TOldNetwork* old,
 				std::vector<TNeuralNetwork::Input>); 
-TTrainedNetwork* convertNewToOld(const TNeuralNetwork* new_net); 
+TOldNetwork* convertNewToOld(const TNeuralNetwork* new_net); 
 
 template<class O, class I>
 O convert_node(const I& in) { 

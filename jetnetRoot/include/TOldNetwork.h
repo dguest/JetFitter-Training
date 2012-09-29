@@ -1,6 +1,6 @@
 // It's -*- c++ -*-
-#ifndef __TTrainedNetwork_
-#define __TTrainedNetwork_
+#ifndef __TOldNetwork_
+#define __TOldNetwork_
 
 #include "TObject.h"
 #include "TMatrixD.h"
@@ -11,14 +11,14 @@
 
 //by Giacinto Piacquadio (18-02-2008)
 
-class TTrainedNetwork : public TObject
+class TOldNetwork : public TObject
 {
  public:
   
-  TTrainedNetwork();
+  TOldNetwork();
 
   //class takes ownership of all pointers...
-  TTrainedNetwork(Int_t nInput,
+  TOldNetwork(Int_t nInput,
 		  Int_t nHidden,
 		  Int_t nOutput,
 		  std::vector<Int_t> & nHiddenLayerSize,
@@ -26,7 +26,7 @@ class TTrainedNetwork : public TObject
 		  std::vector<TMatrixD*> & weightMatrices,
 		  Int_t activationFunction);
 
-  ~TTrainedNetwork();
+  ~TOldNetwork();
 
   void setNewWeights(std::vector<TVectorD*> & thresholdVectors,
 		     std::vector<TMatrixD*> & weightMatrices);
@@ -64,7 +64,7 @@ class TTrainedNetwork : public TObject
 
   Double_t sigmoid(Double_t x) const { return 1./(1.+exp(-2*x)); };
 
-  ClassDef( TTrainedNetwork, 1 )
+  ClassDef( TOldNetwork, 1 )
 
 };
 

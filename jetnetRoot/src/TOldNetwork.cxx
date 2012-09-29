@@ -1,9 +1,9 @@
-#include "TTrainedNetwork.h"
+#include "TOldNetwork.h"
 #include <iostream>
 
-ClassImp( TTrainedNetwork)
+ClassImp( TOldNetwork)
 
-TTrainedNetwork::TTrainedNetwork()
+TOldNetwork::TOldNetwork()
 {
   mnInput=0;
   mnHidden=0;
@@ -11,7 +11,7 @@ TTrainedNetwork::TTrainedNetwork()
   mActivationFunction=1;
 }
 
-TTrainedNetwork::TTrainedNetwork(Int_t nInput,
+TOldNetwork::TOldNetwork(Int_t nInput,
 		  Int_t nHidden,
 		  Int_t nOutput,
 		  std::vector<Int_t> & nHiddenLayerSize,
@@ -29,7 +29,7 @@ TTrainedNetwork::TTrainedNetwork(Int_t nInput,
   mActivationFunction=activationFunction;
 }
 
-TTrainedNetwork::~TTrainedNetwork()
+TOldNetwork::~TOldNetwork()
 {
   std::vector<TVectorD*>::const_iterator vectBegin=mThresholdVectors.begin();
   std::vector<TVectorD*>::const_iterator vectEnd=mThresholdVectors.end();
@@ -53,7 +53,7 @@ TTrainedNetwork::~TTrainedNetwork()
 
 }
 
-void TTrainedNetwork::setNewWeights(std::vector<TVectorD*> & thresholdVectors,
+void TOldNetwork::setNewWeights(std::vector<TVectorD*> & thresholdVectors,
 				    std::vector<TMatrixD*> & weightMatrices)
 {
 
@@ -85,7 +85,7 @@ void TTrainedNetwork::setNewWeights(std::vector<TVectorD*> & thresholdVectors,
 
 }
 
-std::vector<Double_t>  TTrainedNetwork::calculateOutputValues(std::vector<Double_t> & input) const 
+std::vector<Double_t>  TOldNetwork::calculateOutputValues(std::vector<Double_t> & input) const 
 {
 
   std::vector<Double_t> result;

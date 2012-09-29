@@ -5,7 +5,7 @@
 #include <boost/format.hpp>
 #include "JetNet.hh"
 #include "TNeuralNetwork.h"
-#include "TTrainedNetwork.h"
+#include "TOldNetwork.h"
 #include "NNAdapters.hh"
 #include "TVector.h"
 #include "TMatrix.h"
@@ -165,13 +165,13 @@ void setTrainedNetwork(JetNet& jn, const TNeuralNetwork* trainedNetwork)
 }
 
 // -----------------------------------------------
-// converter from old TTrainedNetwork
+// converter from old TOldNetwork
 
 TNeuralNetwork* getOldTrainedNetwork(std::string file_name) { 
 
   TFile file(file_name.c_str()); 
-  TTrainedNetwork* trained = dynamic_cast<TTrainedNetwork*>
-    (file.Get("TTrainedNetwork")); 
+  TOldNetwork* trained = dynamic_cast<TOldNetwork*>
+    (file.Get("TOldNetwork")); 
   if (!trained) throw std::runtime_error("missing trained network"); 
   
   int n_input = trained->getnInput(); 
@@ -207,7 +207,7 @@ TNeuralNetwork* getOldTrainedNetwork(std::string file_name) {
 }
 
 TNeuralNetwork* 
-convertOldToNew(const TTrainedNetwork* trained, 
+convertOldToNew(const TOldNetwork* trained, 
 		std::vector<TNeuralNetwork::Input> flav_inputs)
 {
   
@@ -239,7 +239,7 @@ convertOldToNew(const TTrainedNetwork* trained,
 
 }
 
-TTrainedNetwork* convertNewToOld(const TNeuralNetwork* trained) { 
+TOldNetwork* convertNewToOld(const TNeuralNetwork* trained) { 
   int n_input = trained->getnInput(); 
   int n_hidden = trained->getnHidden(); 
   int n_output = trained->getnOutput(); 
@@ -259,7 +259,7 @@ TTrainedNetwork* convertNewToOld(const TNeuralNetwork* trained) {
       (dynamic_cast<TMatrixD*>(weight_matrices.at(i)->Clone())); 
   }
   
-  TTrainedNetwork* out_net = new TTrainedNetwork
+  TOldNetwork* out_net = new TOldNetwork
     (n_input, 
      n_hidden, 
      n_output, 

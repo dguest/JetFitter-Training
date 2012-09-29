@@ -5,7 +5,7 @@
 #include <cstdlib>
 #include <ctime> 
 #include "TNeuralNetwork.h"
-#include "TTrainedNetwork.h"
+#include "TOldNetwork.h"
 #include "NetworkToHistoTool.hh"
 #include "NNAdapters.hh"
 #include "JetNet.hh"
@@ -183,7 +183,7 @@ bool test_trained(std::vector<int> layer_sizes) {
   std::vector<double> ttrained_normvec_out = 
     jn_trained_out->calculateNormalized(raw_vector); 
   
-  TTrainedNetwork* old_style_nn = convertNewToOld(jn_trained_out); 
+  TOldNetwork* old_style_nn = convertNewToOld(jn_trained_out); 
   std::vector<double> old_style_out = old_style_nn->calculateOutputValues
     (input_vector); 
   TNeuralNetwork* new_style_nn = convertOldToNew(old_style_nn,inputs); 

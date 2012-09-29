@@ -1,4 +1,4 @@
-#include "TTrainedNetwork.h"
+#include "TOldNetwork.h"
 #include "TNeuralNetwork.h"
 #include "TFile.h"
 #include "NNAdapters.hh"

@@ -6,7 +6,7 @@
 #include <map>
 
 class TH1;
-class TNeuralNetwork;
+class TTrainedNetwork;
 
 
 class NetworkToHistoTool 
@@ -17,9 +17,9 @@ public:
 
   ~NetworkToHistoTool() {};
 
-  std::map<std::string,TH1*> histsFromNetwork(const TNeuralNetwork*) const;
+  std::map<std::string,TH1*> histsFromNetwork(const TTrainedNetwork*) const;
   
-  TNeuralNetwork* networkFromHists(std::map<std::string,TH1*>&) const;
+  TTrainedNetwork* networkFromHists(std::map<std::string,TH1*>&) const;
 
 private:
   

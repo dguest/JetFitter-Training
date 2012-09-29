@@ -1,6 +1,6 @@
 #include <TH1D.h>
 #include <TH2D.h>
-#include "TNeuralNetwork.h"
+#include "TTrainedNetwork.h"
 #include "NetworkToHistoTool.hh"
 #include <cmath>
 #include <stdexcept> 
@@ -11,7 +11,7 @@
 // ClassImp( TNetworkToHistoTool)
 
 std::map<std::string,TH1*> 
-NetworkToHistoTool::histsFromNetwork(const TNeuralNetwork* trainedNetwork) 
+NetworkToHistoTool::histsFromNetwork(const TTrainedNetwork* trainedNetwork) 
   const
 {
 
@@ -103,7 +103,7 @@ NetworkToHistoTool::histsFromNetwork(const TNeuralNetwork* trainedNetwork)
     
   }
 
-  typedef TNeuralNetwork::Input Input; 
+  typedef TTrainedNetwork::Input Input; 
   std::vector<Input> inputs = trainedNetwork->getInputs(); 
   
   assert(inputs.size() == nInput); 
@@ -125,7 +125,7 @@ NetworkToHistoTool::histsFromNetwork(const TNeuralNetwork* trainedNetwork)
 }
 
 
-TNeuralNetwork* 
+TTrainedNetwork* 
 NetworkToHistoTool::networkFromHists(std::map<std::string,TH1*>& inputHistos) 
   const
 {
@@ -155,11 +155,11 @@ NetworkToHistoTool::networkFromHists(std::map<std::string,TH1*>& inputHistos)
   unsigned options = 0; 
   if (histoLayersInfo->GetBinContent(0)>0.5)
   {
-    options |= TNeuralNetwork::linearOutput;
+    options |= TTrainedNetwork::linearOutput;
   }
   if (histoLayersInfo->GetBinContent(nHidden+3)>0.5)
   {
-    options |= TNeuralNetwork::normalizeOutput;
+    options |= TTrainedNetwork::normalizeOutput;
   }
 
   
@@ -206,10 +206,10 @@ NetworkToHistoTool::networkFromHists(std::map<std::string,TH1*>& inputHistos)
   }
   
   TH1* histoInputs = inputHistos["InputsInfo"]; 
-  std::vector<TNeuralNetwork::Input> inputs; 
+  std::vector<TTrainedNetwork::Input> inputs; 
   if (!histoInputs) { 
     for (unsigned i = 0 ; i < nInput; i++) { 
-      TNeuralNetwork::Input the_input; 
+      TTrainedNetwork::Input the_input; 
       the_input.offset = 0; 
       the_input.scale = 1; 
       inputs.push_back(the_input); 
@@ -217,15 +217,15 @@ NetworkToHistoTool::networkFromHists(std::map<std::string,TH1*>& inputHistos)
   }
   else { 
     for (unsigned i = 0 ; i < nInput; i++) { 
-      TNeuralNetwork::Input the_input; 
+      TTrainedNetwork::Input the_input; 
       the_input.name = histoInputs->GetXaxis()->GetBinLabel(i + 1); 
       the_input.offset = histoInputs->GetBinContent(i + 1, 1); 
       the_input.scale = histoInputs->GetBinContent(i + 1, 2); 
       inputs.push_back(the_input); 
     }
   }
-  TNeuralNetwork* trainedNetwork = 
-    new TNeuralNetwork(inputs,
+  TTrainedNetwork* trainedNetwork = 
+    new TTrainedNetwork(inputs,
 		       nOutput,
 		       thresholdVectors,
 		       weightMatrices, 

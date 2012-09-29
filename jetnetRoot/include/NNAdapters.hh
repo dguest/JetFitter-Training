@@ -4,19 +4,19 @@
 class JetNet; 
 class TOldNetwork; 
 
-#include "TNeuralNetwork.h"
+#include "TTrainedNetwork.h"
 
 #include <string> 
 #include <vector>
 
-TNeuralNetwork* getTrainedNetwork(const JetNet&); 
+TTrainedNetwork* getTrainedNetwork(const JetNet&); 
 
-void setTrainedNetwork(JetNet&, const TNeuralNetwork* trainedNetwork); 
+void setTrainedNetwork(JetNet&, const TTrainedNetwork* trainedNetwork); 
 
-TNeuralNetwork* getOldTrainedNetwork(std::string file_name); 
-TNeuralNetwork* convertOldToNew(const TOldNetwork* old,
-				std::vector<TNeuralNetwork::Input>); 
-TOldNetwork* convertNewToOld(const TNeuralNetwork* new_net); 
+TTrainedNetwork* getOldTrainedNetwork(std::string file_name); 
+TTrainedNetwork* convertOldToNew(const TOldNetwork* old,
+				std::vector<TTrainedNetwork::Input>); 
+TOldNetwork* convertNewToOld(const TTrainedNetwork* new_net); 
 
 template<class O, class I>
 O convert_node(const I& in) { 

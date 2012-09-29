@@ -1,4 +1,4 @@
-#include "TNeuralNetwork.h"
+#include "TTrainedNetwork.h"
 #include <iostream>
 #include <set> 
 #include <limits>
@@ -20,7 +20,7 @@ namespace TTN_internal {
 }
 
 
-TNeuralNetwork::TNeuralNetwork()
+TTrainedNetwork::TTrainedNetwork()
 {
   mnInput=0;
   mnHidden=0;
@@ -32,7 +32,7 @@ TNeuralNetwork::TNeuralNetwork()
   
 }
 
-TNeuralNetwork::TNeuralNetwork(Int_t nInput, 
+TTrainedNetwork::TTrainedNetwork(Int_t nInput, 
 				 Int_t nHidden, 
                                  Int_t nOutput,
 				 std::vector<Int_t> & nHiddenLayerSize, 
@@ -55,18 +55,18 @@ TNeuralNetwork::TNeuralNetwork(Int_t nInput,
   
 }
 
-void TNeuralNetwork::setOffsets(const std::vector<double>& offsets) 
+void TTrainedNetwork::setOffsets(const std::vector<double>& offsets) 
 { 
   assert(check_norm_size(offsets.size())); 
   m_input_node_offset = offsets; 
 }
-void TNeuralNetwork::setScales(const std::vector<double>& scales) 
+void TTrainedNetwork::setScales(const std::vector<double>& scales) 
 { 
   assert(check_norm_size(scales.size())); 
   m_input_node_scale = scales; 
 }
 
-TNeuralNetwork::TNeuralNetwork(std::vector<TNeuralNetwork::Input> inputs, 
+TTrainedNetwork::TTrainedNetwork(std::vector<TTrainedNetwork::Input> inputs, 
 			       unsigned nOutput,
 			       std::vector<TVectorD*> & thresholdVectors,
 			       std::vector<TMatrixD*> & weightMatrices,
@@ -120,14 +120,14 @@ TNeuralNetwork::TNeuralNetwork(std::vector<TNeuralNetwork::Input> inputs,
   for (unsigned i = 0; i < mnHiddenLayerSize.size(); ++i)
     nlayer_max = std::max(nlayer_max, mnHiddenLayerSize[i]);
   if (nlayer_max >= TTN_internal::MAX_LAYER_LENGTH) { 
-    std::cout<<"TNeuralNetwork ERROR Maximal layer size exceeded"<<std::endl;
+    std::cout<<"TTrainedNetwork ERROR Maximal layer size exceeded"<<std::endl;
     assert(false);
   }
 
   assert(is_consistent()); 
 }
 
-TNeuralNetwork::~TNeuralNetwork()
+TTrainedNetwork::~TTrainedNetwork()
 {
   std::vector<TVectorD*>::const_iterator vectBegin=mThresholdVectors.begin();
   std::vector<TVectorD*>::const_iterator vectEnd=mThresholdVectors.end();
@@ -151,7 +151,7 @@ TNeuralNetwork::~TNeuralNetwork()
 
 }
 
-std::vector<TNeuralNetwork::Input> TNeuralNetwork::getInputs() const { 
+std::vector<TTrainedNetwork::Input> TTrainedNetwork::getInputs() const { 
   std::map<int,Input> inputs; 
   for (std::map<std::string,int>::const_iterator itr = 
 	 m_inputStringToNode.begin(); 
@@ -173,7 +173,7 @@ std::vector<TNeuralNetwork::Input> TNeuralNetwork::getInputs() const {
   return inputs_vector; 
 }
 
-void TNeuralNetwork::setNewWeights(std::vector<TVectorD*> & thresholdVectors,
+void TTrainedNetwork::setNewWeights(std::vector<TVectorD*> & thresholdVectors,
 				    std::vector<TMatrixD*> & weightMatrices)
 {
 
@@ -206,7 +206,7 @@ void TNeuralNetwork::setNewWeights(std::vector<TVectorD*> & thresholdVectors,
 }
 
 std::vector<Double_t> 
-TNeuralNetwork::calculateNormalized(const TNeuralNetwork::DMap& in) 
+TTrainedNetwork::calculateNormalized(const TTrainedNetwork::DMap& in) 
   const { 
 
   std::vector<Double_t> inputs(mnInput); 
@@ -253,7 +253,7 @@ TNeuralNetwork::calculateNormalized(const TNeuralNetwork::DMap& in)
 }
 
 std::vector<Double_t>
-TNeuralNetwork::calculateNormalized(const TNeuralNetwork::DVec& input)
+TTrainedNetwork::calculateNormalized(const TTrainedNetwork::DVec& input)
   const 
 {
   // asserts can be turned off in optomized code anyway, 
@@ -269,7 +269,7 @@ TNeuralNetwork::calculateNormalized(const TNeuralNetwork::DVec& input)
   return calculateOutputValues(transformed_inputs); 
 }
 std::vector<Double_t>  
-TNeuralNetwork::calculateOutputValues(const std::vector<Double_t>& input) 
+TTrainedNetwork::calculateOutputValues(const std::vector<Double_t>& input) 
   const 
 {
   // This method is now highly optimised (apart from the potential use
@@ -281,7 +281,7 @@ TNeuralNetwork::calculateOutputValues(const std::vector<Double_t>& input)
 
   if (input.size() != mnInput)
   {
-    std::cerr << "TNeuralNetwork WARNING Input size: " << input.size()
+    std::cerr << "TTrainedNetwork WARNING Input size: " << input.size()
 	      << " does not match with network: " << mnInput << std::endl;
     return std::vector<double>();
   }
@@ -342,14 +342,14 @@ TNeuralNetwork::calculateOutputValues(const std::vector<Double_t>& input)
 }
 
 
-Double_t TNeuralNetwork::sigmoid(Double_t x) const { 
+Double_t TTrainedNetwork::sigmoid(Double_t x) const { 
   if (-2*x >= maxExpValue){
     return 0.;
   }
   return 1./(1.+exp(-2*x)); 
 }
 
-bool TNeuralNetwork::is_consistent() const { 
+bool TTrainedNetwork::is_consistent() const { 
   if (mThresholdVectors.size() != mWeightMatrices.size()) 
     return false; 
   int nodes_last_layer = mnInput; 
@@ -372,16 +372,16 @@ bool TNeuralNetwork::is_consistent() const {
   return true; 
 }
 
-bool TNeuralNetwork::check_norm_size(unsigned size) const { 
+bool TTrainedNetwork::check_norm_size(unsigned size) const { 
   if (size != mnInput) { 
-    std::cerr << "ERROR: TNeuralNetwork has " << mnInput << " inputs, "
+    std::cerr << "ERROR: TTrainedNetwork has " << mnInput << " inputs, "
 	      << size << " normalization values provided\n"; 
     return false; 
   }
   return true; 
 }
 
-ClassImp( TNeuralNetwork)
+ClassImp( TTrainedNetwork)
 
 
 

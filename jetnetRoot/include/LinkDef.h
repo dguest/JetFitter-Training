@@ -6,6 +6,6 @@
 
 #pragma link C++ class TNeuralDataSet;
 /* #pragma link C++ class JetNet; */
-#pragma link C++ class TNeuralNetwork;
+#pragma link C++ class TTrainedNetwork;
 
 #endif

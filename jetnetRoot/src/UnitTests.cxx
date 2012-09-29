@@ -4,7 +4,7 @@
 #include <stdexcept> 
 #include <cstdlib>
 #include <ctime> 
-#include "TNeuralNetwork.h"
+#include "TTrainedNetwork.h"
 #include "TOldNetwork.h"
 #include "NetworkToHistoTool.hh"
 #include "NNAdapters.hh"
@@ -30,7 +30,7 @@ float get_rand(float range, float offset) {
   return rand_base; 
 }
 
-std::vector<double> test_histo_tool(const TNeuralNetwork* net, 
+std::vector<double> test_histo_tool(const TTrainedNetwork* net, 
 				    std::map<std::string, double> in, 
 				    bool do_broken = false, 
 				    std::string out_fname = "test_hists.root")
@@ -49,11 +49,11 @@ std::vector<double> test_histo_tool(const TNeuralNetwork* net,
   }
   out_file->Close(); 
 
-  TNeuralNetwork* from_hists = histo_tool.networkFromHists(hists); 
+  TTrainedNetwork* from_hists = histo_tool.networkFromHists(hists); 
   return from_hists->calculateNormalized(in); 
 }
 
-std::vector<double> test_histo_tool(const TNeuralNetwork* net, 
+std::vector<double> test_histo_tool(const TTrainedNetwork* net, 
 				    std::vector<double> in, 
 				    bool do_broken = false, 
 				    std::string out_fname = "stripped.root")
@@ -74,17 +74,17 @@ std::vector<double> test_histo_tool(const TNeuralNetwork* net,
   }
   out_file->Close(); 
 
-  TNeuralNetwork* from_hists = histo_tool.networkFromHists(hists); 
+  TTrainedNetwork* from_hists = histo_tool.networkFromHists(hists); 
   return from_hists->calculateNormalized(in); 
 }
 
 
 bool test_trained(std::vector<int> layer_sizes) { 
   srand(time(0)); 
-  std::vector<TNeuralNetwork::Input> inputs; 
-  TNeuralNetwork::Input cat = {"cat",get_rand(),get_rand()}; 
-  TNeuralNetwork::Input dog = {"dog",get_rand(),get_rand()}; 
-  TNeuralNetwork::Input horse = {"horse",get_rand(),get_rand()}; 
+  std::vector<TTrainedNetwork::Input> inputs; 
+  TTrainedNetwork::Input cat = {"cat",get_rand(),get_rand()}; 
+  TTrainedNetwork::Input dog = {"dog",get_rand(),get_rand()}; 
+  TTrainedNetwork::Input horse = {"horse",get_rand(),get_rand()}; 
   inputs.push_back(cat); 
   inputs.push_back(dog); 
   inputs.push_back(horse); 
@@ -107,9 +107,9 @@ bool test_trained(std::vector<int> layer_sizes) {
   std::cout << "before:\n"; 
   print_node_info(inputs); 
 
-  TNeuralNetwork trained(inputs, 3, thresholds, weights); 
+  TTrainedNetwork trained(inputs, 3, thresholds, weights); 
 
-  std::vector<TNeuralNetwork::Input> read_back = trained.getInputs(); 
+  std::vector<TTrainedNetwork::Input> read_back = trained.getInputs(); 
 
   std::cout << "after:\n"; 
   print_node_info(read_back); 
@@ -129,7 +129,7 @@ bool test_trained(std::vector<int> layer_sizes) {
   jn->Init(); 
 
   std::vector<JetNet::InputNode> jn_input_info; 
-  for (std::vector<TNeuralNetwork::Input>::const_iterator itr = 
+  for (std::vector<TTrainedNetwork::Input>::const_iterator itr = 
 	 read_back.begin(); 
        itr != read_back.end(); 
        itr++) { 
@@ -143,9 +143,9 @@ bool test_trained(std::vector<int> layer_sizes) {
   print_node_info(jn_read_back); 
 
 
-  TNeuralNetwork* jn_trained_out = getTrainedNetwork(*jn); 
+  TTrainedNetwork* jn_trained_out = getTrainedNetwork(*jn); 
   
-  std::cout << "TNeuralNetwork from jn\n"; 
+  std::cout << "TTrainedNetwork from jn\n"; 
   print_node_info(jn_trained_out->getInputs()); 
 
   std::map<std::string,double> input_map; 
@@ -186,7 +186,7 @@ bool test_trained(std::vector<int> layer_sizes) {
   TOldNetwork* old_style_nn = convertNewToOld(jn_trained_out); 
   std::vector<double> old_style_out = old_style_nn->calculateOutputValues
     (input_vector); 
-  TNeuralNetwork* new_style_nn = convertOldToNew(old_style_nn,inputs); 
+  TTrainedNetwork* new_style_nn = convertOldToNew(old_style_nn,inputs); 
   std::vector<double> new_style_out = 
     new_style_nn->calculateNormalized(input_map); 
   
@@ -221,7 +221,7 @@ bool test_trained(std::vector<int> layer_sizes) {
 			       nneurons );
 
   setTrainedNetwork(*new_jn,jn_trained_out); 
-  std::cout << "new_jn from TNeuralNetwork\n"; 
+  std::cout << "new_jn from TTrainedNetwork\n"; 
   print_node_info(new_jn->getInputNodes()); 
   new_jn->Init(); 
 
@@ -236,7 +236,7 @@ bool test_trained(std::vector<int> layer_sizes) {
   
   // cout << " create Trained Network object..." << endl;
   
-  // TNeuralNetwork* trainedNetwork = jn->createTrainedNetwork();
+  // TTrainedNetwork* trainedNetwork = jn->createTrainedNetwork();
 
   // cout << " now getting value with trained Network ";
 
@@ -297,7 +297,7 @@ bool test_trained(std::vector<int> layer_sizes) {
   //   fromTrainedNetworkToHisto(trainedNetwork);
 
   // cout << " From histo to network back..." << endl;
-  // TNeuralNetwork* trainedNetwork2 = myHistoTool.
+  // TTrainedNetwork* trainedNetwork2 = myHistoTool.
   //   fromHistoToTrainedNetwork(myHistos);
 
   // cout << " reading back " << endl;

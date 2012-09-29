@@ -470,7 +470,7 @@ PyObject* py_makehist(PyObject *self,
 {
   const char* nn_file; 
   const char* out_file; 
-  const char* nn_name = "TNeuralNetwork"; 
+  const char* nn_name = "TTrainedNetwork"; 
   bool ok = PyArg_ParseTupleAndKeywords
     (args, keywds, makehist_argtypes.c_str(), 
      // I think python people argue about whether this should be 
@@ -502,7 +502,7 @@ PyObject* py_makenn(PyObject *self,
 {
   const char* nn_file; 
   const char* out_file; 
-  const char* nn_name = "TNeuralNetwork"; 
+  const char* nn_name = "TTrainedNetwork"; 
   bool ok = PyArg_ParseTupleAndKeywords
     (args, keywds, makehist_argtypes.c_str(), 
      // I think python people argue about whether this should be 

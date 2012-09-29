@@ -18,7 +18,7 @@
 #include "nnExceptions.hh"
 #include <stdexcept>
 
-#include "TNeuralNetwork.h"
+#include "TTrainedNetwork.h"
 #include "NNAdapters.hh"
 #include "trainNN.hh"
 
@@ -346,7 +346,7 @@ void trainNN(const TrainingInputs inputs,
       name+=".root";
 
       TFile* file = new TFile(name,"recreate");
-      TNeuralNetwork* trainedNetwork = getTrainedNetwork(*jn);
+      TTrainedNetwork* trainedNetwork = getTrainedNetwork(*jn);
       file->WriteTObject(trainedNetwork); 
 
 
@@ -392,8 +392,8 @@ void trainNN(const TrainingInputs inputs,
 
 
     TFile min_file(min_file_name);
-    TNeuralNetwork* trainedNetwork = 
-      dynamic_cast<TNeuralNetwork*>(min_file.Get("TNeuralNetwork"));
+    TTrainedNetwork* trainedNetwork = 
+      dynamic_cast<TTrainedNetwork*>(min_file.Get("TTrainedNetwork"));
     
     // textout << " Reading back network with minimum" << endl;
     // setTrainedNetwork(*jn,trainedNetwork);

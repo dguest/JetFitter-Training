@@ -1,6 +1,6 @@
 //-*-c++-*-
-#ifndef __TNeuralNetwork_
-#define __TNeuralNetwork_
+#ifndef __TTrainedNetwork_
+#define __TTrainedNetwork_
 
 #include "TObject.h"
 #include "TMatrixD.h"
@@ -11,7 +11,7 @@
 #include <map>
 
 /******************************************************
-  @class TNeuralNetwork
+  @class TTrainedNetwork
   Created : 18-02-2008
   @author Giacinto Piacquadio (giacinto.piacquadio AT physik.uni-freiburg.de)
 ********************************************************/
@@ -19,7 +19,7 @@
 namespace nnopt { 
 }
 
-class TNeuralNetwork : public TObject
+class TTrainedNetwork : public TObject
 {
 public:
 
@@ -40,12 +40,12 @@ public:
   typedef std::map<std::string, double> DMap; 
   typedef DMap::const_iterator DMapI; 
 
-  TNeuralNetwork();
+  TTrainedNetwork();
 
   //NOTE: class takes ownership of all pointers.
 
   // old-school constructor (for compatability)
-  TNeuralNetwork(Int_t nInput, 
+  TTrainedNetwork(Int_t nInput, 
 		 Int_t nHidden, 
 		 Int_t nOutput,
 		 std::vector<Int_t> & nHiddenLayerSize, 
@@ -65,14 +65,14 @@ public:
   // This avoids some chances for logical inconsistency by constructing 
   // the hidden layer size from the thresholdVectors and weightMatrices. 
   // Also runs a consistency check on thresholdVectors and weightMatrices. 
-  TNeuralNetwork(std::vector<TNeuralNetwork::Input> inputs,
+  TTrainedNetwork(std::vector<TTrainedNetwork::Input> inputs,
 		 unsigned nOutput,
 		 std::vector<TVectorD*> & thresholdVectors,
 		 std::vector<TMatrixD*> & weightMatrices,
 		 int activationFunction = SIGMOID,
 		 unsigned options = 0);
 
-  ~TNeuralNetwork();
+  ~TTrainedNetwork();
 
   std::vector<Input> getInputs() const; 
 
@@ -148,7 +148,7 @@ private:
   bool is_consistent() const; 
   bool check_norm_size(unsigned size) const; 
 
-  ClassDef( TNeuralNetwork, 3 )
+  ClassDef( TTrainedNetwork, 3 )
   
 };
 

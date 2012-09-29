@@ -4,7 +4,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/format.hpp>
 #include "JetNet.hh"
-#include "TNeuralNetwork.h"
+#include "TTrainedNetwork.h"
 #include "TOldNetwork.h"
 #include "NNAdapters.hh"
 #include "TVector.h"
@@ -13,7 +13,7 @@
 #include "TFile.h"
 
 //by Giacinto Piacquadio (18-02-2008)
-TNeuralNetwork* getTrainedNetwork(const JetNet& jn) 
+TTrainedNetwork* getTrainedNetwork(const JetNet& jn) 
 {
   Int_t nInput = jn.GetInputDim();
   Int_t nHidden = jn.GetHiddenLayerDim();
@@ -57,18 +57,18 @@ TNeuralNetwork* getTrainedNetwork(const JetNet& jn)
 
   typedef std::vector<JetNet::InputNode> JetNetInputs; 
   JetNetInputs jn_inputs = jn.getInputNodes(); 
-  std::vector<TNeuralNetwork::Input> nn_inputs; 
+  std::vector<TTrainedNetwork::Input> nn_inputs; 
   for (JetNetInputs::const_iterator itr = jn_inputs.begin(); 
        itr != jn_inputs.end(); itr++) { 
-    TNeuralNetwork::Input the_node = 
-      convert_node<TNeuralNetwork::Input>(*itr); 
+    TTrainedNetwork::Input the_node = 
+      convert_node<TTrainedNetwork::Input>(*itr); 
     nn_inputs.push_back(the_node); 
   }
        
   int activation_function = jn.GetActivationFunction(); 
 
-  TNeuralNetwork* trainedNetwork=
-    new TNeuralNetwork(nn_inputs, 
+  TTrainedNetwork* trainedNetwork=
+    new TTrainedNetwork(nn_inputs, 
 			nOutput,
 			thresholdVectors,
 			weightMatrices,
@@ -79,7 +79,7 @@ TNeuralNetwork* getTrainedNetwork(const JetNet& jn)
 }
 //___________________________________________________________________________
 //by Giacinto Piacquadio (18-02-2008)
-void setTrainedNetwork(JetNet& jn, const TNeuralNetwork* trainedNetwork)
+void setTrainedNetwork(JetNet& jn, const TTrainedNetwork* trainedNetwork)
 {
 
   Int_t nInput = jn.GetInputDim();
@@ -91,7 +91,7 @@ void setTrainedNetwork(JetNet& jn, const TNeuralNetwork* trainedNetwork)
   if (tr_n_hidden != nHidden)
   {
     std::string e_string = 
-      "Hidden layers mismatch -- JetNet: %i, TNeuralNetwork: %i"; 
+      "Hidden layers mismatch -- JetNet: %i, TTrainedNetwork: %i"; 
     std::string err = (boost::format(e_string) % nHidden % tr_n_hidden).str(); 
     throw std::runtime_error(err); 
   }
@@ -123,7 +123,7 @@ void setTrainedNetwork(JetNet& jn, const TNeuralNetwork* trainedNetwork)
   
   std::vector<TVectorD*> thresholdVectors=trainedNetwork->getThresholdVectors();
   std::vector<TMatrixD*> weightMatrices=trainedNetwork->weightMatrices();
-  //ownership remains of the TNeuralNetwork
+  //ownership remains of the TTrainedNetwork
 
   for (Int_t o=0;o<nHidden+1;++o)
   {
@@ -151,7 +151,7 @@ void setTrainedNetwork(JetNet& jn, const TNeuralNetwork* trainedNetwork)
     }
   }      
 
-  typedef std::vector<TNeuralNetwork::Input> TrainedInputs; 
+  typedef std::vector<TTrainedNetwork::Input> TrainedInputs; 
   std::vector<JetNet::InputNode> jetnet_inputs; 
   TrainedInputs inputs = trainedNetwork->getInputs(); 
   for (TrainedInputs::const_iterator itr = inputs.begin(); 
@@ -167,7 +167,7 @@ void setTrainedNetwork(JetNet& jn, const TNeuralNetwork* trainedNetwork)
 // -----------------------------------------------
 // converter from old TOldNetwork
 
-TNeuralNetwork* getOldTrainedNetwork(std::string file_name) { 
+TTrainedNetwork* getOldTrainedNetwork(std::string file_name) { 
 
   TFile file(file_name.c_str()); 
   TOldNetwork* trained = dynamic_cast<TOldNetwork*>
@@ -191,10 +191,10 @@ TNeuralNetwork* getOldTrainedNetwork(std::string file_name) {
     throw std::runtime_error("missing branch"); 
   }
 
-  std::vector<TNeuralNetwork::Input> flav_inputs; 
+  std::vector<TTrainedNetwork::Input> flav_inputs; 
   for (int n = 0; n < n_input; n++) { 
     normalization->GetEntry(n); 
-    TNeuralNetwork::Input input; 
+    TTrainedNetwork::Input input; 
     input.name = *name_ptr; 
     input.offset = offset; 
     input.scale = scale; 
@@ -206,9 +206,9 @@ TNeuralNetwork* getOldTrainedNetwork(std::string file_name) {
   return convertOldToNew(trained, flav_inputs); 
 }
 
-TNeuralNetwork* 
+TTrainedNetwork* 
 convertOldToNew(const TOldNetwork* trained, 
-		std::vector<TNeuralNetwork::Input> flav_inputs)
+		std::vector<TTrainedNetwork::Input> flav_inputs)
 {
   
   int n_input = trained->getnInput(); 
@@ -230,7 +230,7 @@ convertOldToNew(const TOldNetwork* trained,
   }
 
   
-  TNeuralNetwork* flav_network = new TNeuralNetwork
+  TTrainedNetwork* flav_network = new TTrainedNetwork
     (flav_inputs, 
      n_output, 
      new_threshold_vectors, 
@@ -239,7 +239,7 @@ convertOldToNew(const TOldNetwork* trained,
 
 }
 
-TOldNetwork* convertNewToOld(const TNeuralNetwork* trained) { 
+TOldNetwork* convertNewToOld(const TTrainedNetwork* trained) { 
   int n_input = trained->getnInput(); 
   int n_hidden = trained->getnHidden(); 
   int n_output = trained->getnOutput(); 

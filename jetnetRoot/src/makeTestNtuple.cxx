@@ -10,7 +10,7 @@
 #include <algorithm>
 #include <TH1D.h>
 #include "NNAdapters.hh"
-#include "TNeuralNetwork.h"
+#include "TTrainedNetwork.h"
 #include "JetNet.hh"
 #include <TVectorD.h>
 #include <TMatrixD.h>
@@ -31,9 +31,9 @@ void makeTestNtuple(IONames io_names, bool debug)
   std::string output_file_name = io_names.output_file; 
   std::string output_tree_name = io_names.output_tree; 
 
-  std::string nn_name = "TNeuralNetwork"; 
+  std::string nn_name = "TTrainedNetwork"; 
   TFile input_weights_file(input_weights_name.c_str());
-  TNeuralNetwork* trainedNetwork = dynamic_cast<TNeuralNetwork*>
+  TTrainedNetwork* trainedNetwork = dynamic_cast<TTrainedNetwork*>
     (input_weights_file.Get(nn_name.c_str()));
 
   

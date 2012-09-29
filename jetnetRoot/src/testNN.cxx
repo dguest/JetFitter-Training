@@ -12,7 +12,7 @@
 #include <stdexcept>
 #include <cassert>
 #include "JetNet.hh"
-#include "normedInput.hh"
+#include "NormedInput.hh"
 
 #include "NNAdapters.hh"
 #include "TNeuralNetwork.h"

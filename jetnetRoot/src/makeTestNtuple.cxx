@@ -17,7 +17,7 @@
 #include <string> 
 #include "nnExceptions.hh"
 #include <stdexcept>
-#include "normedInput.hh"
+#include "NormedInput.hh"
 
 
 void makeTestNtuple(IONames io_names, bool debug)

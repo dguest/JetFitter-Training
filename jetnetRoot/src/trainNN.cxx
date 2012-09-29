@@ -14,7 +14,7 @@
 #include "JetNet.hh"
 // #include "NetworkToHistoTool.hh" // not currently used
 
-#include "normedInput.hh"
+#include "NormedInput.hh"
 #include "nnExceptions.hh"
 #include <stdexcept>
 

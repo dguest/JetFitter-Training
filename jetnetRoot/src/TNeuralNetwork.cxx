@@ -57,12 +57,12 @@ TNeuralNetwork::TNeuralNetwork(Int_t nInput,
 
 void TNeuralNetwork::setOffsets(const std::vector<double>& offsets) 
 { 
-  assert(offsets.size() == mnInput); 
+  assert(check_norm_size(offsets.size())); 
   m_input_node_offset = offsets; 
 }
 void TNeuralNetwork::setScales(const std::vector<double>& scales) 
 { 
-  assert(scales.size() == mnInput); 
+  assert(check_norm_size(scales.size())); 
   m_input_node_scale = scales; 
 }
 
@@ -208,20 +208,11 @@ void TNeuralNetwork::setNewWeights(std::vector<TVectorD*> & thresholdVectors,
 std::vector<Double_t> 
 TNeuralNetwork::calculateWithNormalization(const TNeuralNetwork::DMap& in) 
   const { 
-  DMapI begin = in.begin(); 
-  DMapI end = in.end(); 
-  return calculateWithNormalization(begin, end); 
-}
-
-std::vector<Double_t> 
-TNeuralNetwork::calculateWithNormalization(TNeuralNetwork::DMapI begin, 
-					   TNeuralNetwork::DMapI end) 
-  const { 
 
   std::vector<Double_t> inputs(mnInput); 
   size_t n_filled = 0;
-  for (std::map<std::string,double>::const_iterator itr = begin; 
-       itr != end; 
+  for (std::map<std::string,double>::const_iterator itr = in.begin(); 
+       itr != in.end(); 
        itr++){ 
     std::map<std::string,int>::const_iterator input_node_ptr = 
       m_inputStringToNode.find(itr->first); 
@@ -245,7 +236,7 @@ TNeuralNetwork::calculateWithNormalization(TNeuralNetwork::DMapI begin,
   if (n_filled != m_inputStringToNode.size() ) { 
     assert(n_filled < m_inputStringToNode.size() ); 
     std::set<std::string> input_set;
-    for (DMapI itr = begin; itr != end; itr++) { 
+    for (DMapI itr = in.begin(); itr != in.end(); itr++) { 
       input_set.insert(itr->first); 
     }
     std::string err = "nodes not filled in NN: "; 
@@ -378,6 +369,15 @@ bool TNeuralNetwork::is_consistent() const {
     return false; 
   }
 
+  return true; 
+}
+
+bool TNeuralNetwork::check_norm_size(unsigned size) const { 
+  if (size != mnInput) { 
+    std::cerr << "ERROR: TNeuralNetwork has " << mnInput << " inputs, "
+	      << size << " normalization values provided\n"; 
+    return false; 
+  }
   return true; 
 }
 

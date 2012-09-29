@@ -110,7 +110,6 @@ public:
   // They are designed for robustness and ease of use, not for highly
   // optimized code. 
   DVec calculateWithNormalization(const DMap & input) const;
-  DVec calculateWithNormalization(DMapI begin, DMapI end) const;
 
   bool getIfLinearOutput() const { return mLinearOutput; };
 
@@ -145,7 +144,9 @@ private:
 
   Double_t sigmoid(Double_t x) const; 
 
+  // assertions to check for nonsense initialization 
   bool is_consistent() const; 
+  bool check_norm_size(unsigned size) const; 
 
   ClassDef( TNeuralNetwork, 3 )
   

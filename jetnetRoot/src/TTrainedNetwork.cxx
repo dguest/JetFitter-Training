@@ -5,6 +5,7 @@
 #include <numeric>
 #include <cassert>
 #include <cstring>
+#include <algorithm>
 #include <stdexcept>
 
 //Since we are single-threaded and never calls outself recursively, we
@@ -122,6 +123,13 @@ TTrainedNetwork::TTrainedNetwork(std::vector<TTrainedNetwork::Input> inputs,
   if (nlayer_max >= TTN_internal::MAX_LAYER_LENGTH) { 
     std::cout<<"TTrainedNetwork ERROR Maximal layer size exceeded"<<std::endl;
     assert(false);
+  }
+
+  unsigned n_zero = std::count(m_input_node_scale.begin(), 
+			       m_input_node_scale.end(), 0); 
+  if (n_zero == n_node) {
+    m_input_node_scale.clear(); 
+    m_input_node_offset.clear(); 
   }
 
   assert(is_consistent()); 

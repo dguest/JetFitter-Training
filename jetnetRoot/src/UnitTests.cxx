@@ -164,7 +164,12 @@ std::vector<double> test_histo_tool(const TTrainedNetwork* net,
   delete netcopy; 
   netcopy = 0; 
 
-  return from_hists->calculateNormalized(in); 
+  if (flags & (bf::normalized | bf::renormalized) ) { 
+    return from_hists->calculateNormalized(in); 
+  }
+  else { 
+    return from_hists->calculateOutputValues(in); 
+  }
 }
 
 

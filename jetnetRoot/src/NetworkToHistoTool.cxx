@@ -239,7 +239,8 @@ NetworkToHistoTool::networkFromHists(std::map<std::string,TH1*>& inputHistos)
     for (unsigned i = 0 ; i < nInput; i++) { 
       TTrainedNetwork::Input the_input; 
       the_input.offset = 0; 
-      the_input.scale = 1; 
+      // setting all scales to zero disables normalized output
+      the_input.scale = 0; 	
       inputs.push_back(the_input); 
     }
   }

@@ -206,7 +206,7 @@ void TNeuralNetwork::setNewWeights(std::vector<TVectorD*> & thresholdVectors,
 }
 
 std::vector<Double_t> 
-TNeuralNetwork::calculateWithNormalization(const TNeuralNetwork::DMap& in) 
+TNeuralNetwork::calculateNormalized(const TNeuralNetwork::DMap& in) 
   const { 
 
   std::vector<Double_t> inputs(mnInput); 
@@ -253,7 +253,7 @@ TNeuralNetwork::calculateWithNormalization(const TNeuralNetwork::DMap& in)
 }
 
 std::vector<Double_t>
-TNeuralNetwork::calculateWithNormalization(const TNeuralNetwork::DVec& input)
+TNeuralNetwork::calculateNormalized(const TNeuralNetwork::DVec& input)
   const 
 {
   // asserts can be turned off in optomized code anyway, 

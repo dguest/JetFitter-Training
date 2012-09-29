@@ -103,13 +103,13 @@ public:
 
   // these methods should be optimized. 
   DVec calculateOutputValues(const DVec & input) const;
-  DVec calculateWithNormalization(const DVec& input) const;
+  DVec calculateNormalized(const DVec& input) const;
 
   // these are intentionally slow: the NN must 
   // rearrange the inputs each time these functions are called. 
   // They are designed for robustness and ease of use, not for highly
   // optimized code. 
-  DVec calculateWithNormalization(const DMap & input) const;
+  DVec calculateNormalized(const DMap & input) const;
 
   bool getIfLinearOutput() const { return mLinearOutput; };
 

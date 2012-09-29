@@ -159,7 +159,7 @@ int augment_tree(std::string file_name,
       input.insert(input_pair); 
     }
     // run nn
-    std::vector<double> nn_out = nn->calculateWithNormalization(input); 
+    std::vector<double> nn_out = nn->calculateNormalized(input); 
     b_val = nn_out.at(0); 
     c_val = nn_out.at(1); 
     l_val = nn_out.at(2); 

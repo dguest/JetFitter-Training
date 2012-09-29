@@ -50,7 +50,7 @@ std::vector<double> test_histo_tool(const TNeuralNetwork* net,
   out_file->Close(); 
 
   TNeuralNetwork* from_hists = histo_tool.networkFromHists(hists); 
-  return from_hists->calculateWithNormalization(in); 
+  return from_hists->calculateNormalized(in); 
 }
 
 std::vector<double> test_histo_tool(const TNeuralNetwork* net, 
@@ -75,7 +75,7 @@ std::vector<double> test_histo_tool(const TNeuralNetwork* net,
   out_file->Close(); 
 
   TNeuralNetwork* from_hists = histo_tool.networkFromHists(hists); 
-  return from_hists->calculateWithNormalization(in); 
+  return from_hists->calculateNormalized(in); 
 }
 
 
@@ -168,7 +168,7 @@ bool test_trained(std::vector<int> layer_sizes) {
   std::cout << "calculate in a few ways: first with normalization..."; 
   
   std::vector<double> ttrained_map_out = 
-    jn_trained_out->calculateWithNormalization(input_map); 
+    jn_trained_out->calculateNormalized(input_map); 
   std::cout << "now without...\n"; 
   std::vector<double> ttrained_vector_out; 
   try { 
@@ -181,14 +181,14 @@ bool test_trained(std::vector<int> layer_sizes) {
     throw; 
   }
   std::vector<double> ttrained_normvec_out = 
-    jn_trained_out->calculateWithNormalization(raw_vector); 
+    jn_trained_out->calculateNormalized(raw_vector); 
   
   TTrainedNetwork* old_style_nn = convertNewToOld(jn_trained_out); 
   std::vector<double> old_style_out = old_style_nn->calculateOutputValues
     (input_vector); 
   TNeuralNetwork* new_style_nn = convertOldToNew(old_style_nn,inputs); 
   std::vector<double> new_style_out = 
-    new_style_nn->calculateWithNormalization(input_map); 
+    new_style_nn->calculateNormalized(input_map); 
   
   std::cout << "reading back...\n"; 
   int v_out_size = ttrained_vector_out.size();  

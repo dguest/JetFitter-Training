@@ -155,6 +155,7 @@ std::vector<TTrainedNetwork::Input> TTrainedNetwork::getInputs() const {
 
   assert(m_inputStringToNode.size() == 0 || 
 	 m_inputStringToNode.size() == mnInput); 
+  assert(m_input_node_scale.size() == m_input_node_offset.size()); 
 
   std::map<int,std::string> input_n_to_name; 
   for (std::map<std::string,int>::const_iterator 
@@ -164,6 +165,9 @@ std::vector<TTrainedNetwork::Input> TTrainedNetwork::getInputs() const {
   }
 
   std::vector<Input> inputs_vector; 
+  if (m_input_node_offset.size() != mnInput) { 
+    return inputs_vector; 
+  }
   for (unsigned input_n = 0; input_n < mnInput; input_n++){ 
     std::map<int,std::string>::const_iterator 
       name_itr = input_n_to_name.find(input_n); 

@@ -53,6 +53,47 @@ std::vector<double> test_histo_tool(const TTrainedNetwork* net,
   return from_hists->calculateNormalized(in); 
 }
 
+std::vector<double> test_oldschool(const TTrainedNetwork* net, 
+				   std::vector<double> in, 
+				   std::string out_fname = "old.root")
+{
+  NetworkToHistoTool histo_tool; 
+  std::vector<int> hls = net->getnHiddenLayerSize(); 
+  std::vector<TVectorD*> thv; 
+  for (std::vector<TVectorD*>::const_iterator 
+	 itr = net->getThresholdVectors().begin(); 
+       itr != net->getThresholdVectors().end(); itr++) { 
+    thv.push_back(dynamic_cast<TVectorD*>((*itr)->Clone())); 
+  }
+  std::vector<TMatrixD*> wtm; 
+  for (std::vector<TMatrixD*>::const_iterator 
+	 itr = net->weightMatrices().begin(); 
+       itr != net->weightMatrices().end(); itr++) { 
+    wtm.push_back(dynamic_cast<TMatrixD*>((*itr)->Clone())); 
+  }
+  TTrainedNetwork* os_net = new TTrainedNetwork
+    (net->getnInput(), 
+     net->getnHidden(), 
+     net->getnOutput(), 
+     hls, 
+     thv, 
+     wtm, 
+     1); 
+  std::map<std::string,TH1*> hists = histo_tool.histsFromNetwork(os_net); 
+
+  TFile* out_file = new TFile(out_fname.c_str(),"recreate"); 
+  for (std::map<std::string,TH1*>::iterator itr = hists.begin(); 
+       itr != hists.end(); 
+       itr++){ 
+    out_file->WriteTObject(itr->second, itr->first.c_str()); 
+  }
+  out_file->Close(); 
+
+  TTrainedNetwork* from_hists = histo_tool.networkFromHists(hists); 
+  return from_hists->calculateOutputValues(in); 
+}
+
+
 namespace bf {
   const unsigned none          = 0; 
   const unsigned broken        = 1u << 0; 
@@ -60,6 +101,7 @@ namespace bf {
   const unsigned renormalized  = 1u << 2; 
   const unsigned scramble      = 1u << 3; 
   const unsigned testvec       = 1u << 4; 
+  const unsigned oldhists      = 1u << 5; 
 }
 
 std::vector<double> test_histo_tool(const TTrainedNetwork* net, 
@@ -68,6 +110,9 @@ std::vector<double> test_histo_tool(const TTrainedNetwork* net,
 				    std::string out_fname = "stripped.root")
 {
   NetworkToHistoTool histo_tool; 
+  TTrainedNetwork* netcopy = 0; 
+  if (flags & bf::oldhists) { 
+  }
   std::map<std::string,TH1*> hists = histo_tool.histsFromNetwork(net); 
   if (flags & bf::scramble) { 
     hists["Layer0_weights"]->Fill(0.5,0.5); 
@@ -115,6 +160,9 @@ std::vector<double> test_histo_tool(const TTrainedNetwork* net,
     from_hists->setOffsets(offsets); 
     from_hists->setScales(scales); 
   }
+  
+  delete netcopy; 
+  netcopy = 0; 
 
   return from_hists->calculateNormalized(in); 
 }
@@ -242,6 +290,8 @@ bool test_trained(std::vector<int> layer_sizes) {
 
   std::vector<double> stripped_hist_out = test_histo_tool
     (new_style_nn, input_vector, bf::none, "stripped.root"); 
+  std::vector<double> altstrip_hist_out = test_oldschool
+    (new_style_nn, input_vector); 
   std::vector<double> normed_hist_out = test_histo_tool
     (new_style_nn, raw_vector, bf::normalized, "normed.root"); 
   std::vector<double> renormed_hist_out = test_histo_tool
@@ -256,6 +306,7 @@ bool test_trained(std::vector<int> layer_sizes) {
 	      << ", FlavNet from old: " << new_style_out.at(i) 
 	      << ", From Histos: " << histo_out.at(i)
 	      << ", From stripped hists: " << stripped_hist_out.at(i)
+	      << ", From altstrip hists: " << altstrip_hist_out.at(i)
 	      << ", From normed hists: " << normed_hist_out.at(i)
 	      << ", From renorm hists: " << renormed_hist_out.at(i)
 	      << std::endl;

@@ -74,9 +74,8 @@ public:
 
   ~TTrainedNetwork();
 
+  // returns an empty vector if normalization isn't set
   std::vector<Input> getInputs() const; 
-
-
 
   void setNewWeights(std::vector<TVectorD*> & thresholdVectors,
 		     std::vector<TMatrixD*> & weightMatrices);

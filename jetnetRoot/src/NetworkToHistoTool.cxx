@@ -109,7 +109,10 @@ NetworkToHistoTool::histsFromNetwork(const TTrainedNetwork* trainedNetwork)
 
   typedef TTrainedNetwork::Input Input; 
   std::vector<Input> inputs = trainedNetwork->getInputs(); 
-  
+
+  if (inputs.size() == 0) { 
+    return outputHistos; 
+  }
   assert(inputs.size() == nInput); 
 
   std::string ii_str = (boost::format("InputsInfo_%i") % rand()).str(); 

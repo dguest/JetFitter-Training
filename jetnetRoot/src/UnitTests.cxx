@@ -45,7 +45,7 @@ std::vector<double> test_histo_tool(const TTrainedNetwork* net,
   for (std::map<std::string,TH1*>::iterator itr = hists.begin(); 
        itr != hists.end(); 
        itr++){ 
-    out_file->WriteTObject(itr->second); 
+    out_file->WriteTObject(itr->second, itr->first.c_str()); 
   }
   out_file->Close(); 
 
@@ -59,6 +59,7 @@ namespace bf {
   const unsigned normalized    = 1u << 1; 
   const unsigned renormalized  = 1u << 2; 
   const unsigned scramble      = 1u << 3; 
+  const unsigned testvec       = 1u << 4; 
 }
 
 std::vector<double> test_histo_tool(const TTrainedNetwork* net, 
@@ -92,7 +93,7 @@ std::vector<double> test_histo_tool(const TTrainedNetwork* net,
   for (std::map<std::string,TH1*>::iterator itr = hists.begin(); 
        itr != hists.end(); 
        itr++){ 
-    out_file->WriteTObject(itr->second); 
+    out_file->WriteTObject(itr->second, itr->first.c_str()); 
   }
   out_file->Close(); 
 

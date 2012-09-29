@@ -153,8 +153,9 @@ TTrainedNetwork::~TTrainedNetwork()
 
 std::vector<TTrainedNetwork::Input> TTrainedNetwork::getInputs() const { 
 
-  unsigned n_name_mappings = m_inputStringToNode.size(); 
-  assert(n_name_mappings == 0 || n_name_mappings == mnInput); 
+  assert(m_inputStringToNode.size() == 0 || 
+	 m_inputStringToNode.size() == mnInput); 
+
   std::map<int,std::string> input_n_to_name; 
   for (std::map<std::string,int>::const_iterator 
 	 itr = m_inputStringToNode.begin(); 

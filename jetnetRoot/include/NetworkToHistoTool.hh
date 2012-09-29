@@ -21,7 +21,7 @@ public:
   std::map<std::string,TH1*> histsFromNetwork(const TTrainedNetwork*) const;
   TTrainedNetwork* networkFromHists(std::map<std::string,TH1*>&) const;
 
-  std::vector<TH1*> fromNeuralNetworkToHisto(const TTrainedNetwork*) const;
+  std::vector<TH1*> fromTrainedNetworkToHisto(const TTrainedNetwork*) const;
   TTrainedNetwork* fromHistoToTrainedNetwork(std::vector<TH1*>&) const; 
 
 private:

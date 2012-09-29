@@ -260,7 +260,7 @@ NetworkToHistoTool::networkFromHists(std::map<std::string,TH1*>& inputHistos)
 }
 
 std::vector<TH1*> NetworkToHistoTool
-::fromNeuralNetworkToHisto(const TTrainedNetwork* net) const
+::fromTrainedNetworkToHisto(const TTrainedNetwork* net) const
 {
   std::map<std::string, TH1*> hists = histsFromNetwork(net); 
   std::vector<TH1*> hist_vec; 

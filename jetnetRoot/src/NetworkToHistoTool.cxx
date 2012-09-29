@@ -233,3 +233,26 @@ NetworkToHistoTool::networkFromHists(std::map<std::string,TH1*>& inputHistos)
   return trainedNetwork;
   
 }
+
+std::vector<TH1*> NetworkToHistoTool
+::fromNeuralNetworkToHisto(const TTrainedNetwork* net) const
+{
+  std::map<std::string, TH1*> hists = histsFromNetwork(net); 
+  std::vector<TH1*> hist_vec; 
+  for (std::map<std::string, TH1*>::const_iterator itr = hists.begin(); 
+       itr != hists.end(); itr++) { 
+    hist_vec.push_back(itr->second); 
+  }
+  return hist_vec; 
+}
+
+TTrainedNetwork* NetworkToHistoTool
+::fromHistoToTrainedNetwork(std::vector<TH1*>& hists) const 
+{
+  std::map<std::string, TH1*> hist_map; 
+  for (std::vector<TH1*>::const_iterator itr = hists.begin(); 
+       itr != hists.end(); itr++) { 
+    hist_map[(*itr)->GetName()] = *itr; 
+  }
+  return networkFromHists(hist_map); 
+}

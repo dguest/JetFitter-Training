@@ -152,23 +152,27 @@ TTrainedNetwork::~TTrainedNetwork()
 }
 
 std::vector<TTrainedNetwork::Input> TTrainedNetwork::getInputs() const { 
-  std::map<int,Input> inputs; 
-  for (std::map<std::string,int>::const_iterator itr = 
-	 m_inputStringToNode.begin(); 
-       itr != m_inputStringToNode.end(); 
-       itr++){ 
-    Input the_input; 
-    the_input.name = itr->first; 
-    the_input.offset = m_input_node_offset.at(itr->second); 
-    the_input.scale = m_input_node_scale.at(itr->second);
-    inputs[itr->second] = the_input; 
+
+  unsigned n_name_mappings = m_inputStringToNode.size(); 
+  assert(n_name_mappings == 0 || n_name_mappings == mnInput); 
+  std::map<int,std::string> input_n_to_name; 
+  for (std::map<std::string,int>::const_iterator 
+	 itr = m_inputStringToNode.begin(); 
+       itr != m_inputStringToNode.end(); itr++){ 
+    input_n_to_name[itr->second] = itr->first; 
   }
-  assert(inputs.size() == m_inputStringToNode.size()); 
 
   std::vector<Input> inputs_vector; 
-  for (std::map<int,Input>::const_iterator itr = inputs.begin(); 
-       itr != inputs.end(); itr++){ 
-    inputs_vector.push_back(itr->second); 
+  for (unsigned input_n = 0; input_n < mnInput; input_n++){ 
+    std::map<int,std::string>::const_iterator 
+      name_itr = input_n_to_name.find(input_n); 
+    Input the_input; 
+    if (name_itr != input_n_to_name.end()) { 
+      the_input.name = name_itr->second; 
+    }
+    the_input.offset = m_input_node_offset.at(input_n); 
+    the_input.scale = m_input_node_scale.at(input_n);
+    inputs_vector.push_back(the_input); 
   }
   return inputs_vector; 
 }
@@ -350,20 +354,37 @@ Double_t TTrainedNetwork::sigmoid(Double_t x) const {
 }
 
 bool TTrainedNetwork::is_consistent() const { 
-  if (mThresholdVectors.size() != mWeightMatrices.size()) 
+  if (mThresholdVectors.size() != mWeightMatrices.size()) { 
+    std::cerr << "ERROR: " 
+	      << "n threshold vectors: " << mThresholdVectors.size() 
+	      << " n weight matrices: " << mWeightMatrices.size() 
+	      << std::endl; 
     return false; 
+  }
   int nodes_last_layer = mnInput; 
   for (unsigned layer_n = 0; layer_n < mThresholdVectors.size(); layer_n++){ 
     int n_threshold_nodes = mThresholdVectors.at(layer_n)->GetNrows(); 
     int n_weights_nodes = mWeightMatrices.at(layer_n)->GetNcols(); 
-    if (n_threshold_nodes != n_weights_nodes) return false; 
-    if (mWeightMatrices.at(layer_n)->GetNrows() != nodes_last_layer)
+    if (n_threshold_nodes != n_weights_nodes) {
+      std::cerr << "ERROR: in layer " << layer_n 
+		<< " --- n threshold: " << n_threshold_nodes
+		<< " n_weights: " << n_weights_nodes << std::endl;
       return false; 
+    }
+    int n_incoming_connections = mWeightMatrices.at(layer_n)->GetNrows(); 
+    if (n_incoming_connections != nodes_last_layer) { 
+      std::cerr << "ERROR: in layer " << layer_n 
+		<< " --- last layer nodes: " << nodes_last_layer
+		<< " connected to this layer: " <<  n_incoming_connections
+		<< std::endl;
+      return false; 
+    }
     nodes_last_layer = n_weights_nodes; 
   }
   
   if (mThresholdVectors.size() - 1 != mnHiddenLayerSize.size() ){ 
-    std::cerr << "size mThresholdVectors: " << mThresholdVectors.size() 
+    std::cerr << "ERROR: "
+	      << "size mThresholdVectors: " << mThresholdVectors.size() 
 	      << " size mnHiddenLayerSize: " << mnHiddenLayerSize.size()
 	      << std::endl; 
     return false; 

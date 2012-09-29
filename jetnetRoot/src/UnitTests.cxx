@@ -53,18 +53,37 @@ std::vector<double> test_histo_tool(const TTrainedNetwork* net,
   return from_hists->calculateNormalized(in); 
 }
 
+namespace bf {
+  const unsigned none          = 0; 
+  const unsigned broken        = 1u << 0; 
+  const unsigned normalized    = 1u << 1; 
+  const unsigned renormalized  = 1u << 2; 
+  const unsigned scramble      = 1u << 3; 
+}
+
 std::vector<double> test_histo_tool(const TTrainedNetwork* net, 
 				    std::vector<double> in, 
-				    bool do_broken = false, 
+				    const unsigned flags = 0, 
 				    std::string out_fname = "stripped.root")
 {
   NetworkToHistoTool histo_tool; 
   std::map<std::string,TH1*> hists = histo_tool.histsFromNetwork(net); 
-  if (do_broken) { 
-    hists.rbegin()->second->Fill(0.5,0.5); 
+  if (flags & bf::scramble) { 
+    hists["Layer0_weights"]->Fill(0.5,0.5); 
   }
 
-  hists.erase("InputsInfo"); 
+  typedef std::vector<TTrainedNetwork::Input> Inputs; 
+
+  if (flags & bf::normalized) { 
+    TH1* inp_hist = hists["InputsInfo"]; 
+    int n_bins = inp_hist->GetNbinsX(); 
+    for (int bin_n = 1; bin_n <= n_bins; bin_n++) { 
+      inp_hist->GetXaxis()->SetBinLabel(bin_n,""); 
+    }
+  }
+  else { 
+    hists.erase("InputsInfo"); 
+  }
 
   TFile* out_file = new TFile(out_fname.c_str(),"recreate"); 
   for (std::map<std::string,TH1*>::iterator itr = hists.begin(); 
@@ -75,6 +94,24 @@ std::vector<double> test_histo_tool(const TTrainedNetwork* net,
   out_file->Close(); 
 
   TTrainedNetwork* from_hists = histo_tool.networkFromHists(hists); 
+
+  if (flags & bf::renormalized) { 
+    Inputs inputs = net->getInputs(); 
+    std::vector<double> scales; 
+    std::vector<double> offsets; 
+    for (Inputs::const_iterator itr = inputs.begin(); itr != inputs.end(); 
+	 itr++) { 
+      scales.push_back(itr->scale); 
+      offsets.push_back(itr->offset); 
+    }
+    if (flags & bf::broken) { 
+      scales.push_back(0); 
+      offsets.push_back(0); 
+    }
+    from_hists->setOffsets(offsets); 
+    from_hists->setScales(scales); 
+  }
+
   return from_hists->calculateNormalized(in); 
 }
 
@@ -200,7 +237,11 @@ bool test_trained(std::vector<int> layer_sizes) {
     (new_style_nn, input_map, false); 
 
   std::vector<double> stripped_hist_out = test_histo_tool
-    (new_style_nn, input_vector, false); 
+    (new_style_nn, input_vector, bf::none, "stripped.root"); 
+  std::vector<double> normed_hist_out = test_histo_tool
+    (new_style_nn, raw_vector, bf::normalized, "normed.root"); 
+  std::vector<double> renormed_hist_out = test_histo_tool
+    (new_style_nn, raw_vector, bf::renormalized , "renormed.root"); 
 
   for (int i = 0; i < 3; i++){ 
     std::cout << "output " << i << " -- JN: " << jn->GetOutput(i) 
@@ -211,6 +252,8 @@ bool test_trained(std::vector<int> layer_sizes) {
 	      << ", FlavNet from old: " << new_style_out.at(i) 
 	      << ", From Histos: " << histo_out.at(i)
 	      << ", From stripped hists: " << stripped_hist_out.at(i)
+	      << ", From normed hists: " << normed_hist_out.at(i)
+	      << ", From renorm hists: " << renormed_hist_out.at(i)
 	      << std::endl;
   }
   

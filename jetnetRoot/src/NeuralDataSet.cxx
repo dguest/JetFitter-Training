@@ -1,7 +1,7 @@
-#include "TNeuralDataSet.h"
+#include "NeuralDataSet.h"
 #include <cstdlib> // rand
 //______________________________________________________________________________
-TNeuralDataSet::TNeuralDataSet( int n_pattern, int n_unit ): 
+NeuralDataSet::NeuralDataSet( int n_pattern, int n_unit ): 
   m_n_patterns(n_pattern), 
   m_n_units(n_unit)
 {
@@ -14,19 +14,19 @@ TNeuralDataSet::TNeuralDataSet( int n_pattern, int n_unit ):
 
 }
 //______________________________________________________________________________
-TNeuralDataSet::~TNeuralDataSet()
+NeuralDataSet::~NeuralDataSet()
 {
   // Default destructor
   delete mpData;
   delete mpWeights;
 }
 //______________________________________________________________________________
-void TNeuralDataSet::SetEventWeight( const int aPattern, double aValue )
+void NeuralDataSet::SetEventWeight( const int aPattern, double aValue )
 {
   mpWeights[aPattern] = aValue;
 }
 //______________________________________________________________________________
-void TNeuralDataSet::SetData( const int aPattern, const int aIndex, double aValue )
+void NeuralDataSet::SetData( const int aPattern, const int aIndex, double aValue )
 {
   int global_index = aPattern * m_n_units + aIndex; 
   // Changes the value of cell in the set specified by Pattern number and Unit index
@@ -34,7 +34,7 @@ void TNeuralDataSet::SetData( const int aPattern, const int aIndex, double aValu
 }
 
 //______________________________________________________________________________
-void TNeuralDataSet::Shuffle( int seed )
+void NeuralDataSet::Shuffle( int seed )
 {
   // Shuffles data
   if (seed) { 

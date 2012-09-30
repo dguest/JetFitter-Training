@@ -16,11 +16,11 @@
 //______________________________________________________________________________
 //
 
-class TNeuralDataSet
+class NeuralDataSet
 {
  public:
-  TNeuralDataSet( int aNumberOfPatterns = 0, int aNumberOfUnits = 0 );
-  virtual ~TNeuralDataSet( void );
+  NeuralDataSet( int aNumberOfPatterns = 0, int aNumberOfUnits = 0 );
+  virtual ~NeuralDataSet( void );
   
   // Returns the number of the patterns in set
   int GetPatternsCount( void ){ return m_n_patterns; };
@@ -48,14 +48,14 @@ class TNeuralDataSet
   double* mpWeights;
 };
 
-inline double TNeuralDataSet::GetData( const int aPattern, const int aIndex )
+inline double NeuralDataSet::GetData( const int aPattern, const int aIndex )
 {
   // Returns the value of cell in the set specified by Pattern number and Unit index
   int global_index = aPattern * m_n_units + aIndex; 
   return mpData[global_index];
 }
 //______________________________________________________________________________
-inline double TNeuralDataSet::GetEventWeight( const int aPattern )
+inline double NeuralDataSet::GetEventWeight( const int aPattern )
 {
   return mpWeights[aPattern];
 }

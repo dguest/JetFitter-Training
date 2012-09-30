@@ -71,10 +71,10 @@ JetNet::JetNet( Int_t aTestCount, Int_t aTrainCount,
   mIsInitialized = kFALSE;
   mInitLocked = kFALSE;
 
-  mpInputTrainSet  = new TNeuralDataSet( mTrainSetCnt, GetInputDim() );
-  mpInputTestSet = new TNeuralDataSet( mTestSetCnt, GetInputDim() );
-  mpOutputTrainSet = new TNeuralDataSet( mTrainSetCnt, GetOutputDim() );
-  mpOutputTestSet = new TNeuralDataSet( mTestSetCnt, GetOutputDim() );
+  mpInputTrainSet  = new NeuralDataSet( mTrainSetCnt, GetInputDim() );
+  mpInputTestSet = new NeuralDataSet( mTestSetCnt, GetInputDim() );
+  mpOutputTrainSet = new NeuralDataSet( mTrainSetCnt, GetOutputDim() );
+  mpOutputTestSet = new NeuralDataSet( mTestSetCnt, GetOutputDim() );
   
   menActFunction=afSigmoid;
 
@@ -678,10 +678,10 @@ void  JetNet::LoadDataAscii( TString aFileName )
     delete mpOutputTestSet;
     delete mpOutputTrainSet;
     
-    mpInputTrainSet  = new TNeuralDataSet( mTrainSetCnt, GetInputDim() );
-    mpInputTestSet   = new TNeuralDataSet( mTestSetCnt, GetInputDim() );
-    mpOutputTrainSet = new TNeuralDataSet( mTrainSetCnt, GetOutputDim() );
-    mpOutputTestSet  = new TNeuralDataSet( mTestSetCnt, GetOutputDim() );
+    mpInputTrainSet  = new NeuralDataSet( mTrainSetCnt, GetInputDim() );
+    mpInputTestSet   = new NeuralDataSet( mTestSetCnt, GetInputDim() );
+    mpOutputTrainSet = new NeuralDataSet( mTrainSetCnt, GetOutputDim() );
+    mpOutputTestSet  = new NeuralDataSet( mTestSetCnt, GetOutputDim() );
 
     i = 0;
     j = 0;
@@ -853,10 +853,10 @@ void JetNet::Reinitialize( void )
     mpLayers[ i ] = JNDAT1.MSTJN[ 9 + i ]; 
   }
   
-  mpInputTrainSet  = new TNeuralDataSet( mTrainSetCnt, GetInputDim() );
-  mpInputTestSet   = new TNeuralDataSet( mTestSetCnt, GetInputDim() );
-  mpOutputTrainSet = new TNeuralDataSet( mTrainSetCnt, GetOutputDim() );
-  mpOutputTestSet  = new TNeuralDataSet( mTestSetCnt, GetOutputDim() );
+  mpInputTrainSet  = new NeuralDataSet( mTrainSetCnt, GetInputDim() );
+  mpInputTestSet   = new NeuralDataSet( mTestSetCnt, GetInputDim() );
+  mpOutputTrainSet = new NeuralDataSet( mTrainSetCnt, GetOutputDim() );
+  mpOutputTestSet  = new NeuralDataSet( mTestSetCnt, GetOutputDim() );
 
   mInputDim = mpLayers[ 0 ];
   mOutputDim = mpLayers[ mLayerCount - 1 ];

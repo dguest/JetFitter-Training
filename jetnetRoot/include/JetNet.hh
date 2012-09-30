@@ -26,7 +26,7 @@
 #include "TROOT.h"
 #include "TObject.h"
 #include "Riostream.h"
-#include "TNeuralDataSet.h"
+#include "NeuralDataSet.h"
 #include "TF1.h"
 
 #include <vector>
@@ -170,10 +170,10 @@ private:
   Int_t  mLayerCount; // Number of Layers (including the input and output)
   Int_t* mpLayers; //! Array which contains the number of units in each layer 
 
-  TNeuralDataSet* mpInputTrainSet;
-  TNeuralDataSet* mpOutputTrainSet;
-  TNeuralDataSet* mpInputTestSet;
-  TNeuralDataSet* mpOutputTestSet;
+  NeuralDataSet* mpInputTrainSet;
+  NeuralDataSet* mpOutputTrainSet;
+  NeuralDataSet* mpInputTestSet;
+  NeuralDataSet* mpOutputTestSet;
 
   Int_t mTrainSetCnt, mTestSetCnt; // Size of Train and Test set
 

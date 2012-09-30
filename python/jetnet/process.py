@@ -6,7 +6,6 @@ ROOT.PyConfig.IgnoreCommandLineOptions = True
 ROOT.gROOT.SetBatch()           # don't draw (crashes subprocess)
 
 from jetnet import training, pyprep, profile, utils
-from jetnet.perf import rejection, performance
 import os, sys, glob, re, itertools
 from os.path import isdir, isfile, splitext, basename
 from warnings import warn

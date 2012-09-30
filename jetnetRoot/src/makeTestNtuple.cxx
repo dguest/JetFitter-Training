@@ -10,14 +10,14 @@
 #include <algorithm>
 #include <TH1D.h>
 #include "NNAdapters.hh"
-#include "TFlavorNetwork.h"
+#include "TTrainedNetwork.h"
 #include "JetNet.hh"
 #include <TVectorD.h>
 #include <TMatrixD.h>
 #include <string> 
 #include "nnExceptions.hh"
 #include <stdexcept>
-#include "normedInput.hh"
+#include "NormedInput.hh"
 
 
 void makeTestNtuple(IONames io_names, bool debug)
@@ -31,9 +31,9 @@ void makeTestNtuple(IONames io_names, bool debug)
   std::string output_file_name = io_names.output_file; 
   std::string output_tree_name = io_names.output_tree; 
 
-  std::string nn_name = "TFlavorNetwork"; 
+  std::string nn_name = "TTrainedNetwork"; 
   TFile input_weights_file(input_weights_name.c_str());
-  TFlavorNetwork* trainedNetwork = dynamic_cast<TFlavorNetwork*>
+  TTrainedNetwork* trainedNetwork = dynamic_cast<TTrainedNetwork*>
     (input_weights_file.Get(nn_name.c_str()));
 
   
@@ -60,7 +60,7 @@ void makeTestNtuple(IONames io_names, bool debug)
   Int_t nInput=trainedNetwork->getnInput();
   std::cout << " Input size: " << nInput;
 
-  vector<Int_t> nHiddenLayerSize=trainedNetwork->getnHiddenLayerSize();
+  std::vector<Int_t> nHiddenLayerSize=trainedNetwork->getnHiddenLayerSize();
   Int_t nHidden=nHiddenLayerSize.size();
   
   for (Int_t o=0;o<nHidden;++o) {

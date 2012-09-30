@@ -1,12 +1,13 @@
 //-*-c++-*-
-#ifndef __TNetworkToHistoTool_
-#define __TNetworkToHistoTool_
+#ifndef NETWORK_TO_HISTO_TOOL_H
+#define NETWORK_TO_HISTO_TOOL_H
 
 #include <string>
 #include <map>
+#include <vector>
 
 class TH1;
-class TFlavorNetwork;
+class TTrainedNetwork;
 
 
 class NetworkToHistoTool 
@@ -17,9 +18,11 @@ public:
 
   ~NetworkToHistoTool() {};
 
-  std::map<std::string,TH1*> histsFromNetwork(const TFlavorNetwork*) const;
-  
-  TFlavorNetwork* networkFromHists(std::map<std::string,TH1*>&) const;
+  std::map<std::string,TH1*> histsFromNetwork(const TTrainedNetwork*) const;
+  TTrainedNetwork* networkFromHists(std::map<std::string,TH1*>&) const;
+
+  std::vector<TH1*> fromTrainedNetworkToHisto(const TTrainedNetwork*) const;
+  TTrainedNetwork* fromHistoToTrainedNetwork(std::vector<TH1*>&) const; 
 
 private:
   

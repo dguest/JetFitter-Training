@@ -1,6 +1,6 @@
 #include "NNFileConverters.hh"
 #include "NetworkToHistoTool.hh"
-#include "TFlavorNetwork.h"
+#include "TTrainedNetwork.h"
 
 #include <string> 
 #include <map> 
@@ -21,7 +21,7 @@ void hist_from_nn(std::string nn_file,
   if (in_file.IsZombie()) { 
     throw std::runtime_error("can't open " + nn_file); 
   }
-  TFlavorNetwork* net = dynamic_cast<TFlavorNetwork*>
+  TTrainedNetwork* net = dynamic_cast<TTrainedNetwork*>
     (in_file.Get(nn_name.c_str())); 
   if (!net) { 
     throw std::runtime_error("no " + nn_name + " in " + nn_file); 
@@ -33,7 +33,7 @@ void hist_from_nn(std::string nn_file,
   std::map<std::string,TH1*> hists = tool.histsFromNetwork(net); 
   for (std::map<std::string,TH1*>::iterator itr = hists.begin(); 
        itr != hists.end(); itr++) { 
-    out.WriteTObject(itr->second); 
+    out.WriteTObject(itr->second, itr->first.c_str()); 
   }
 
   // also copy over any remaining histograms
@@ -80,7 +80,7 @@ void nn_from_hist(std::string hist_file,
   TFile out(nn_file.c_str(), "recreate"); 
 
   NetworkToHistoTool tool; 
-  TFlavorNetwork* nn = tool.networkFromHists(hists); 
+  TTrainedNetwork* nn = tool.networkFromHists(hists); 
   out.WriteTObject(nn); 
 
   copy_hists(in_file, out, exclude); 

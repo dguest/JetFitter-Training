@@ -215,7 +215,8 @@ def _overlay_rejrej(array_one, array_two,
     arrays = array_one, array_two
 
     
-
+    # pretty sure the 'nonzero' calls here aren't needed (bool array returned
+    # by the inequality should work)
     array_one['eff'][np.nonzero(array_one['eff'] <= 0.0)] = np.NaN
     array_two['eff'][np.nonzero(array_two['eff'] <= 0.0)] = np.NaN
 

@@ -4,8 +4,8 @@
 #pragma link off all classes;
 #pragma link off all functions;
 
-#pragma link C++ class TNeuralDataSet;
+#pragma link C++ class NeuralDataSet;
 /* #pragma link C++ class JetNet; */
-#pragma link C++ class TFlavorNetwork;
+#pragma link C++ class TTrainedNetwork;
 
 #endif

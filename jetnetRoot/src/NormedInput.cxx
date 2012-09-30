@@ -1,4 +1,4 @@
-#include "normedInput.hh"
+#include "NormedInput.hh"
 #include "nnExceptions.hh"
 
 #include <boost/ptr_container/ptr_vector.hpp>

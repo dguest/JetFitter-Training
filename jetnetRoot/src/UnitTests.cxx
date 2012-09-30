@@ -4,8 +4,8 @@
 #include <stdexcept> 
 #include <cstdlib>
 #include <ctime> 
-#include "TFlavorNetwork.h"
 #include "TTrainedNetwork.h"
+#include "TOldNetwork.h"
 #include "NetworkToHistoTool.hh"
 #include "NNAdapters.hh"
 #include "JetNet.hh"
@@ -30,9 +30,10 @@ float get_rand(float range, float offset) {
   return rand_base; 
 }
 
-std::vector<double> test_histo_tool(const TFlavorNetwork* net, 
+std::vector<double> test_histo_tool(const TTrainedNetwork* net, 
 				    std::map<std::string, double> in, 
-				    bool do_broken = false)
+				    bool do_broken = false, 
+				    std::string out_fname = "test_hists.root")
 {
   NetworkToHistoTool histo_tool; 
   std::map<std::string,TH1*> hists = histo_tool.histsFromNetwork(net); 
@@ -40,29 +41,144 @@ std::vector<double> test_histo_tool(const TFlavorNetwork* net,
     hists.rbegin()->second->Fill(0.5,0.5); 
   }
 
-  TFile* out_file = new TFile("test_hists.root","recreate"); 
+  TFile* out_file = new TFile(out_fname.c_str(),"recreate"); 
   for (std::map<std::string,TH1*>::iterator itr = hists.begin(); 
        itr != hists.end(); 
        itr++){ 
-    out_file->WriteTObject(itr->second); 
+    out_file->WriteTObject(itr->second, itr->first.c_str()); 
   }
   out_file->Close(); 
 
-  // TFile in_file("test_hists.root"); 
-  // std::vector<TH1*> read_hists; 
-  
+  TTrainedNetwork* from_hists = histo_tool.networkFromHists(hists); 
+  return from_hists->calculateNormalized(in); 
+}
 
-  TFlavorNetwork* from_hists = histo_tool.networkFromHists(hists); 
-  return from_hists->calculateWithNormalization(in); 
+std::vector<double> test_oldschool(const TTrainedNetwork* net, 
+				   std::vector<double> in, 
+				   std::string out_fname = "old.root")
+{
+  NetworkToHistoTool histo_tool; 
+  std::vector<int> hls = net->getnHiddenLayerSize(); 
+  std::vector<TVectorD*> thv; 
+  for (std::vector<TVectorD*>::const_iterator 
+	 itr = net->getThresholdVectors().begin(); 
+       itr != net->getThresholdVectors().end(); itr++) { 
+    thv.push_back(dynamic_cast<TVectorD*>((*itr)->Clone())); 
+  }
+  std::vector<TMatrixD*> wtm; 
+  for (std::vector<TMatrixD*>::const_iterator 
+	 itr = net->weightMatrices().begin(); 
+       itr != net->weightMatrices().end(); itr++) { 
+    wtm.push_back(dynamic_cast<TMatrixD*>((*itr)->Clone())); 
+  }
+  TTrainedNetwork* os_net = new TTrainedNetwork
+    (net->getnInput(), 
+     net->getnHidden(), 
+     net->getnOutput(), 
+     hls, 
+     thv, 
+     wtm, 
+     1); 
+  std::map<std::string,TH1*> hists = histo_tool.histsFromNetwork(os_net); 
+
+  TFile* out_file = new TFile(out_fname.c_str(),"recreate"); 
+  for (std::map<std::string,TH1*>::iterator itr = hists.begin(); 
+       itr != hists.end(); 
+       itr++){ 
+    out_file->WriteTObject(itr->second, itr->first.c_str()); 
+  }
+  out_file->Close(); 
+
+  TTrainedNetwork* from_hists = histo_tool.networkFromHists(hists); 
+  return from_hists->calculateOutputValues(in); 
+}
+
+
+namespace bf {
+  const unsigned none          = 0; 
+  const unsigned broken        = 1u << 0; 
+  const unsigned normalized    = 1u << 1; 
+  const unsigned renormalized  = 1u << 2; 
+  const unsigned scramble      = 1u << 3; 
+  const unsigned testvec       = 1u << 4; 
+  const unsigned oldhists      = 1u << 5; 
+}
+
+std::vector<double> test_histo_tool(const TTrainedNetwork* net, 
+				    std::vector<double> in, 
+				    const unsigned flags = 0, 
+				    std::string out_fname = "stripped.root")
+{
+  NetworkToHistoTool histo_tool; 
+  TTrainedNetwork* netcopy = 0; 
+  if (flags & bf::oldhists) { 
+  }
+  std::map<std::string,TH1*> hists = histo_tool.histsFromNetwork(net); 
+  if (flags & bf::scramble) { 
+    hists["Layer0_weights"]->Fill(0.5,0.5); 
+  }
+  if (flags & bf::broken) { 
+    hists["LayersInfo"]->Fill(1.5); 
+  }
+
+  typedef std::vector<TTrainedNetwork::Input> Inputs; 
+
+  if (flags & bf::normalized) { 
+    TH1* inp_hist = hists["InputsInfo"]; 
+    int n_bins = inp_hist->GetNbinsX(); 
+    for (int bin_n = 1; bin_n <= n_bins; bin_n++) { 
+      inp_hist->GetXaxis()->SetBinLabel(bin_n,""); 
+    }
+  }
+  else { 
+    hists.erase("InputsInfo"); 
+  }
+
+  TFile* out_file = new TFile(out_fname.c_str(),"recreate"); 
+  for (std::map<std::string,TH1*>::iterator itr = hists.begin(); 
+       itr != hists.end(); 
+       itr++){ 
+    out_file->WriteTObject(itr->second, itr->first.c_str()); 
+  }
+  out_file->Close(); 
+
+  TTrainedNetwork* from_hists = histo_tool.networkFromHists(hists); 
+
+  if (flags & bf::renormalized) { 
+    Inputs inputs = net->getInputs(); 
+    std::vector<double> scales; 
+    std::vector<double> offsets; 
+    for (Inputs::const_iterator itr = inputs.begin(); itr != inputs.end(); 
+	 itr++) { 
+      scales.push_back(itr->scale); 
+      offsets.push_back(itr->offset); 
+    }
+    if (flags & bf::broken) { 
+      scales.push_back(0); 
+      offsets.push_back(0); 
+    }
+    from_hists->setOffsets(offsets); 
+    from_hists->setScales(scales); 
+  }
+  
+  delete netcopy; 
+  netcopy = 0; 
+
+  if (flags & (bf::normalized | bf::renormalized) ) { 
+    return from_hists->calculateNormalized(in); 
+  }
+  else { 
+    return from_hists->calculateOutputValues(in); 
+  }
 }
 
 
 bool test_trained(std::vector<int> layer_sizes) { 
   srand(time(0)); 
-  std::vector<TFlavorNetwork::Input> inputs; 
-  TFlavorNetwork::Input cat = {"cat",get_rand(),get_rand()}; 
-  TFlavorNetwork::Input dog = {"dog",get_rand(),get_rand()}; 
-  TFlavorNetwork::Input horse = {"horse",get_rand(),get_rand()}; 
+  std::vector<TTrainedNetwork::Input> inputs; 
+  TTrainedNetwork::Input cat = {"cat",get_rand(),get_rand()}; 
+  TTrainedNetwork::Input dog = {"dog",get_rand(),get_rand()}; 
+  TTrainedNetwork::Input horse = {"horse",get_rand(),get_rand()}; 
   inputs.push_back(cat); 
   inputs.push_back(dog); 
   inputs.push_back(horse); 
@@ -85,9 +201,9 @@ bool test_trained(std::vector<int> layer_sizes) {
   std::cout << "before:\n"; 
   print_node_info(inputs); 
 
-  TFlavorNetwork trained(inputs, 3, thresholds, weights); 
+  TTrainedNetwork trained(inputs, 3, thresholds, weights); 
 
-  std::vector<TFlavorNetwork::Input> read_back = trained.getInputs(); 
+  std::vector<TTrainedNetwork::Input> read_back = trained.getInputs(); 
 
   std::cout << "after:\n"; 
   print_node_info(read_back); 
@@ -107,7 +223,7 @@ bool test_trained(std::vector<int> layer_sizes) {
   jn->Init(); 
 
   std::vector<JetNet::InputNode> jn_input_info; 
-  for (std::vector<TFlavorNetwork::Input>::const_iterator itr = 
+  for (std::vector<TTrainedNetwork::Input>::const_iterator itr = 
 	 read_back.begin(); 
        itr != read_back.end(); 
        itr++) { 
@@ -121,13 +237,14 @@ bool test_trained(std::vector<int> layer_sizes) {
   print_node_info(jn_read_back); 
 
 
-  TFlavorNetwork* jn_trained_out = getTrainedNetwork(*jn); 
+  TTrainedNetwork* jn_trained_out = getTrainedNetwork(*jn); 
   
-  std::cout << "TFlavorNetwork from jn\n"; 
+  std::cout << "TTrainedNetwork from jn\n"; 
   print_node_info(jn_trained_out->getInputs()); 
 
   std::map<std::string,double> input_map; 
   std::vector<double> input_vector; 
+  std::vector<double> raw_vector; 
   for (int i = 0; i < inputs.size(); i++){ 
     double value = float(rand()) / float(RAND_MAX) - 0.5; 
     double normed_value = 
@@ -137,6 +254,7 @@ bool test_trained(std::vector<int> layer_sizes) {
     jn->SetInputs(i,normed_value); 
     input_map[inputs.at(i).name] = value; 
     input_vector.push_back(normed_value); 
+    raw_vector.push_back(value); 
   }
 
   jn->Evaluate(); 
@@ -144,7 +262,7 @@ bool test_trained(std::vector<int> layer_sizes) {
   std::cout << "calculate in a few ways: first with normalization..."; 
   
   std::vector<double> ttrained_map_out = 
-    jn_trained_out->calculateWithNormalization(input_map); 
+    jn_trained_out->calculateNormalized(input_map); 
   std::cout << "now without...\n"; 
   std::vector<double> ttrained_vector_out; 
   try { 
@@ -156,12 +274,15 @@ bool test_trained(std::vector<int> layer_sizes) {
       input_map.size() << std::endl; 
     throw; 
   }
-  TTrainedNetwork* old_style_nn = convertNewToOld(jn_trained_out); 
+  std::vector<double> ttrained_normvec_out = 
+    jn_trained_out->calculateNormalized(raw_vector); 
+  
+  TOldNetwork* old_style_nn = convertNewToOld(jn_trained_out); 
   std::vector<double> old_style_out = old_style_nn->calculateOutputValues
     (input_vector); 
-  TFlavorNetwork* new_style_nn = convertOldToNew(old_style_nn,inputs); 
+  TTrainedNetwork* new_style_nn = convertOldToNew(old_style_nn,inputs); 
   std::vector<double> new_style_out = 
-    new_style_nn->calculateWithNormalization(input_map); 
+    new_style_nn->calculateNormalized(input_map); 
   
   std::cout << "reading back...\n"; 
   int v_out_size = ttrained_vector_out.size();  
@@ -172,13 +293,27 @@ bool test_trained(std::vector<int> layer_sizes) {
   std::vector<double> histo_out = test_histo_tool
     (new_style_nn, input_map, false); 
 
+  std::vector<double> stripped_hist_out = test_histo_tool
+    (new_style_nn, input_vector, bf::none, "stripped.root"); 
+  std::vector<double> altstrip_hist_out = test_oldschool
+    (new_style_nn, input_vector); 
+  std::vector<double> normed_hist_out = test_histo_tool
+    (new_style_nn, raw_vector, bf::normalized, "normed.root"); 
+  std::vector<double> renormed_hist_out = test_histo_tool
+    (new_style_nn, raw_vector, bf::renormalized  , "renormed.root"); 
+
   for (int i = 0; i < 3; i++){ 
     std::cout << "output " << i << " -- JN: " << jn->GetOutput(i) 
 	      << ", FlavNet map: " << ttrained_map_out.at(i) 
 	      << ", FlavNet vec: " << ttrained_vector_out.at(i) 
+	      << ", FlavNet normvec: " << ttrained_normvec_out.at(i)
 	      << ", TrainedNet vec: " << old_style_out.at(i) 
 	      << ", FlavNet from old: " << new_style_out.at(i) 
 	      << ", From Histos: " << histo_out.at(i)
+	      << ", From stripped hists: " << stripped_hist_out.at(i)
+	      << ", From altstrip hists: " << altstrip_hist_out.at(i)
+	      << ", From normed hists: " << normed_hist_out.at(i)
+	      << ", From renorm hists: " << renormed_hist_out.at(i)
 	      << std::endl;
   }
   
@@ -189,7 +324,7 @@ bool test_trained(std::vector<int> layer_sizes) {
 			       nneurons );
 
   setTrainedNetwork(*new_jn,jn_trained_out); 
-  std::cout << "new_jn from TFlavorNetwork\n"; 
+  std::cout << "new_jn from TTrainedNetwork\n"; 
   print_node_info(new_jn->getInputNodes()); 
   new_jn->Init(); 
 
@@ -204,7 +339,7 @@ bool test_trained(std::vector<int> layer_sizes) {
   
   // cout << " create Trained Network object..." << endl;
   
-  // TFlavorNetwork* trainedNetwork = jn->createTrainedNetwork();
+  // TTrainedNetwork* trainedNetwork = jn->createTrainedNetwork();
 
   // cout << " now getting value with trained Network ";
 
@@ -265,7 +400,7 @@ bool test_trained(std::vector<int> layer_sizes) {
   //   fromTrainedNetworkToHisto(trainedNetwork);
 
   // cout << " From histo to network back..." << endl;
-  // TFlavorNetwork* trainedNetwork2 = myHistoTool.
+  // TTrainedNetwork* trainedNetwork2 = myHistoTool.
   //   fromHistoToTrainedNetwork(myHistos);
 
   // cout << " reading back " << endl;

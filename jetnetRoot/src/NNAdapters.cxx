@@ -4,16 +4,17 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/format.hpp>
 #include "JetNet.hh"
-#include "TFlavorNetwork.h"
 #include "TTrainedNetwork.h"
+#include "TOldNetwork.h"
 #include "NNAdapters.hh"
 #include "TVector.h"
 #include "TMatrix.h"
 #include "TTree.h"
 #include "TFile.h"
+#include "TROOT.h"
 
 //by Giacinto Piacquadio (18-02-2008)
-TFlavorNetwork* getTrainedNetwork(const JetNet& jn) 
+TTrainedNetwork* getTrainedNetwork(const JetNet& jn) 
 {
   Int_t nInput = jn.GetInputDim();
   Int_t nHidden = jn.GetHiddenLayerDim();
@@ -57,18 +58,18 @@ TFlavorNetwork* getTrainedNetwork(const JetNet& jn)
 
   typedef std::vector<JetNet::InputNode> JetNetInputs; 
   JetNetInputs jn_inputs = jn.getInputNodes(); 
-  std::vector<TFlavorNetwork::Input> nn_inputs; 
+  std::vector<TTrainedNetwork::Input> nn_inputs; 
   for (JetNetInputs::const_iterator itr = jn_inputs.begin(); 
        itr != jn_inputs.end(); itr++) { 
-    TFlavorNetwork::Input the_node = 
-      convert_node<TFlavorNetwork::Input>(*itr); 
+    TTrainedNetwork::Input the_node = 
+      convert_node<TTrainedNetwork::Input>(*itr); 
     nn_inputs.push_back(the_node); 
   }
        
   int activation_function = jn.GetActivationFunction(); 
 
-  TFlavorNetwork* trainedNetwork=
-    new TFlavorNetwork(nn_inputs, 
+  TTrainedNetwork* trainedNetwork=
+    new TTrainedNetwork(nn_inputs, 
 			nOutput,
 			thresholdVectors,
 			weightMatrices,
@@ -79,7 +80,7 @@ TFlavorNetwork* getTrainedNetwork(const JetNet& jn)
 }
 //___________________________________________________________________________
 //by Giacinto Piacquadio (18-02-2008)
-void setTrainedNetwork(JetNet& jn, const TFlavorNetwork* trainedNetwork)
+void setTrainedNetwork(JetNet& jn, const TTrainedNetwork* trainedNetwork)
 {
 
   Int_t nInput = jn.GetInputDim();
@@ -91,7 +92,7 @@ void setTrainedNetwork(JetNet& jn, const TFlavorNetwork* trainedNetwork)
   if (tr_n_hidden != nHidden)
   {
     std::string e_string = 
-      "Hidden layers mismatch -- JetNet: %i, TFlavorNetwork: %i"; 
+      "Hidden layers mismatch -- JetNet: %i, TTrainedNetwork: %i"; 
     std::string err = (boost::format(e_string) % nHidden % tr_n_hidden).str(); 
     throw std::runtime_error(err); 
   }
@@ -123,7 +124,7 @@ void setTrainedNetwork(JetNet& jn, const TFlavorNetwork* trainedNetwork)
   
   std::vector<TVectorD*> thresholdVectors=trainedNetwork->getThresholdVectors();
   std::vector<TMatrixD*> weightMatrices=trainedNetwork->weightMatrices();
-  //ownership remains of the TFlavorNetwork
+  //ownership remains of the TTrainedNetwork
 
   for (Int_t o=0;o<nHidden+1;++o)
   {
@@ -151,7 +152,7 @@ void setTrainedNetwork(JetNet& jn, const TFlavorNetwork* trainedNetwork)
     }
   }      
 
-  typedef std::vector<TFlavorNetwork::Input> TrainedInputs; 
+  typedef std::vector<TTrainedNetwork::Input> TrainedInputs; 
   std::vector<JetNet::InputNode> jetnet_inputs; 
   TrainedInputs inputs = trainedNetwork->getInputs(); 
   for (TrainedInputs::const_iterator itr = inputs.begin(); 
@@ -165,13 +166,13 @@ void setTrainedNetwork(JetNet& jn, const TFlavorNetwork* trainedNetwork)
 }
 
 // -----------------------------------------------
-// converter from old TTrainedNetwork
+// converter from old TOldNetwork
 
-TFlavorNetwork* getOldTrainedNetwork(std::string file_name) { 
+TTrainedNetwork* getOldTrainedNetwork(std::string file_name) { 
 
   TFile file(file_name.c_str()); 
-  TTrainedNetwork* trained = dynamic_cast<TTrainedNetwork*>
-    (file.Get("TTrainedNetwork")); 
+  TOldNetwork* trained = dynamic_cast<TOldNetwork*>
+    (file.Get("TOldNetwork")); 
   if (!trained) throw std::runtime_error("missing trained network"); 
   
   int n_input = trained->getnInput(); 
@@ -191,10 +192,10 @@ TFlavorNetwork* getOldTrainedNetwork(std::string file_name) {
     throw std::runtime_error("missing branch"); 
   }
 
-  std::vector<TFlavorNetwork::Input> flav_inputs; 
+  std::vector<TTrainedNetwork::Input> flav_inputs; 
   for (int n = 0; n < n_input; n++) { 
     normalization->GetEntry(n); 
-    TFlavorNetwork::Input input; 
+    TTrainedNetwork::Input input; 
     input.name = *name_ptr; 
     input.offset = offset; 
     input.scale = scale; 
@@ -206,9 +207,9 @@ TFlavorNetwork* getOldTrainedNetwork(std::string file_name) {
   return convertOldToNew(trained, flav_inputs); 
 }
 
-TFlavorNetwork* 
-convertOldToNew(const TTrainedNetwork* trained, 
-		std::vector<TFlavorNetwork::Input> flav_inputs)
+TTrainedNetwork* 
+convertOldToNew(const TOldNetwork* trained, 
+		std::vector<TTrainedNetwork::Input> flav_inputs)
 {
   
   int n_input = trained->getnInput(); 
@@ -230,7 +231,7 @@ convertOldToNew(const TTrainedNetwork* trained,
   }
 
   
-  TFlavorNetwork* flav_network = new TFlavorNetwork
+  TTrainedNetwork* flav_network = new TTrainedNetwork
     (flav_inputs, 
      n_output, 
      new_threshold_vectors, 
@@ -239,7 +240,7 @@ convertOldToNew(const TTrainedNetwork* trained,
 
 }
 
-TTrainedNetwork* convertNewToOld(const TFlavorNetwork* trained) { 
+TOldNetwork* convertNewToOld(const TTrainedNetwork* trained) { 
   int n_input = trained->getnInput(); 
   int n_hidden = trained->getnHidden(); 
   int n_output = trained->getnOutput(); 
@@ -259,7 +260,7 @@ TTrainedNetwork* convertNewToOld(const TFlavorNetwork* trained) {
       (dynamic_cast<TMatrixD*>(weight_matrices.at(i)->Clone())); 
   }
   
-  TTrainedNetwork* out_net = new TTrainedNetwork
+  TOldNetwork* out_net = new TOldNetwork
     (n_input, 
      n_hidden, 
      n_output, 

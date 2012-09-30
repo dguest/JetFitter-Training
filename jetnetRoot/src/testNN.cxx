@@ -12,10 +12,10 @@
 #include <stdexcept>
 #include <cassert>
 #include "JetNet.hh"
-#include "normedInput.hh"
+#include "NormedInput.hh"
 
 #include "NNAdapters.hh"
-#include "TFlavorNetwork.h"
+#include "TTrainedNetwork.h"
 #include "testNN.hh"
 #include "nnExceptions.hh"
 
@@ -117,10 +117,10 @@ void testNN(std::string inputfile,
 
   // === above was from the top of the train routine
 
-  std::string nn_name = "TFlavorNetwork"; 
+  std::string nn_name = "TTrainedNetwork"; 
   TObject* trained_network_obj = trained_network_file.Get(nn_name.c_str());
-  TFlavorNetwork* trained_network = 
-    dynamic_cast<TFlavorNetwork*>(trained_network_obj); 
+  TTrainedNetwork* trained_network = 
+    dynamic_cast<TTrainedNetwork*>(trained_network_obj); 
   if (trained_network == 0){ 
     throw std::runtime_error("could not load " + nn_name + 
 			     " from " + training_file); 

@@ -34,7 +34,7 @@ FC := gfortran
 CC := g++
 LIBS := -lgfortran $(ROOTLIBS) 
 
-COPT := -O2 -fPIC -g -I$(INC) -I$(COMMON_INC)
+COPT := -O2 -fPIC -g -I$(INC) -I$(COMMON_INC) -Wall
 FOPT := -ffixed-form -ffixed-line-length-none -g -fPIC
 
 # LINKER_OPTS := -L$(LIB) -Wl,-rpath,$(LIB) 
@@ -49,15 +49,16 @@ LIBS += -L$(COMMON_LIBS) -Wl,-rpath,$(COMMON_LIBS)
 JETNET_OBJ := jetnet.o
 JETNET_SRC := jetnet_35.f
 
-T_OBJ := TNeuralDataSet.o TFlavorNetwork.o TTrainedNetwork.o
+T_OBJ :=  TTrainedNetwork.o TOldNetwork.o
 T_DICTS := $(T_OBJ:.o=Dict.o)
 
-JETNET_CXX_OBJECTS := trainNN.o testNN.o 
+JETNET_CXX_OBJECTS := trainNN.o 
 JETNET_CXX_OBJECTS += makeTestNtuple.o augment_tree.o
-JETNET_CXX_OBJECTS += normedInput.o nnExceptions.o
+JETNET_CXX_OBJECTS += NormedInput.o nnExceptions.o
 JETNET_CXX_OBJECTS += JetNet.o NNAdapters.o
 JETNET_CXX_OBJECTS += NetworkToHistoTool.o 
 JETNET_CXX_OBJECTS += NNFileConverters.o 
+JETNET_CXX_OBJECTS += NeuralDataSet.o
 JETNET_CXX_OBJECTS += $(T_OBJ) $(T_DICTS)
 
 TJETNET_OBJECTS := $(JETNET_OBJ)

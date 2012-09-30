@@ -2,21 +2,21 @@
 #define NN_ADAPTERS
 
 class JetNet; 
-class TTrainedNetwork; 
+class TOldNetwork; 
 
-#include "TFlavorNetwork.h"
+#include "TTrainedNetwork.h"
 
 #include <string> 
 #include <vector>
 
-TFlavorNetwork* getTrainedNetwork(const JetNet&); 
+TTrainedNetwork* getTrainedNetwork(const JetNet&); 
 
-void setTrainedNetwork(JetNet&, const TFlavorNetwork* trainedNetwork); 
+void setTrainedNetwork(JetNet&, const TTrainedNetwork* trainedNetwork); 
 
-TFlavorNetwork* getOldTrainedNetwork(std::string file_name); 
-TFlavorNetwork* convertOldToNew(const TTrainedNetwork* old,
-				std::vector<TFlavorNetwork::Input>); 
-TTrainedNetwork* convertNewToOld(const TFlavorNetwork* new_net); 
+TTrainedNetwork* getOldTrainedNetwork(std::string file_name); 
+TTrainedNetwork* convertOldToNew(const TOldNetwork* old,
+				std::vector<TTrainedNetwork::Input>); 
+TOldNetwork* convertNewToOld(const TTrainedNetwork* new_net); 
 
 template<class O, class I>
 O convert_node(const I& in) { 

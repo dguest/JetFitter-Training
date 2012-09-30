@@ -7,7 +7,7 @@
 class JetNet; 
 class TTree; 
 
-#include "normedInput.hh"
+#include "NormedInput.hh"
 
 
 

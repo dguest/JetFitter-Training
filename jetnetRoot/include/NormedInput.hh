@@ -24,12 +24,12 @@ struct InputVariableInfo {
 class NormedInputBase
 {
 public: 
-  virtual int set_tree(TTree* ) {}; 
-  virtual float get_normed() const {}; 
-  virtual float get_offset() const {}; 
-  virtual float get_scale() const {}; 
-  virtual std::string get_name() const {}; 
-  virtual int add_passthrough_branch_to(TTree*, std::string = "") const {}; 
+  virtual int set_tree(TTree* ) = 0; 
+  virtual float get_normed() const = 0; 
+  virtual float get_offset() const = 0; 
+  virtual float get_scale() const = 0; 
+  virtual std::string get_name() const = 0; 
+  virtual int add_passthrough_branch_to(TTree*, std::string = "") const = 0; 
   friend std::ostream& operator<<(std::ostream&, const NormedInputBase&);
 private: 
   virtual void print_to(std::ostream&) const = 0; 

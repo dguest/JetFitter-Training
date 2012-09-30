@@ -3,6 +3,7 @@
 #include <TH1F.h>
 #include "TCollection.h"
 #include "TKey.h"
+#include "TROOT.h"
 
 #include <string.h>
 #include <cmath>
@@ -14,11 +15,11 @@
 #include "JetNet.hh"
 // #include "NetworkToHistoTool.hh" // not currently used
 
-#include "normedInput.hh"
+#include "NormedInput.hh"
 #include "nnExceptions.hh"
 #include <stdexcept>
 
-#include "TFlavorNetwork.h"
+#include "TTrainedNetwork.h"
 #include "NNAdapters.hh"
 #include "trainNN.hh"
 
@@ -204,7 +205,7 @@ void trainNN(const TrainingInputs inputs,
   }
   
   textout << " N. training events: " << settings.n_training_events << 
-    " N. testing events: " << settings.n_testing_events << endl;
+    " N. testing events: " << settings.n_testing_events << std::endl;
 
  
   JetNet* jn = new JetNet( settings.n_testing_events, 
@@ -212,7 +213,7 @@ void trainNN(const TrainingInputs inputs,
 			     nlayer, 
 			     nneurons );
 
-  textout <<  " setting up JetNet... " << endl;
+  textout <<  " setting up JetNet... " << std::endl;
   float updates_per_epoch = std::floor(float(settings.n_training_events)/
 				       float(inputs.n_patterns_per_update)); 
   jn->SetUpdatesPerEpoch(int( updates_per_epoch ));
@@ -266,14 +267,14 @@ void trainNN(const TrainingInputs inputs,
   
   std::string chronology_name = inputs.output_dir + "/trainingCronology.txt"; 
 
-  ofstream cronology(chronology_name.c_str(),ios_base::out);
+  ofstream cronology(chronology_name.c_str(),std::ios_base::out);
   if (! cronology ) 
     throw std::runtime_error("Could not write " + chronology_name); 
   
   cronology << jn; 
 
-  cronology << "--------------HISTORY-----------------" << endl;
-  cronology << "History of iterations: " << endl;
+  cronology << "--------------HISTORY-----------------" << std::endl;
+  cronology << "History of iterations: " << std::endl;
   cronology.close();
 
   //prepare training histo
@@ -317,26 +318,26 @@ void trainNN(const TrainingInputs inputs,
 	}
       }
       
-      cronology.open(chronology_name.c_str(),ios_base::app);
+      cronology.open(chronology_name.c_str(),std::ios_base::app);
       if (epochesWithRisingError>300) {
 	// Sat May 12 17:06:06 CEST 2012 --- commented this out 
 	if (trainingError < minimumError || 
 	    !(bit_flags & train::req_training_lt_min) ) { 
 	  textout << " End of training. Minimum already on epoch: " 
-		    << epochWithMinimum << endl;
+		  << epochWithMinimum << std::endl;
 	  cronology << " End of training. Minimum already on epoch: " 
-		    << epochWithMinimum << endl;
+		    << epochWithMinimum << std::endl;
 	break;
 	} 
       }
       
       cronology << "Epoch: [" << epoch <<
 	"] Error: " << trainingError << 
-	" Test: " << testError << endl;
+	" Test: " << testError << std::endl;
 
       textout << "Epoch: [" << epoch <<
 	"] Error: " << trainingError << 
-	" Test: " << testError << endl;
+	" Test: " << testError << std::endl;
 
       cronology.close();
       
@@ -346,7 +347,7 @@ void trainNN(const TrainingInputs inputs,
       name+=".root";
 
       TFile* file = new TFile(name,"recreate");
-      TFlavorNetwork* trainedNetwork = getTrainedNetwork(*jn);
+      TTrainedNetwork* trainedNetwork = getTrainedNetwork(*jn);
       file->WriteTObject(trainedNetwork); 
 
 
@@ -375,10 +376,11 @@ void trainNN(const TrainingInputs inputs,
   // ==================================================================
 
   if (epochWithMinimum!=0) {
-    cronology << "Minimum stored from Epoch: " << epochWithMinimum << endl;
+    cronology << "Minimum stored from Epoch: " << epochWithMinimum 
+	      << std::endl;
   }  
   else {
-    cronology << "Minimum not reached" << endl;
+    cronology << "Minimum not reached" << std::endl;
   }
 
   cronology.close();
@@ -392,8 +394,8 @@ void trainNN(const TrainingInputs inputs,
 
 
     TFile min_file(min_file_name);
-    TFlavorNetwork* trainedNetwork = 
-      dynamic_cast<TFlavorNetwork*>(min_file.Get("TFlavorNetwork"));
+    TTrainedNetwork* trainedNetwork = 
+      dynamic_cast<TTrainedNetwork*>(min_file.Get("TTrainedNetwork"));
     
     // textout << " Reading back network with minimum" << endl;
     // setTrainedNetwork(*jn,trainedNetwork);
@@ -407,7 +409,7 @@ void trainNN(const TrainingInputs inputs,
   } 
   else {
     textout << " using network at last iteration (minimum not reached)" 
-	      << endl;
+	    << std::endl;
   }
   
   std::string training_info_name = inputs.output_dir + "/trainingInfo.root"; 
@@ -612,8 +614,9 @@ bool is_flavor_tagged(const TeachingVariables& t){
   return has_tag; 
 }
 
-void dump_nn_settings(ostream& cronology, const JetNet* jn) {   
-  cronology << "-------------SETTINGS----------------" << endl;
+void dump_nn_settings(ostream& cronology, const JetNet* jn) {  
+  using namespace std; 
+  cronology << "-------------SETTINGS----------------" << std::endl;
   cronology << "Epochs: " << jn->GetEpochs() << std::endl;
   cronology << "Updates Per Epoch: " << jn->GetUpdatesPerEpoch() << std::endl;
   cronology << "Updating Procedure: " << jn->GetUpdatingProcedure() 
@@ -629,7 +632,7 @@ void dump_nn_settings(ostream& cronology, const JetNet* jn) {
 	    << std::endl;
   cronology << "Activation Function: " << jn->GetActivationFunction() 
 	    << std::endl;
-  cronology << "-------------LAYOUT------------------" << endl;
+  cronology << "-------------LAYOUT------------------" << std::endl;
   cronology << "Input variables: " << jn->GetInputDim() << endl;
   cronology << "Output variables: " << jn->GetOutputDim() << endl;
   cronology << "Hidden layers: " << jn->GetHiddenLayerDim() << endl;

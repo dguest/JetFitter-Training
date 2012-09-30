@@ -1,8 +1,9 @@
 // -*-c++-*-
 // Author: Vassil Verguilov  11/05/2006
+// Changed a bit by Dan Guest (2012)
 
-#ifndef __NEURALDATASET_
-#define __NEURALDATASET_
+#ifndef NEURAL_DATASET
+#define NEURAL_DATASET
 
 //______________________________________________________________________________
 //
@@ -15,56 +16,48 @@
 //______________________________________________________________________________
 //
 
-#include "TMatrixD.h"
-#include "TVectorD.h"
-
-
 class TNeuralDataSet
 {
  public:
-  TNeuralDataSet( Int_t aNumberOfPatterns = 0, Int_t aNumberOfUnits = 0 );
+  TNeuralDataSet( int aNumberOfPatterns = 0, int aNumberOfUnits = 0 );
   virtual ~TNeuralDataSet( void );
   
   // Returns the number of the patterns in set
-  Int_t GetPatternsCount( void ){ return mpData->GetNrows(); };
+  int GetPatternsCount( void ){ return m_n_patterns; };
   // Returns the number of the units in pattern
-  Int_t GetUnitsCount( void ){ return mpData->GetNcols(); };
+  int GetUnitsCount( void ){ return m_n_units; };
   // Returns the data in cell defined by pattern number and unit index in the pattern
-  Double_t GetData( const Int_t aPattern, const Int_t aIndex );
+  double GetData( const int aPattern, const int aIndex );
   // Change the data in cell defined by pattern number and unit index in the pattern
-  void     SetData( const Int_t aPattern, const Int_t aIndex, Double_t aValue );
+  void     SetData( const int aPattern, const int aIndex, double aValue );
 
-  Double_t GetEventWeight( const Int_t aPattern );
-  void SetEventWeight( const Int_t aPattern, Double_t aValue );
+  double GetEventWeight( const int aPattern );
+  void SetEventWeight( const int aPattern, double aValue );
 
   // Shuffles the patterns
-  void     Shuffle( Int_t aSeed = 0 );
+  void     Shuffle( int aSeed = 0 );
 
  private:  
 
+  int m_n_patterns; 
+  int m_n_units; 
   //data matrix
-  TMatrixD * mpData;
+  double* mpData;
 
   //vector (dim= entries)
-  TVectorD * mpWeights;
-
-  //vector (dim=variables)
-  TVectorD * mpNormFactors;
-  TVectorD * mpShiftFactors;
-
-  ClassDef( TNeuralDataSet, 2 )
-
+  double* mpWeights;
 };
 
-inline Double_t TNeuralDataSet::GetData( const Int_t aPattern, const Int_t aIndex )
+inline double TNeuralDataSet::GetData( const int aPattern, const int aIndex )
 {
   // Returns the value of cell in the set specified by Pattern number and Unit index
-  return mpData->operator() ( aPattern, aIndex );
+  int global_index = aPattern * m_n_units + aIndex; 
+  return mpData[global_index];
 }
 //______________________________________________________________________________
-inline Double_t TNeuralDataSet::GetEventWeight( const Int_t aPattern )
+inline double TNeuralDataSet::GetEventWeight( const int aPattern )
 {
-  return mpWeights->operator() ( aPattern );
+  return mpWeights[aPattern];
 }
 //______________________________________________________________________________
 

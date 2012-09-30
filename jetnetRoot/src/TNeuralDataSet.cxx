@@ -1,19 +1,17 @@
 #include "TNeuralDataSet.h"
-#include "TRandom3.h"
-
-ClassImp( TNeuralDataSet )
+#include <cstdlib> // rand
 //______________________________________________________________________________
-TNeuralDataSet::TNeuralDataSet( Int_t aNumberOfPatterns, Int_t aNumberOfUnits )
+TNeuralDataSet::TNeuralDataSet( int n_pattern, int n_unit ): 
+  m_n_patterns(n_pattern), 
+  m_n_units(n_unit)
 {
   // Default constructor
-  mpData = new TMatrixD( aNumberOfPatterns, aNumberOfUnits ); 
-  mpWeights = new TVectorD( aNumberOfPatterns);
-  for (int i=0;i<mpWeights->GetNrows();i++){
-    (*mpWeights)[i]=1.;
+  mpData = new double[ n_pattern * n_unit ]; 
+  mpWeights = new double[n_pattern];
+  for (int i=0; i < n_pattern; i++){
+    mpWeights[i]=1.;
   }
 
-  mpNormFactors = new TVectorD( aNumberOfUnits );
-  mpShiftFactors = new TVectorD(  aNumberOfUnits);
 }
 //______________________________________________________________________________
 TNeuralDataSet::~TNeuralDataSet()
@@ -21,33 +19,34 @@ TNeuralDataSet::~TNeuralDataSet()
   // Default destructor
   delete mpData;
   delete mpWeights;
-  delete mpNormFactors;
-  delete mpShiftFactors;
 }
 //______________________________________________________________________________
-void TNeuralDataSet::SetEventWeight( const Int_t aPattern, Double_t aValue )
+void TNeuralDataSet::SetEventWeight( const int aPattern, double aValue )
 {
-  mpWeights->operator() ( aPattern ) = aValue;
+  mpWeights[aPattern] = aValue;
 }
 //______________________________________________________________________________
-void TNeuralDataSet::SetData( const Int_t aPattern, const Int_t aIndex, Double_t aValue )
+void TNeuralDataSet::SetData( const int aPattern, const int aIndex, double aValue )
 {
+  int global_index = aPattern * m_n_units + aIndex; 
   // Changes the value of cell in the set specified by Pattern number and Unit index
-  mpData->operator() ( aPattern, aIndex ) = aValue;
+  mpData[global_index] = aValue;
 }
 
 //______________________________________________________________________________
-void TNeuralDataSet::Shuffle( Int_t aSeed )
+void TNeuralDataSet::Shuffle( int seed )
 {
   // Shuffles data
-  TRandom3 Random( aSeed );
-  Int_t j;
-  Double_t tmp;
-  Int_t a = this->GetPatternsCount() - 1;
-  for ( Int_t i = 0; i < this->GetPatternsCount(); i++ )
+  if (seed) { 
+    srand(seed); 
+  }
+  int j;
+  double tmp;
+  int a = this->GetPatternsCount() - 1;
+  for ( int i = 0; i < this->GetPatternsCount(); i++ )
   {
-     j = ( Int_t ) ( Random.Rndm() * a );
-     for( Int_t p = 0; p < this->GetUnitsCount(); p++ )
+    i = static_cast<int>( (double(rand() ) / RAND_MAX ) * a );
+     for( int p = 0; p < this->GetUnitsCount(); p++ )
      {
 	tmp = this->GetData( i, p );
 	this->SetData( i, p, this->GetData( j, p ) );

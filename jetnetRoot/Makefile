@@ -52,7 +52,7 @@ JETNET_SRC := jetnet_35.f
 T_OBJ :=  TTrainedNetwork.o TOldNetwork.o
 T_DICTS := $(T_OBJ:.o=Dict.o)
 
-JETNET_CXX_OBJECTS := trainNN.o testNN.o 
+JETNET_CXX_OBJECTS := trainNN.o 
 JETNET_CXX_OBJECTS += makeTestNtuple.o augment_tree.o
 JETNET_CXX_OBJECTS += NormedInput.o nnExceptions.o
 JETNET_CXX_OBJECTS += JetNet.o NNAdapters.o

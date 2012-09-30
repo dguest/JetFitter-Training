@@ -6,7 +6,6 @@
 #include <iostream>
 #include <stdexcept>
 #include "trainNN.hh"
-#include "testNN.hh"
 #include "augment_tree.hh"
 #include "nnExceptions.hh"
 #include "NNFileConverters.hh"
@@ -190,89 +189,6 @@ extern "C" PyObject* train_py(PyObject *self,
   return Py_None;
 }
 
-static const char* test_doc_string = 
-  "test the neural net. \n"
-  "Keywords:\n"
-  "reduced_dataset\n"
-  "weights_file\n"
-  "dilution_factor\n"
-  "use_sd\n"
-  "with_ip3d\n"; 
-
-extern "C" PyObject* test_py(PyObject *self, 
-			     PyObject *args, 
-			     PyObject *keywds)
-{
-  const char* input_file; 
-  const char* training_file = "weights/weightMinimum.root"; 
-  int dilution_factor = 2; 
-  int nodes_first_layer = 10; 
-  int nodes_second_layer = 9; 
-  bool use_sd = false; 
-  bool with_ip3d = true; 
-  bool debug = false; 
-  const char* out_file = "all_hists.root"; 
-
-  const char *kwlist[] = {
-    "reduced_dataset",
-    "weights_file", 
-    "dilution_factor",
-    "use_sd",
-    "with_ip3d",
-    "output_file", 
-    "debug", 
-    NULL};
- 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s|sibbsb", 
-				   // this function should take a const, and 
-				   // may be changed, until then we'll cast
-				   const_cast<char**>(kwlist),
-				   &input_file,  
-				   &training_file,
-				   &dilution_factor, 
-				   &use_sd, 
-				   &with_ip3d, 
-				   &out_file, 
-				   &debug))
-    return NULL;
-
-  if (debug){ 
-    printf("in ds = %s, train = %s, dil = %i\n", 
-  	   input_file, training_file, dilution_factor); 
-    
-    
-  }
-  else { 
-    try { 
-      testNN(input_file, 
-	     training_file,
-	     dilution_factor,
-	     // nodes_first_layer, 
-	     // nodes_second_layer, 
-	     use_sd,
-	     with_ip3d, 
-	     out_file); 
-    }
-    catch (const MissingLeafException& e) { 
-      std::string error = "could not find leaf " + e.leaf_name() + 
-	" in chain" + e.chain_name() + " file " + input_file; 
-      PyErr_SetString(PyExc_IOError, error.c_str()); 
-      return NULL; 
-    }
-    catch (const NNException& e) { 
-      PyErr_SetString(PyExc_StandardError,"generic nn exception in testNN"); 
-      return NULL; 
-    }
-    catch (const std::runtime_error& e) { 
-      PyErr_SetString(PyExc_StandardError,e.what()); 
-      return NULL; 
-    }
-  }
-
-  Py_INCREF(Py_None);
-
-  return Py_None;
-}
 
 static const std::string augment_name = "augment_tree"; 
 static const char* augment_kwlist[] = {
@@ -527,9 +443,6 @@ static PyMethodDef keywdarg_methods[] = {
   {train_name.c_str(), (PyCFunction)train_py, 
    METH_VARARGS | METH_KEYWORDS,
    train_doc},
-  {"testNN", (PyCFunction)test_py, 
-   METH_VARARGS | METH_KEYWORDS,
-   test_doc_string},
   {"makeNtuple", (PyCFunction)make_test_ntuple, 
    METH_VARARGS | METH_KEYWORDS,
    ntuple_doc_string},

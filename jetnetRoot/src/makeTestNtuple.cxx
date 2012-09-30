@@ -60,7 +60,7 @@ void makeTestNtuple(IONames io_names, bool debug)
   Int_t nInput=trainedNetwork->getnInput();
   std::cout << " Input size: " << nInput;
 
-  vector<Int_t> nHiddenLayerSize=trainedNetwork->getnHiddenLayerSize();
+  std::vector<Int_t> nHiddenLayerSize=trainedNetwork->getnHiddenLayerSize();
   Int_t nHidden=nHiddenLayerSize.size();
   
   for (Int_t o=0;o<nHidden;++o) {

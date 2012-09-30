@@ -9,31 +9,24 @@
 
 
 
-#ifndef __TJETNET_
-#define __TJETNET_
+#ifndef JETNET
+#define JETNET
 
 //______________________________________________________________________________
 //
 // JetNet
 //
-// This class is a ROOT wrapper for jetnet library.
+// This class is not a ROOT wrapper for jetnet library.
 //
 //______________________________________________________________________________
 //
 
 //#define _DEBUG
 
-#include "TROOT.h"
-#include "TObject.h"
-#include "Riostream.h"
 #include "NeuralDataSet.h"
-#include "TF1.h"
 
 #include <vector>
 #include <string>
-
-class TTrainedNetwork;
-
 
 //typedef ActivationFunction  TActivationFunction;
 
@@ -49,100 +42,99 @@ public:
   
   JetNet( void );
 
-  JetNet( Int_t aTestCount, Int_t aTrainCount, const Int_t aLayersCnt, const Int_t* aLayers );
+  JetNet( int aTestCount, int aTrainCount, const int aLayersCnt, const int* aLayers );
 
   virtual ~JetNet( void );
   
   void Print( void );
   
-  Int_t GetTrainSetCnt( void ) const { return mTrainSetCnt; };
-  Int_t GetTestSetCnt( void ) const { return mTestSetCnt; };
-  Int_t GetInputDim( void ) const { return mpLayers[ 0 ]; };
-  Int_t GetHiddenLayerDim( void ) const { return mHiddenLayerDim; };
-  Int_t GetHiddenLayerSize(Int_t number) const { return mpLayers[ number ]; };
-  Int_t GetOutputDim( void ) const { return mpLayers[ mLayerCount - 1 ]; };
+  int GetTrainSetCnt( void ) const { return mTrainSetCnt; };
+  int GetTestSetCnt( void ) const { return mTestSetCnt; };
+  int GetInputDim( void ) const { return mpLayers[ 0 ]; };
+  int GetHiddenLayerDim( void ) const { return mHiddenLayerDim; };
+  int GetHiddenLayerSize(int number) const { return mpLayers[ number ]; };
+  int GetOutputDim( void ) const { return mpLayers[ mLayerCount - 1 ]; };
 
-  void SetInputTrainSet( Int_t aPatternInd, Int_t aInputInd, Double_t aValue );
-  void SetOutputTrainSet( Int_t aPatternInd, Int_t aOutputInd, Double_t aValue );
-  void SetInputTestSet( Int_t aPatternInd, Int_t aInputInd, Double_t aValue );
-  void SetOutputTestSet( Int_t aPatternInd, Int_t aOutputInd, Double_t aValue );
+  void SetInputTrainSet( int aPatternInd, int aInputInd, double aValue );
+  void SetOutputTrainSet( int aPatternInd, int aOutputInd, double aValue );
+  void SetInputTestSet( int aPatternInd, int aInputInd, double aValue );
+  void SetOutputTestSet( int aPatternInd, int aOutputInd, double aValue );
   
-  void SetEventWeightTrainSet( Int_t aPatternInd, Double_t aValue );
-  void SetEventWeightTestSet( Int_t aPatternInd, Double_t aValue );
+  void SetEventWeightTrainSet( int aPatternInd, double aValue );
+  void SetEventWeightTestSet( int aPatternInd, double aValue );
 
-  Double_t GetInputTrainSet( Int_t aPatternInd, Int_t aInputInd ) const ;
-  Double_t GetOutputTrainSet( Int_t aPatternInd, Int_t aOutputInd ) const ;
-  Double_t GetInputTestSet( Int_t aPatternInd, Int_t aInputInd ) const ;
-  Double_t GetOutputTestSet( Int_t aPatternInd, Int_t aOutputInd ) const;
+  double GetInputTrainSet( int aPatternInd, int aInputInd ) const ;
+  double GetOutputTrainSet( int aPatternInd, int aOutputInd ) const ;
+  double GetInputTestSet( int aPatternInd, int aInputInd ) const ;
+  double GetOutputTestSet( int aPatternInd, int aOutputInd ) const;
   
-  Double_t GetEventWeightTrainSet( Int_t aPatternInd ) const;
-  Double_t GetEventWeightTestSet( Int_t aPatternInd ) const;
+  double GetEventWeightTrainSet( int aPatternInd ) const;
+  double GetEventWeightTestSet( int aPatternInd ) const;
 
-  Double_t GetWeight( Int_t aLayerInd, Int_t aNodeInd, 
-		      Int_t aConnectedNodeInd ) const; 
-  Double_t GetThreshold( Int_t aLayerInd, Int_t aNodeInd) const;
+  double GetWeight( int aLayerInd, int aNodeInd, 
+		      int aConnectedNodeInd ) const; 
+  double GetThreshold( int aLayerInd, int aNodeInd) const;
 
-  Int_t GetEpochs( void ) const { return mEpochs; } ;
-  void SetEpochs( const Int_t aEpochs ) { mEpochs = aEpochs; mCurrentEpoch = 0; };
+  int GetEpochs( void ) const { return mEpochs; } ;
+  void SetEpochs( const int aEpochs ) { mEpochs = aEpochs; mCurrentEpoch = 0; };
   void Init( void );
 
-  Double_t Train( void );
-  Int_t Epoch( void );
-  Double_t Test( void );
-  Double_t TestBTAG( void );
+  double Train( void );
+  int Epoch( void );
+  double Test( void );
 
-  void Shuffle ( Bool_t aShuffleTrainSet = true, Bool_t aShuffleTestSet = true );
+  void Shuffle ( bool aShuffleTrainSet = true, bool aShuffleTestSet = true );
  
-  void SaveDataAscii( TString aFileName = "jndata.dat" ) const;
-  void SaveDataRoot( TString aFileName = "jndata.root" );
+  void SaveDataAscii( const char* aFileName = "jndata.dat" ) const;
+  void SaveDataRoot( const char* aFileName = "jndata.root" );
 
-  void LoadDataAscii( TString aFileName = "jndata.dat" );
-  void LoadDataRoot( TString aFileName = "jndata.root" );
+  void LoadDataAscii( const char* aFileName = "jndata.dat" );
+  void LoadDataRoot( const char* aFileName = "jndata.root" );
   
-  void DumpToFile( TString aFileName = "fort.8" ) const;
-  void ReadFromFile( TString aFileName = "fort.8" );
+  void DumpToFile( const char* aFileName = "fort.8" ) const;
+  void ReadFromFile( const char* aFileName = "fort.8" );
 
-  Double_t GetOutput( Int_t aIndex = 0 ) const;
-  void SetInputs( Int_t aIndex = 0, Double_t aValue = 0.0 );
-  void Evaluate( Int_t aPattern );
+  double GetOutput( int aIndex = 0 ) const;
+  void SetInputs( int aIndex = 0, double aValue = 0.0 );
+  void Evaluate( int aPattern );
   void Evaluate();
 
-  void writeNetworkInfo(Int_t typeOfInfo = 0);
+  void writeNetworkInfo(int typeOfInfo = 0);
 
-  Int_t GetLayerCount( void ) const { return mLayerCount; };
+  int GetLayerCount( void ) const { return mLayerCount; };
   //Number of layers in NN
-  Int_t GetUnitCount( Int_t aLayer ) const ;
+  int GetUnitCount( int aLayer ) const ;
   //Number of units in NN  
 
-  void SelectiveFields( Int_t aLayerA, Int_t aNodeA1, Int_t aNodeA2, Int_t aNodeB1, Int_t aNodeB2, Int_t aSwitch = 0 );
+  void SelectiveFields( int aLayerA, int aNodeA1, int aNodeA2, int aNodeB1, int aNodeB2, int aSwitch = 0 );
   
-  void SetUpdatesPerEpoch( Int_t aValue );
-  void SetUpdatingProcedure( Int_t aValue );
-  void SetErrorMeasure( Int_t aValue );
-  void SetActivationFunction( Int_t aValue );
-  void SetPatternsPerUpdate( Int_t aValue );
-  void SetLearningRate( Double_t aValue );
-  void SetMomentum( Double_t aValue );
-  void SetInitialWeightsWidth( Double_t aValue );
-  void SetLearningRateDecrease( Double_t aValue );
+  void SetUpdatesPerEpoch( int aValue );
+  void SetUpdatingProcedure( int aValue );
+  void SetErrorMeasure( int aValue );
+  void SetActivationFunction( int aValue );
+  void SetPatternsPerUpdate( int aValue );
+  void SetLearningRate( double aValue );
+  void SetMomentum( double aValue );
+  void SetInitialWeightsWidth( double aValue );
+  void SetLearningRateDecrease( double aValue );
 
 
-  Int_t GetUpdatesPerEpoch( void ) const ;
-  Int_t GetUpdatingProcedure( void ) const ;
-  Int_t GetErrorMeasure( void ) const ;
-  Int_t GetActivationFunction( void ) const ;
-  Int_t GetPatternsPerUpdate( void ) const ;
-  Double_t GetLearningRate( void ) const ;
-  Double_t GetMomentum( void ) const ;
-  Double_t GetInitialWeightsWidth( void ) const ;
-  Double_t GetLearningRateDecrease( void ) const ;
+  int GetUpdatesPerEpoch( void ) const ;
+  int GetUpdatingProcedure( void ) const ;
+  int GetErrorMeasure( void ) const ;
+  int GetActivationFunction( void ) const ;
+  int GetPatternsPerUpdate( void ) const ;
+  double GetLearningRate( void ) const ;
+  double GetMomentum( void ) const ;
+  double GetInitialWeightsWidth( void ) const ;
+  double GetLearningRateDecrease( void ) const ;
     
-  void LockInit( void ){ mInitLocked = kTRUE; };
-  void UnlockInit( void ){ mInitLocked = kFALSE; };
-  Int_t GetMSTJN( Int_t aIndex ) const;
-  Double_t GetPARJN( Int_t aIndex ) const;
-  void SetMSTJN( Int_t aIndex, Int_t aValue );
-  void SetPARJN( Int_t aIndex, Double_t aValue );
+  void LockInit( void ){ mInitLocked = true; };
+  void UnlockInit( void ){ mInitLocked = false; };
+  int GetMSTJN( int aIndex ) const;
+  double GetPARJN( int aIndex ) const;
+  void SetMSTJN( int aIndex, int aValue );
+  void SetPARJN( int aIndex, double aValue );
 
   void setInputNodes(std::vector<InputNode> ); 
   std::vector<InputNode> getInputNodes() const; 
@@ -156,60 +148,60 @@ public:
   };
 
 
-  void SetWeight( Double_t weight,Int_t aLayerInd, Int_t aNodeInd, Int_t aConnectedNodeInd ); 
-  void SetThreshold( Double_t threshold, Int_t aLayerInd, Int_t aNodeInd);
+  void SetWeight( double weight,int aLayerInd, int aNodeInd, int aConnectedNodeInd ); 
+  void SetThreshold( double threshold, int aLayerInd, int aNodeInd);
     
 private:
   
 
-  Int_t CopyFile( TString aSrcFile, TString aDestFile );
+  int CopyFile( const char* aSrcFile, const char* aDestFile );
   void Reinitialize( void ); // Synchronizing the paramaters of the class object from JETNET parameters
 
   TActivationFunction menActFunction;
 
-  Int_t  mLayerCount; // Number of Layers (including the input and output)
-  Int_t* mpLayers; //! Array which contains the number of units in each layer 
+  int  mLayerCount; // Number of Layers (including the input and output)
+  int* mpLayers; //! Array which contains the number of units in each layer 
 
   NeuralDataSet* mpInputTrainSet;
   NeuralDataSet* mpOutputTrainSet;
   NeuralDataSet* mpInputTestSet;
   NeuralDataSet* mpOutputTestSet;
 
-  Int_t mTrainSetCnt, mTestSetCnt; // Size of Train and Test set
+  int mTrainSetCnt, mTestSetCnt; // Size of Train and Test set
 
-  Int_t mInputDim; // Number of the elements in intput layer
-  Int_t mHiddenLayerDim; // Number of Hidden Layers
-  Int_t mOutputDim; // Number of outputs
-  Int_t mEpochs;    // Epochs
-  Int_t mCurrentEpoch;    // Current epoch
-  Bool_t mDebug; // Debug Flag
-  Bool_t mIsInitialized;
-  Bool_t mInitLocked;
+  int mInputDim; // Number of the elements in intput layer
+  int mHiddenLayerDim; // Number of Hidden Layers
+  int mOutputDim; // Number of outputs
+  int mEpochs;    // Epochs
+  int mCurrentEpoch;    // Current epoch
+  bool mDebug; // Debug Flag
+  bool mIsInitialized;
+  bool mInitLocked;
 
   std::vector<InputNode> m_input_nodes; 
 
   //  ClassDef( JetNet, 1 )
 }; 
 
-inline void JetNet::SetOutputTestSet( Int_t aPatternInd, Int_t aOutputInd, Double_t aValue )
+inline void JetNet::SetOutputTestSet( int aPatternInd, int aOutputInd, double aValue )
 {
   // Changes the value of the cell corresponding to unit aInputInd in pattern aPatternInd into OUTPUT TEST set
   mpOutputTestSet->SetData( aPatternInd, aOutputInd, aValue );
 }
 //______________________________________________________________________________
-inline Double_t JetNet::GetInputTrainSet( Int_t aPatternInd, 
-					  Int_t aInputInd ) const 
+inline double JetNet::GetInputTrainSet( int aPatternInd, 
+					  int aInputInd ) const 
 {
   // Returns the value of the cell corresponding to unit aInputInd in pattern aPatternInd into INPUT TRAIN set
   return mpInputTrainSet->GetData( aPatternInd, aInputInd );
 }
 //______________________________________________________________________________
-inline Double_t JetNet::GetEventWeightTrainSet( Int_t aPatternInd ) const
+inline double JetNet::GetEventWeightTrainSet( int aPatternInd ) const
 {
   return mpInputTrainSet->GetEventWeight( aPatternInd);
 }
 //______________________________________________________________________________
-inline Double_t JetNet::GetEventWeightTestSet( Int_t aPatternInd ) const
+inline double JetNet::GetEventWeightTestSet( int aPatternInd ) const
 {
   return mpInputTestSet->GetEventWeight( aPatternInd);
 }

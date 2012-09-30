@@ -1,13 +1,11 @@
 #include "JetNet.hh"
 #include "jetnet.h"
-#include "TRandom3.h"
-#include "TTimeStamp.h"
 #include <unistd.h>
-#include <stdio.h>
+//#include <stdio.h>
+#include <iostream>
+#include <fstream>
 #include <cmath>
-#include "TFile.h"
-
-#include "TH1F.h"
+#include <ctime>
 
 // ClassImp( JetNet )
  
@@ -22,8 +20,8 @@ JetNet::JetNet()
 
   mpLayers = 0;
 
-  mIsInitialized = kFALSE;
-  mInitLocked = kFALSE;
+  mIsInitialized = false;
+  mInitLocked = false;
 
   mpInputTrainSet = 0;
   mpInputTestSet = 0;
@@ -34,17 +32,17 @@ JetNet::JetNet()
   mCurrentEpoch = 0;
 }
 //______________________________________________________________________________
-JetNet::JetNet( Int_t aTestCount, Int_t aTrainCount,
-	 const Int_t aLayersCnt, const Int_t* aLayers )
+JetNet::JetNet( int aTestCount, int aTrainCount,
+	 const int aLayersCnt, const int* aLayers )
 {
   // Creates neural network with aLayersCnt number of layers,
   // aTestCount number of patterns for the test set,
   // aTrainCount patterns for the train set.
   // aLayers contains the information for number of the units in the different layers
 
-  mDebug = kFALSE;
+  mDebug = false;
 #ifdef _DEBUG
-  mDebug = kTRUE;
+  mDebug = true;
 #endif
   
   if( mDebug ){ std::cout << "=====> Entering JetNet::JetNet(...)" << std::endl; }
@@ -56,7 +54,7 @@ JetNet::JetNet( Int_t aTestCount, Int_t aTrainCount,
   if( mLayerCount > 0 )
   {  
    //Perform deep copy of the array holding Layers count
-    mpLayers = new Int_t[ mLayerCount ];
+    mpLayers = new int[ mLayerCount ];
     for(int i = 0; i < mLayerCount; ++i )
     {
       mpLayers[ i ] = aLayers[ i ];
@@ -68,8 +66,8 @@ JetNet::JetNet( Int_t aTestCount, Int_t aTrainCount,
   mHiddenLayerDim = mLayerCount-2;
   
 
-  mIsInitialized = kFALSE;
-  mInitLocked = kFALSE;
+  mIsInitialized = false;
+  mInitLocked = false;
 
   mpInputTrainSet  = new NeuralDataSet( mTrainSetCnt, GetInputDim() );
   mpInputTestSet = new NeuralDataSet( mTestSetCnt, GetInputDim() );
@@ -105,12 +103,12 @@ std::vector<JetNet::InputNode> JetNet::getInputNodes() const {
 }
 
   
-void JetNet::SetWeight( Double_t weight,Int_t aLayerInd, Int_t aNodeInd, Int_t aConnectedNodeInd )
+void JetNet::SetWeight( double weight,int aLayerInd, int aNodeInd, int aConnectedNodeInd )
 {
   JNINT1.W[ JNINDX( aLayerInd, aNodeInd, aConnectedNodeInd )-1 ]=weight;
 }
 //______________________________________________________________________________
-void JetNet::SetThreshold( Double_t threshold, Int_t aLayerInd, Int_t aNodeInd)
+void JetNet::SetThreshold( double threshold, int aLayerInd, int aNodeInd)
 {
   JNINT1.T[ JNINDX( aLayerInd, aNodeInd, 0 )-1 ]=threshold;
 }
@@ -118,7 +116,7 @@ void JetNet::SetThreshold( Double_t threshold, Int_t aLayerInd, Int_t aNodeInd)
 void JetNet::Print( void )
 {
   // Prints on the screen, information for the neural network
-  Int_t i;
+  int i;
 
   std::cout << "JetNet" << std::endl;
   std::cout << "Number of layers: " << mLayerCount << std::endl;
@@ -140,19 +138,19 @@ void JetNet::Print( void )
   std::cout << "Activation Function: " << GetActivationFunction() << std::endl;
 }
 //______________________________________________________________________________
-Double_t JetNet::Test( void )
+double JetNet::Test( void )
 {
   // Initiate test cycle of the neural network
-  Int_t NRight = 0;
-  Double_t fMeanError = 0.0;
-  Double_t *TMP;
-  Int_t  NPatterns = GetTestSetCnt();
+  int NRight = 0;
+  double fMeanError = 0.0;
+  double *TMP;
+  int  NPatterns = GetTestSetCnt();
  
 
-  for( Int_t iPattern = 0; iPattern < NPatterns; iPattern++ )
+  for( int iPattern = 0; iPattern < NPatterns; iPattern++ )
   {
 
-      for( Int_t i = 0; i < GetInputDim(); i++ )
+      for( int i = 0; i < GetInputDim(); i++ )
       {
 	JNDAT1.OIN[ i ] = float ( GetInputTestSet( iPattern, i ) );
       }
@@ -161,7 +159,7 @@ Double_t JetNet::Test( void )
 
       JNTEST();
 
-      for( Int_t j = 0; j < GetOutputDim(); j++ )
+      for( int j = 0; j < GetOutputDim(); j++ )
       {
 	fMeanError+= NWJNWGT.OWGT * 
 	  std::pow(JNDAT1.OUT[ j ]-float( GetOutputTestSet( iPattern, j )),2)/(float)GetOutputDim();
@@ -177,306 +175,49 @@ Double_t JetNet::Test( void )
   fMeanError/=2.*NPatterns;
 
   if (mDebug)
-  std::cout << " Test error: " << fMeanError << endl;
+    std::cout << " Test error: " << fMeanError << std::endl;
 
   return fMeanError;
 }
 //
-Double_t JetNet::TestBTAG( void )
-{
-
-  bool test=false;
-
-  // Initiate test cycle of the neural network
-  Int_t NRight = 0;
-  Double_t fMeanError = 0.0;
-  Double_t *TMP;
-  Int_t  NPatterns = GetTestSetCnt();
-  if (test)
-  {
-    NPatterns = GetTrainSetCnt();
-  }
- 
-  vector<double> eff;
-  eff.push_back(0.3);
-  eff.push_back(0.5);
-//  eff.push_back(0.6);
-  eff.push_back(0.7);
-
-  //test also the b-tagging performance directly during testing !!!
-  vector<TH1F*> histoEfficienciesC;
-  vector<TH1F*> histoEfficienciesL;
-  TString histoEffStringC("histoEffC");
-  TString histoEffStringL("histoEffL");
-  for (int i=0;i<GetOutputDim();i++)
-  {
-    TString string1=histoEffStringC;
-    string1+=i;
-    TH1F* histo=new TH1F(string1,
-                         string1,
-                         20000,
-                         -2,3);
-    TString string2=histoEffStringL;
-    string2+=i;
-    TH1F* histo2=new TH1F(string2,
-                          string2,
-                          20000,
-                          -2,3);
-    histoEfficienciesC.push_back(histo);
-    histoEfficienciesL.push_back(histo2);
-  }
-
-  for( Int_t iPattern = 0; iPattern < NPatterns; iPattern++ )
-  {
-
-      for( Int_t i = 0; i < GetInputDim(); i++ )
-      {
-        if (!test)
-        {
-          JNDAT1.OIN[ i ] = float ( GetInputTestSet( iPattern, i ) );
-          NWJNWGT.OWGT = GetEventWeightTestSet( iPattern );
-        }
-        else
-        {
-          JNDAT1.OIN[ i ] = float (GetInputTrainSet( iPattern, i ) );
-          NWJNWGT.OWGT = GetEventWeightTrainSet( iPattern );
-        }
-
-      }
-
-      JNTEST();
-
-      int active=0;
-      for( Int_t j = 0; j < GetOutputDim(); j++ )
-      {
-        if (!test)
-        {
-          fMeanError+= NWJNWGT.OWGT * 
-              std::pow(JNDAT1.OUT[ j ]-float( GetOutputTestSet( iPattern, j )),2)/(float)GetOutputDim();
-        }
-        else
-        {
-           fMeanError+= NWJNWGT.OWGT * 
-               std::pow(JNDAT1.OUT[ j ]-float( GetOutputTrainSet( iPattern, j )),2)/(float)GetOutputDim();
-        }
-        
-
-//        std::cout << " j " <<  j << " is " << GetOutputTestSet( iPattern, j) << std::endl;
-
-        if (!test)
-        {
-          if (fabs(float( GetOutputTestSet( iPattern, j)) - 1) < 1e-4)
-          {
-            active = j;
-          }
-        }
-        else
-        {
-          if (fabs(float( GetOutputTrainSet( iPattern, j)) - 1) < 1e-4)
-          {
-            active = j;
-          }
-        }
-      }
-
-//      if (mDebug) std::cout << " active is: " << active << std::endl;
-
-//      if (mDebug) std::cout << " filling histograms " << std::endl;
-
-      if (JNDAT1.OUT[ 0 ] + JNDAT1.OUT[ 1 ] >= 0)
-      {
-        histoEfficienciesC[active]->Fill( JNDAT1.OUT[ 0 ] / 
-                                          ( JNDAT1.OUT[ 0 ] + JNDAT1.OUT[ 1 ]),
-                                          NWJNWGT.OWGT);
-                                                                                
-//        if( mDebug ) std::cout << "Filled: " << JNDAT1.OUT[ 0 ] / 
-//                         ( JNDAT1.OUT[ 0 ] + JNDAT1.OUT[ 2 ]) << std::endl;
-      
-      }
-      else
-      {
-        std::cout << " Filled 0 " << std::endl;
-        histoEfficienciesC[active]->Fill( 0 );
-      }
-      
-        
-      if (JNDAT1.OUT[ 0 ] + JNDAT1.OUT[ 2 ] >= 0)
-      {
-        histoEfficienciesL[active]->Fill( JNDAT1.OUT[ 0 ] / 
-                                          ( JNDAT1.OUT[ 0 ] + JNDAT1.OUT[ 2 ]),
-                                          NWJNWGT.OWGT);
-//        if( mDebug ) std::cout << "Filled: " << JNDAT1.OUT[ 0 ] / 
-//                         ( JNDAT1.OUT[ 0 ] + JNDAT1.OUT[ 1 ]) << std::endl;
-      
-     }
-      else
-      {
-        std::cout << " Filled 0 " << std::endl;
-        histoEfficienciesL[active]->Fill( 0 );
-      }
-
-      if( mDebug ) std::cout << "Testing [ " << iPattern << " ] - "  << JNDAT1.OIN[ 0 ] 
-                             << " => " << JNDAT1.OUT[ 0 ] << std::endl;
-      
-  }// finish patterns
-  
-  if (mDebug) std::cout << " Finished patterns... " << std::endl;
-
-  TFile* newFile=new TFile("test.root","recreate");
-  histoEfficienciesL[0]->Write();
-  histoEfficienciesL[1]->Write();
-  histoEfficienciesL[2]->Write();
-  histoEfficienciesC[0]->Write();
-  histoEfficienciesC[1]->Write();
-  histoEfficienciesC[2]->Write();
-  // newFile->Write();
-  newFile->Close();
-  delete newFile; 
-  newFile = 0; 
-
-  //for C-jet rejection
-  
-  for (int u=0;u<2;u++)
-  {
-    vector<TH1F*>* myVectorHistos;
-    if (u==0) 
-    {
-      std::cout << "c-rej --> ";
-      myVectorHistos=&histoEfficienciesC;
-    }
-    if (u==1)
-    {
-      std::cout << "l-rej --> ";
-      myVectorHistos=&histoEfficienciesL;
-    }
-    
-      
-    if (mDebug) std::cout << " 1 " << std::endl;
-    
-    Double_t allb=(*myVectorHistos)[0]->GetSumOfWeights();
-    Double_t allc=(*myVectorHistos)[1]->GetSumOfWeights();
-    Double_t allu=(*myVectorHistos)[2]->GetSumOfWeights();
-    
-    if (mDebug) std::cout << " allb " << allb << std::endl;
-
-    Double_t allbsofar=0;
-    
-    vector<int> binN_Eff;
-    vector<bool> ok_eff;
-    
-    for (int r=0;r<eff.size();r++)
-    {
-      ok_eff.push_back(false);
-      binN_Eff.push_back(0);
-    }
-
-    for (int s=0;s<(*myVectorHistos)[0]->GetNbinsX()+1;s++) {
-      allbsofar+=(*myVectorHistos)[0]->GetBinContent((*myVectorHistos)[0]->GetNbinsX()+1-s);
-      bool nothingMore(true);
-
- 
-      for (int r=0;r<eff.size();r++)
-      {
-        if (mDebug) std::cout << " actual eff: " << allbsofar / allb << std::endl;
-
-        if ((!ok_eff[r]) && allbsofar / allb > eff[r])
-        {
-          binN_Eff[r]=s;
-          ok_eff[r]=true;
-          if (mDebug) std::cout << " bin: " << s << " eff: " << allbsofar / allb << std::endl;
-//          std::cout << " Cut value: " << (*myVectorHistos)[0]->GetBinCenter(s) << std::endl;
-        }
-        else if (allbsofar / allb <= eff[r])
-        {
-          nothingMore=false;
-        }
-      }
-      if (nothingMore) break;
-    }
-    
-    
-    for (int r=0;r<eff.size();r++)
-    {
-      
-      std::cout << " " << eff[r];
-
-      std::cout << " check: " << (double)(*myVectorHistos)[0]->Integral((*myVectorHistos)[0]->GetNbinsX()-binN_Eff[r],
-                                                                        (*myVectorHistos)[1]->GetNbinsX()+1)
-          / (double)allb;
-      
-      double effc=(*myVectorHistos)[1]->Integral((*myVectorHistos)[0]->GetNbinsX()-binN_Eff[r],
-                                                 (*myVectorHistos)[1]->GetNbinsX()+1);
-      effc /= allc;
-      double effl=(*myVectorHistos)[2]->Integral((*myVectorHistos)[0]->GetNbinsX()-binN_Eff[r],
-                                                 (*myVectorHistos)[2]->GetNbinsX()+1);
-      effl /= allu;
-      
-      if (effc!=0)
-      {
-        std::cout << " c: " << 1/effc;
-      }
-      if (effl!=0)
-      {
-        std::cout << " l: " << 1/effl;
-      }
-      
-    }
-    std::cout << std::endl;
-  }
-  
-   for( Int_t j = 0; j < GetOutputDim(); j++ )
-    {
-      delete histoEfficienciesC[j];
-      delete histoEfficienciesL[j];
-    }
-   
-
-  fMeanError/=2.*NPatterns;
-
-  if (mDebug)
-  std::cout << " Test error: " << fMeanError << endl;
-
-  return fMeanError;
-  }
-
 
 //______________________________________________________________________________
-Double_t JetNet::Train( void )
+double JetNet::Train( void )
 {
   // Initiate the train phase for the neural network
-  Int_t NRight = 0;
-  Double_t fMeanError = 0.0;
-  Int_t  NPatterns = GetTrainSetCnt();
+  int NRight = 0;
+  double fMeanError = 0.0;
+  int  NPatterns = GetTrainSetCnt();
 
   //  cout << " NPatterns is: " << NPatterns << endl;
 
-  Int_t inputDim=GetInputDim();
-  Int_t outputDim=GetOutputDim();
-  Int_t updatesPerEpoch=GetUpdatesPerEpoch();
-  Int_t patternsPerUpdate=GetPatternsPerUpdate();
+  int inputDim=GetInputDim();
+  int outputDim=GetOutputDim();
+  int updatesPerEpoch=GetUpdatesPerEpoch();
+  int patternsPerUpdate=GetPatternsPerUpdate();
   
   if (updatesPerEpoch*patternsPerUpdate<1./2.*NPatterns) 
   {
-    cout << "Using only: " << updatesPerEpoch*patternsPerUpdate << 
-        " patterns on available: " << NPatterns << endl;
+    std::cout << "Using only: " << updatesPerEpoch*patternsPerUpdate << 
+      " patterns on available: " << NPatterns << std::endl;
   } else if (updatesPerEpoch*patternsPerUpdate>NPatterns) 
   {
-    cout << " Trying to use " << updatesPerEpoch*patternsPerUpdate << 
-        " patterns, but available: " << NPatterns << endl;
+    std::cout << " Trying to use " << updatesPerEpoch*patternsPerUpdate << 
+      " patterns, but available: " << NPatterns << std::endl;
     return -100;
   }
   
-  for( Int_t iPattern = 0; iPattern < updatesPerEpoch*patternsPerUpdate;
+  for( int iPattern = 0; iPattern < updatesPerEpoch*patternsPerUpdate;
        iPattern++ )
   {
-    for( Int_t i = 0; i < inputDim; i++ )
+    for( int i = 0; i < inputDim; i++ )
     {
       JNDAT1.OIN[ i ] = float ( GetInputTrainSet( iPattern, i ) );
     }
     
     NWJNWGT.OWGT = GetEventWeightTrainSet( iPattern );
     
-    for( Int_t j = 0; j < outputDim; j++ )
+    for( int j = 0; j < outputDim; j++ )
     {
       JNDAT1.OUT[ j ] = float ( GetOutputTrainSet( iPattern, j ) );
     }
@@ -487,16 +228,16 @@ Double_t JetNet::Train( void )
   return GetPARJN(8);
 }
 //______________________________________________________________________________
-void JetNet::writeNetworkInfo(Int_t typeOfInfo)
+void JetNet::writeNetworkInfo(int typeOfInfo)
 {
-  cout << " Invoking info of type: " << typeOfInfo << endl;
+  std::cout << " Invoking info of type: " << typeOfInfo << std::endl;
   JNSTAT(typeOfInfo);
 }  
 //______________________________________________________________________________
 void JetNet::Init( void )
 {
   // Initializes the neuaral network
-  Int_t i;
+  int i;
   JNDAT1.MSTJN[ 0 ] = mLayerCount; // Set the number of layers
 
   // Set the number of nodes for each layer
@@ -506,17 +247,17 @@ void JetNet::Init( void )
     JNDAT1.MSTJN[ 9 + i ] = mpLayers[ i ]; 
   }
    
-  cout << " calling JNINIT " << endl;
+  std::cout << " calling JNINIT " << std::endl;
   JNINIT();
-  cout << " finishing calling JNINIT " << endl;
-  mIsInitialized = kTRUE;
+  std::cout << " finishing calling JNINIT " << std::endl;
+  mIsInitialized = true;
 }
 //______________________________________________________________________________
-Int_t JetNet::Epoch( void )
+int JetNet::Epoch( void )
 {
   // Initiate one train/test step the network. 
 
-  Double_t aTrain, aTest;
+  double aTrain, aTest;
   if ( mCurrentEpoch < mEpochs )
   {
       mCurrentEpoch++;
@@ -544,58 +285,58 @@ Int_t JetNet::Epoch( void )
   return mCurrentEpoch;
 }
 //______________________________________________________________________________
-void JetNet::SetInputTrainSet( Int_t aPatternInd, Int_t aInputInd, Double_t aValue )
+void JetNet::SetInputTrainSet( int aPatternInd, int aInputInd, double aValue )
 {
   // Changes the value of the cell corresponding to unit aInputInd in pattern aPatternInd into INPUT TRAIN set
   mpInputTrainSet->SetData( aPatternInd, aInputInd, aValue );
 }
 //______________________________________________________________________________
-void JetNet::SetOutputTrainSet( Int_t aPatternInd, Int_t aOutputInd, Double_t aValue )
+void JetNet::SetOutputTrainSet( int aPatternInd, int aOutputInd, double aValue )
 {
   // Changes the value of the cell corresponding to unit aInputInd in pattern aPatternInd into OUTPUT TRAIN set
   mpOutputTrainSet->SetData( aPatternInd, aOutputInd, aValue );
 }
 //______________________________________________________________________________
-void JetNet::SetInputTestSet( Int_t aPatternInd, Int_t aInputInd, Double_t aValue )
+void JetNet::SetInputTestSet( int aPatternInd, int aInputInd, double aValue )
 {
   // Changes the value of the cell corresponding to unit aInputInd in pattern aPatternInd into INPUT TEST set
   mpInputTestSet->SetData( aPatternInd, aInputInd, aValue );
 }
 //______________________________________________________________________________
-Double_t JetNet::GetOutputTrainSet( Int_t aPatternInd, 
-				    Int_t aOutputInd ) const 
+double JetNet::GetOutputTrainSet( int aPatternInd, 
+				    int aOutputInd ) const 
 {
   // Returns the value of the cell corresponding to unit aInputInd in pattern aPatternInd into OUTPUT TRAIN set
   return mpOutputTrainSet->GetData( aPatternInd, aOutputInd );
 }
 //______________________________________________________________________________
-void JetNet::SetEventWeightTrainSet( Int_t aPatternInd, Double_t aValue )
+void JetNet::SetEventWeightTrainSet( int aPatternInd, double aValue )
 {
   mpInputTrainSet->SetEventWeight(aPatternInd,aValue);
 }
 //______________________________________________________________________________
 
-void JetNet::SetEventWeightTestSet( Int_t aPatternInd, Double_t aValue )
+void JetNet::SetEventWeightTestSet( int aPatternInd, double aValue )
 {
   mpInputTestSet->SetEventWeight(aPatternInd,aValue);
 }
 //______________________________________________________________________________
-Double_t JetNet::GetInputTestSet( Int_t aPatternInd, Int_t aInputInd ) const
+double JetNet::GetInputTestSet( int aPatternInd, int aInputInd ) const
 {
   // Returns the value of the cell corresponding to unit aInputInd in pattern aPatternInd into INPUT TEST set
   return mpInputTestSet->GetData( aPatternInd, aInputInd );
 }
 //______________________________________________________________________________
-Double_t JetNet::GetOutputTestSet( Int_t aPatternInd, Int_t aOutputInd ) const
+double JetNet::GetOutputTestSet( int aPatternInd, int aOutputInd ) const
 {
   // Returns the value of the cell corresponding to unit aInputInd in pattern aPatternInd into OUTPUT TEST set
   return mpOutputTestSet->GetData( aPatternInd, aOutputInd );
 }
 //______________________________________________________________________________
-void  JetNet::SaveDataAscii( TString aFileName ) const 
+void  JetNet::SaveDataAscii( const char* aFileName ) const 
 {
   // Saves the Input/Output test and train data in plain text file
-  ofstream out;
+  std::ofstream out;
   int i, j;
 
   // Open ASCII file
@@ -632,18 +373,18 @@ void  JetNet::SaveDataAscii( TString aFileName ) const
   out.close();
 }
 //______________________________________________________________________________
-void  JetNet::LoadDataAscii( TString aFileName )
+void  JetNet::LoadDataAscii( const char* aFileName )
 {
   // Loads the input/output test/train data from plain text file 
-  ifstream in;
+  std::ifstream in;
   int i, j, k, l, m;
   int aiParam[ 5 ];//iTrainCount, iTestCount, iInputDim, iHiddenDim, iOutputDim;
-  Bool_t bFlag;
-  Double_t tmp;
-  Int_t iPatternLength;
+  bool bFlag;
+  double tmp;
+  int iPatternLength;
 
   in.open( aFileName );
-  bFlag = Bool_t( in.is_open() );
+  bFlag = bool( in.is_open() );
   if ( in )
   { 
     in >> mLayerCount;
@@ -651,7 +392,7 @@ void  JetNet::LoadDataAscii( TString aFileName )
     i = 0;
 
     delete [] mpLayers;
-    mpLayers = new Int_t[ mLayerCount ];
+    mpLayers = new int[ mLayerCount ];
 
     if( mDebug ){ std::cout << "Updating the Layers Nodes Counters..." << std::endl; }
     while( ( i < mLayerCount ) && ( !in.eof() ) )
@@ -733,12 +474,12 @@ void  JetNet::LoadDataAscii( TString aFileName )
   in.close();
 }
 //______________________________________________________________________________
-void  JetNet::SaveDataRoot( TString aFileName )
+void  JetNet::SaveDataRoot( const char* aFileName )
 {
   // Saves the neural network in ROOT file
 }
 //______________________________________________________________________________
-void  JetNet::LoadDataRoot( TString aFileName )
+void  JetNet::LoadDataRoot( const char* aFileName )
 {
   // Loads the neural network from ROOT file
 }
@@ -749,29 +490,29 @@ void JetNet::Evaluate(  )
   JNTEST();
 }
 //______________________________________________________________________________
-void JetNet::Evaluate( Int_t aPattern  )
+void JetNet::Evaluate( int aPattern  )
 {
   // Evaluates the network output form the input data specified by the Test Pattern
-  for( Int_t i = 0; i < GetInputDim(); i++ )
+  for( int i = 0; i < GetInputDim(); i++ )
   {
 	JNDAT1.OIN[ i ] = float ( GetInputTestSet( aPattern, i ) );
   }
   JNTEST();
 }
 //______________________________________________________________________________
-void JetNet::SetInputs( Int_t aIndex, Double_t aValue )
+void JetNet::SetInputs( int aIndex, double aValue )
 {
   // Directly sets the inputs of the network 
   JNDAT1.OIN[ aIndex ] = float ( aValue );
 }
 //______________________________________________________________________________
-Double_t JetNet::GetOutput( Int_t aIndex ) const 
+double JetNet::GetOutput( int aIndex ) const 
 {
   // Returns the output of the network 
-  return Double_t ( JNDAT1.OUT[ aIndex ] );
+  return double ( JNDAT1.OUT[ aIndex ] );
 }
 //______________________________________________________________________________
-void JetNet::DumpToFile( TString aFileName ) const 
+void JetNet::DumpToFile( const char* aFileName ) const 
 {
   // Dumps the network data into JETNET specific format
   JNDUMP( -8 );
@@ -779,7 +520,7 @@ void JetNet::DumpToFile( TString aFileName ) const
   rename( "./fort.8", aFileName );
 }
 //______________________________________________________________________________
-void JetNet::ReadFromFile( TString aFileName )
+void JetNet::ReadFromFile( const char* aFileName )
 {
   // Loads the network from JETNET specific file
   rename( aFileName, "./fort.12" );
@@ -789,31 +530,31 @@ void JetNet::ReadFromFile( TString aFileName )
   //std::cout << close( 12 ) << std::endl;
 }
 //______________________________________________________________________________
-Double_t JetNet::GetWeight( Int_t aLayerInd, Int_t aNodeInd, Int_t aConnectedNodeInd ) const
+double JetNet::GetWeight( int aLayerInd, int aNodeInd, int aConnectedNodeInd ) const
 {
   // Returns the node weight in specific Layer
-  return Double_t ( JNINT1.W[ JNINDX( aLayerInd, aNodeInd, aConnectedNodeInd )-1 ] );
+  return double ( JNINT1.W[ JNINDX( aLayerInd, aNodeInd, aConnectedNodeInd )-1 ] );
   //GP: ONE HAS TO PAY ATTENTION TO THIS STUPID -1!!!
 }
 //______________________________________________________________________________
-Double_t JetNet::GetThreshold( Int_t aLayerInd, Int_t aNodeInd) const
+double JetNet::GetThreshold( int aLayerInd, int aNodeInd) const
 {
   //Returns the node threshold in the specific layer
-  return Double_t ( JNINT1.T[ JNINDX( aLayerInd, aNodeInd, 0 )-1 ] );
+  return double ( JNINT1.T[ JNINDX( aLayerInd, aNodeInd, 0 )-1 ] );
   //GP: ONE HAS TO PAY ATTENTION TO THIS STUPID -1!!!
 }
 //______________________________________________________________________________
-void JetNet::SelectiveFields( Int_t aLayerA, Int_t aNodeA1, Int_t aNodeA2, Int_t aNodeB1, Int_t aNodeB2, Int_t aSwitch )
+void JetNet::SelectiveFields( int aLayerA, int aNodeA1, int aNodeA2, int aNodeB1, int aNodeB2, int aSwitch )
 {
   // JetNet Selective Fields
-  Int_t tmp, i1, i2, j1, j2;
+  int tmp, i1, i2, j1, j2;
 
   if( ( aLayerA > 0 ) && ( aLayerA < mLayerCount ) )
   {
-    i1 = TMath::Abs( aNodeA1 ); 
-    i2 = TMath::Abs( aNodeA2 );
-    j1 = TMath::Abs( aNodeB1 ); 
-    j2 = TMath::Abs( aNodeB2 );
+    i1 = abs( aNodeA1 ); 
+    i2 = abs( aNodeA2 );
+    j1 = abs( aNodeB1 ); 
+    j2 = abs( aNodeB2 );
 
     if( i1 > i2 )
     {
@@ -840,12 +581,12 @@ void JetNet::SelectiveFields( Int_t aLayerA, Int_t aNodeA1, Int_t aNodeA2, Int_t
 void JetNet::Reinitialize( void )
 {
   //Initializes the settings of the network
-    Int_t i;
+    int i;
     
    mLayerCount = JNDAT1.MSTJN[ 0 ]; // Set the number of layers
    
    delete [] mpLayers;
-   mpLayers = new Int_t[ mLayerCount ];
+   mpLayers = new int[ mLayerCount ];
    
   // Set the number of nodes for each layer
   for( i = 0; i < mLayerCount; i++ )
@@ -866,141 +607,140 @@ void JetNet::Reinitialize( void )
 }  
 
 //______________________________________________________________________________
-Int_t JetNet::GetUnitCount( Int_t aLayer ) const 
+int JetNet::GetUnitCount( int aLayer ) const 
 { 
   // Returns the number of the units in specfic layer
   if( ( aLayer > -1 ) && ( aLayer < mLayerCount ) ) 
     return JNDAT1.MSTJN[ 9 + aLayer ]; 
 }
 //______________________________________________________________________________
-void JetNet::SetUpdatesPerEpoch( Int_t aValue )
+void JetNet::SetUpdatesPerEpoch( int aValue )
 { 
   // Sets the number of the updates per epoch
   JNDAT1.MSTJN[ 8 ] = aValue; 
   // if( !mInitLocked ) this->Init();
 }
 //______________________________________________________________________________
-void JetNet::SetUpdatingProcedure( Int_t aValue )
+void JetNet::SetUpdatingProcedure( int aValue )
 {  
   // Set specific weights update function
   JNDAT1.MSTJN[ 4 ] = aValue; 
   // if( !mInitLocked ) this->Init();
 }
 //______________________________________________________________________________
-void JetNet::SetErrorMeasure( Int_t aValue )
+void JetNet::SetErrorMeasure( int aValue )
 {  
   JNDAT1.MSTJN[ 3 ] = aValue; 
   // if( !mInitLocked ) this->Init();
 }
 //______________________________________________________________________________
-void JetNet::SetActivationFunction( Int_t aValue )
+void JetNet::SetActivationFunction( int aValue )
 { 
   // Set the kind of activation function used
   JNDAT1.MSTJN[ 2 ] = aValue; 
   // if( !mInitLocked ) this->Init();
 }
 //______________________________________________________________________________
-void JetNet::SetPatternsPerUpdate( Int_t aValue )
+void JetNet::SetPatternsPerUpdate( int aValue )
 { 
   JNDAT1.MSTJN[ 1 ] = aValue; 
   // if( !mInitLocked ) this->Init();
 }
 //______________________________________________________________________________
-void JetNet::SetLearningRate( Double_t aValue )
+void JetNet::SetLearningRate( double aValue )
 { 
   // Change the Learning Rate
   JNDAT1.PARJN[ 0 ] = aValue; 
   // if( !mInitLocked ) this->Init();
 }
 //______________________________________________________________________________
-void JetNet::SetMomentum( Double_t aValue )
+void JetNet::SetMomentum( double aValue )
 { 
   JNDAT1.PARJN[ 1 ] = aValue; 
   // if( !mInitLocked ) this->Init();
 }
 //______________________________________________________________________________
-void JetNet::SetInitialWeightsWidth( Double_t aValue )
+void JetNet::SetInitialWeightsWidth( double aValue )
 { 
   JNDAT1.PARJN[ 3 ] = aValue; 
   // if( !mInitLocked ) this->Init();
 }
 //______________________________________________________________________________
-void JetNet::SetLearningRateDecrease( Double_t aValue )
+void JetNet::SetLearningRateDecrease( double aValue )
 { 
   JNDAT1.PARJN[ 10 ] = aValue; 
   // if( !mInitLocked ) this->Init();
 }
 //______________________________________________________________________________
-Int_t JetNet::GetUpdatesPerEpoch( void ) const 
+int JetNet::GetUpdatesPerEpoch( void ) const 
 { 
   return JNDAT1.MSTJN[ 8 ]; 
 }
 //______________________________________________________________________________
-Int_t JetNet::GetUpdatingProcedure( void ) const 
+int JetNet::GetUpdatingProcedure( void ) const 
 {  
   return JNDAT1.MSTJN[ 3 ]; 
 }
 //______________________________________________________________________________
-Int_t JetNet::GetErrorMeasure( void ) const 
+int JetNet::GetErrorMeasure( void ) const 
 { 
   return JNDAT1.MSTJN[ 3 ]; 
 }
 //______________________________________________________________________________
-Int_t JetNet::GetActivationFunction( void ) const 
+int JetNet::GetActivationFunction( void ) const 
 { 
   return JNDAT1.MSTJN[ 2 ]; 
 }
 //______________________________________________________________________________
-Int_t JetNet::GetPatternsPerUpdate( void ) const 
+int JetNet::GetPatternsPerUpdate( void ) const 
 { 
   return JNDAT1.MSTJN[ 1 ]; 
 }
 //______________________________________________________________________________
-Double_t JetNet::GetLearningRate( void ) const 
+double JetNet::GetLearningRate( void ) const 
 { 
   return JNDAT1.PARJN[ 0 ]; 
 }
 //______________________________________________________________________________
-Double_t JetNet::GetMomentum( void ) const 
+double JetNet::GetMomentum( void ) const 
 { 
   return JNDAT1.PARJN[ 1 ]; 
 }
 //______________________________________________________________________________
-Double_t JetNet::GetInitialWeightsWidth( void ) const 
+double JetNet::GetInitialWeightsWidth( void ) const 
 { 
   return JNDAT1.PARJN[ 3 ]; 
 }
 //______________________________________________________________________________
-Double_t JetNet::GetLearningRateDecrease( void ) const 
+double JetNet::GetLearningRateDecrease( void ) const 
 { 
   return JNDAT1.PARJN[ 10 ]; 
 }
 //______________________________________________________________________________
-Int_t JetNet::GetMSTJN( Int_t aIndex ) const 
+int JetNet::GetMSTJN( int aIndex ) const 
 {
   return JNDAT1.MSTJN[ aIndex ]; 
 }
 //______________________________________________________________________________
-Double_t JetNet::GetPARJN( Int_t aIndex ) const 
+double JetNet::GetPARJN( int aIndex ) const 
 {
   return JNDAT1.PARJN[ aIndex ];
 }
 //______________________________________________________________________________
-void JetNet::SetMSTJN( Int_t aIndex, Int_t aValue )
+void JetNet::SetMSTJN( int aIndex, int aValue )
 {
   JNDAT1.MSTJN[ aIndex ] = aValue;
 }
 //______________________________________________________________________________
-void JetNet::SetPARJN( Int_t aIndex, Double_t aValue )
+void JetNet::SetPARJN( int aIndex, double aValue )
 {
   JNDAT1.PARJN[ aIndex ] = aValue;
 }
 //______________________________________________________________________________
-void JetNet::Shuffle( Bool_t aShuffleTrainSet, Bool_t aShuffleTestSet )
+void JetNet::Shuffle( bool aShuffleTrainSet, bool aShuffleTestSet )
 {
   // Shuffles the train and/or test input/output sets
-  TTimeStamp ts;
-  Int_t Seed = ts.GetSec();
+  int Seed = time(0); 
   if ( aShuffleTrainSet )
   {
     
@@ -1010,7 +750,7 @@ void JetNet::Shuffle( Bool_t aShuffleTrainSet, Bool_t aShuffleTestSet )
   //Shuffle Test Set
   if ( aShuffleTestSet )
   {
-    Seed = ts.GetSec();
+    Seed = time(0); 
     mpInputTestSet->Shuffle( Seed );
     mpOutputTestSet->Shuffle( Seed );
   }

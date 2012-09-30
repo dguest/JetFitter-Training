@@ -11,6 +11,7 @@
 #include "TMatrix.h"
 #include "TTree.h"
 #include "TFile.h"
+#include "TROOT.h"
 
 //by Giacinto Piacquadio (18-02-2008)
 TTrainedNetwork* getTrainedNetwork(const JetNet& jn) 

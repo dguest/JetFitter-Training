@@ -1,13 +1,10 @@
 #include "JetNet.hh"
 #include "jetnet.h"
 #include <unistd.h>
-//#include <stdio.h>
 #include <iostream>
 #include <fstream>
 #include <cmath>
 #include <ctime>
-
-// ClassImp( JetNet )
  
 //Constructors
 //______________________________________________________________________________

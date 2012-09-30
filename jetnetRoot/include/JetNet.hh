@@ -143,9 +143,6 @@ public:
   Double_t GetPARJN( Int_t aIndex ) const;
   void SetMSTJN( Int_t aIndex, Int_t aValue );
   void SetPARJN( Int_t aIndex, Double_t aValue );
-  
-  void Normalize( void );
-  void Randomize( void );
 
   void setInputNodes(std::vector<InputNode> ); 
   std::vector<InputNode> getInputNodes() const; 

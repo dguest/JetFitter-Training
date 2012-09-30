@@ -42,7 +42,6 @@ JetNet::JetNet( Int_t aTestCount, Int_t aTrainCount,
   // aTrainCount patterns for the train set.
   // aLayers contains the information for number of the units in the different layers
 
-  int i;
   mDebug = kFALSE;
 #ifdef _DEBUG
   mDebug = kTRUE;
@@ -58,7 +57,7 @@ JetNet::JetNet( Int_t aTestCount, Int_t aTrainCount,
   {  
    //Perform deep copy of the array holding Layers count
     mpLayers = new Int_t[ mLayerCount ];
-    for( i = 0; i < mLayerCount; ++i )
+    for(int i = 0; i < mLayerCount; ++i )
     {
       mpLayers[ i ] = aLayers[ i ];
     }
@@ -865,22 +864,7 @@ void JetNet::Reinitialize( void )
 
 
 }  
-//______________________________________________________________________________
-void JetNet::Normalize( void )
-{
-  // Normilizes Inputs (both test and train)
-  mpInputTrainSet->Normalize();
-  mpInputTestSet->Normalize();
-}
-//______________________________________________________________________________
-void JetNet::Randomize( void )
-{
-  // Randomizes Inputs and Outputs of both train and test sets
-  mpInputTrainSet->Randomize();
-  mpInputTestSet->Randomize();
-  mpOutputTrainSet->Randomize();
-  mpOutputTestSet->Randomize();
-}
+
 //______________________________________________________________________________
 Int_t JetNet::GetUnitCount( Int_t aLayer ) const 
 { 

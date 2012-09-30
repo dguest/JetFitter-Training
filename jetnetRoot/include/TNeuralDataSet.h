@@ -37,10 +37,6 @@ class TNeuralDataSet
   Double_t GetEventWeight( const Int_t aPattern );
   void SetEventWeight( const Int_t aPattern, Double_t aValue );
 
-  // Normalize all data
-  void     Normalize( void );  
-  // Randomizes the data
-  void     Randomize( void );
   // Shuffles the patterns
   void     Shuffle( Int_t aSeed = 0 );
 
@@ -56,7 +52,7 @@ class TNeuralDataSet
   TVectorD * mpNormFactors;
   TVectorD * mpShiftFactors;
 
-  ClassDef( TNeuralDataSet, 1 )
+  ClassDef( TNeuralDataSet, 2 )
 
 };
 

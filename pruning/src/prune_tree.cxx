@@ -18,8 +18,7 @@
 
 int simple_prune(std::string file_name, 
 		 std::string tree_name, 
-		 std::vector<SubTreeIntInfo> int_cuts, 
-		 std::vector<SubTreeDoubleInfo> double_cuts, 
+		 Cuts cuts_info, 
 		 std::set<std::string> subset, 
 		 std::string output_file_name, 
 		 int max_entries, 
@@ -45,6 +44,7 @@ int simple_prune(std::string file_name,
   // Double and IntBuffer own the pointers to the leafs
   IntBuffer int_buffer; 	
   DoubleBuffer double_buffer; 
+  UnsignedBuffer unsigned_buffer; 
   std::vector<std::string> untypable_branches; 
 
   TObjArray* leaflist = tree->GetListOfLeaves(); 
@@ -60,6 +60,9 @@ int simple_prune(std::string file_name,
     }
     else if (leaf_type == "Int_t") { 
       int_buffer[leaf_name] = new int; 
+    }
+    else if (leaf_type == "UInt_t") { 
+      unsigned_buffer[leaf_name] = new unsigned; 
     }
     else{ 
       untypable_branches.push_back(leaf_name); 
@@ -87,12 +90,23 @@ int simple_prune(std::string file_name,
       throw std::runtime_error("could not find branch " + itr->first); 
     }
   }
+  for (UnsignedBuffer::const_iterator itr = 
+	 unsigned_buffer.begin(); 
+       itr != unsigned_buffer.end(); 
+       itr++){ 
+    tree->SetBranchStatus(itr->first.c_str(),1); 
+    bool error = tree->SetBranchAddress(itr->first.c_str(),itr->second); 
+    if (error) { 
+      throw std::runtime_error("could not find branch " + itr->first); 
+    }
+  }
 
   // --- define cuts ---
 
   SubTreeCuts cuts; 		// owns the cuts in it
-  for (std::vector<SubTreeIntInfo>::const_iterator itr = int_cuts.begin(); 
-       itr != int_cuts.end(); 
+  for (std::vector<SubTreeIntInfo>::const_iterator 
+	 itr = cuts_info.ints.begin(); 
+       itr != cuts_info.ints.end(); 
        itr++) { 
     int* buffer = int_buffer[itr->name]; 
     if (!buffer) { 
@@ -101,8 +115,8 @@ int simple_prune(std::string file_name,
     cuts.push_back(new SubTreeIntCut(itr->name, itr->value, buffer)); 
   }
   for (std::vector<SubTreeDoubleInfo>::const_iterator
-	 itr = double_cuts.begin(); 
-       itr != double_cuts.end(); 
+	 itr = cuts_info.doubles.begin(); 
+       itr != cuts_info.doubles.end(); 
        itr++) { 
     double* buffer = double_buffer[itr->name]; 
     if (!buffer) { 
@@ -111,6 +125,17 @@ int simple_prune(std::string file_name,
     cuts.push_back(new SubTreeDoubleCut(itr->name, 
 					itr->low, itr->high, 
 					buffer) ); 
+  }
+  for (std::vector<SubTreeUnsignedInfo>::const_iterator
+	 itr = cuts_info.bits.begin(); 
+       itr != cuts_info.bits.end(); itr++) { 
+    unsigned* buffer = unsigned_buffer[itr->name]; 
+    if (!buffer) { 
+      throw std::runtime_error("could not find branch" + itr->name); 
+    }
+    cuts.push_back(new SubTreeBitmaskCut(itr->name, 
+					 itr->required, itr->veto, 
+					 buffer) ); 
   }
 
   // --- define outputs ----
@@ -188,7 +213,7 @@ SubTreeDoubleCut::SubTreeDoubleCut(std::string name,
 {
 }
 
-bool SubTreeDoubleCut::check() 
+bool SubTreeDoubleCut::check() const
 {
   return (*m_ptr < m_upper) && (*m_ptr >= m_lower); 
 }
@@ -205,11 +230,33 @@ SubTreeIntCut::SubTreeIntCut(std::string name,
   m_ptr(ptr)
 {
 }
-bool SubTreeIntCut::check()
+bool SubTreeIntCut::check() const
 {
   return *m_ptr == m_value; 
 }
 std::string SubTreeIntCut::name()
+{
+  return m_variable; 
+}
+
+SubTreeBitmaskCut::SubTreeBitmaskCut(std::string name, 
+				     unsigned required, 
+				     unsigned veto, 
+				     unsigned* ptr): 
+  m_variable(name), 
+  m_required(required), 
+  m_veto(veto), 
+  m_ptr(ptr)
+{
+}
+bool SubTreeBitmaskCut::check() const
+{
+  unsigned value = *m_ptr; 
+  bool has_all_required = ((m_required & value) == value); 
+  bool has_any_veto = (m_veto & value); 
+  return has_all_required && ~has_any_veto; 
+}
+std::string SubTreeBitmaskCut::name()
 {
   return m_variable; 
 }
@@ -223,6 +270,12 @@ IntBuffer::~IntBuffer()
   }
 }
 DoubleBuffer::~DoubleBuffer() 
+{
+  for (const_iterator itr = begin(); itr != end(); itr++) { 
+    delete itr->second; 
+  }
+}
+UnsignedBuffer::~UnsignedBuffer() 
 {
   for (const_iterator itr = begin(); itr != end(); itr++) { 
     delete itr->second; 

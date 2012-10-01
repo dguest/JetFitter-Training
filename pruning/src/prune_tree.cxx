@@ -252,9 +252,9 @@ SubTreeBitmaskCut::SubTreeBitmaskCut(std::string name,
 bool SubTreeBitmaskCut::check() const
 {
   unsigned value = *m_ptr; 
-  bool has_all_required = ((m_required & value) == value); 
+  bool has_all_required = ((m_required | value) == value); 
   bool has_any_veto = (m_veto & value); 
-  return has_all_required && ~has_any_veto; 
+  return has_all_required && !has_any_veto; 
 }
 std::string SubTreeBitmaskCut::name()
 {

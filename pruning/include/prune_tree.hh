@@ -18,11 +18,23 @@ struct SubTreeDoubleInfo
   double low; 
   double high; 
 }; 
+struct SubTreeUnsignedInfo
+{
+  std::string name; 
+  unsigned required; 
+  unsigned veto; 
+}; 
+
+struct Cuts
+{
+  std::vector<SubTreeIntInfo> ints; 
+  std::vector<SubTreeDoubleInfo> doubles; 
+  std::vector<SubTreeUnsignedInfo> bits; 
+}; 
 
 int simple_prune(std::string file_name, 
 		 std::string tree_name, 
-		 std::vector<SubTreeIntInfo> int_cuts, 
-		 std::vector<SubTreeDoubleInfo> double_cuts, 
+		 Cuts cuts, 
 		 std::set<std::string> subset, 
 		 std::string output_file_name, 
 		 int max_entries = -1, 
@@ -32,7 +44,7 @@ class SubTreeCut
 {
 public: 
   virtual ~SubTreeCut() {}
-  virtual bool check() = 0; 
+  virtual bool check() const = 0; 
   virtual std::string name() = 0; 
 }; 
 
@@ -41,7 +53,7 @@ class SubTreeIntCut: public SubTreeCut
 public: 
   SubTreeIntCut(std::string name, int value, int* ptr); 
   ~SubTreeIntCut() {}
-  bool check(); 
+  bool check() const; 
   std::string name(); 
 private: 
   std::string m_variable; 
@@ -54,7 +66,7 @@ class SubTreeDoubleCut: public SubTreeCut
 public: 
   SubTreeDoubleCut(std::string name, double low, double up, double* ptr);
   ~SubTreeDoubleCut() {}
-  bool check(); 
+  bool check() const; 
   std::string name(); 
 private: 
   std::string m_variable; 
@@ -63,10 +75,32 @@ private:
   double* m_ptr; 
 }; 
 
+class SubTreeBitmaskCut: public SubTreeCut
+{
+public: 
+  SubTreeBitmaskCut(std::string name, 
+		    unsigned required, unsigned veto, 
+		    unsigned* ptr);
+  ~SubTreeBitmaskCut() {}
+  bool check() const; 
+  std::string name(); 
+private: 
+  std::string m_variable; 
+  unsigned m_required; 
+  unsigned m_veto; 
+  unsigned* m_ptr; 
+}; 
+
 class IntBuffer: public std::map<std::string, int*>
 {
 public: 
   ~IntBuffer(); 
+}; 
+
+class UnsignedBuffer: public std::map<std::string, unsigned*> 
+{
+public: 
+  ~UnsignedBuffer(); 
 }; 
 
 class DoubleBuffer: public std::map<std::string, double*>

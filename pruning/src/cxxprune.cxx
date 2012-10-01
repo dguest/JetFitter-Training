@@ -23,6 +23,7 @@ static const char* simple_kwlist[] = {
   "tree", 
   "int_cuts", 
   "double_cuts", 
+  "mask_cuts", 
   "subset", 
   "max_entries",
   "flags", 
@@ -39,13 +40,14 @@ PyObject* py_simple_prune(PyObject *self,
   const char* output_file; 
   PyObject* py_int_cuts = 0; 
   PyObject* py_double_cuts = 0; 
+  PyObject* py_mask_cuts = 0; 
   PyObject* py_subset = 0; 
   int max_entries = -1; 
   const char* flags; 
     
   bool ok = PyArg_ParseTupleAndKeywords
     (args, keywds, 
-     "ss|sOOOis:simple_prune", 
+     "ss|sOOOOis:simple_prune", 
      // I think python people argue about whether this should be 
      // a const char** or a char**
      const_cast<char**>(simple_kwlist),
@@ -54,6 +56,7 @@ PyObject* py_simple_prune(PyObject *self,
      &tree_name, 
      &py_int_cuts, 
      &py_double_cuts, 
+     &py_mask_cuts, 
      &py_subset, 
      &max_entries, 
      &flags); 
@@ -64,7 +67,7 @@ PyObject* py_simple_prune(PyObject *self,
 
   if (strchr(flags,'v')) options |= opt::verbose; 
 
-  std::vector<SubTreeIntInfo> int_cuts; 
+  Cuts cuts; 
   int n_int_cuts = 0; 
   if (py_int_cuts)
     n_int_cuts = PyList_Size(py_int_cuts); 
@@ -96,10 +99,9 @@ PyObject* py_simple_prune(PyObject *self,
 		      " must be an int"); 
       return NULL; 
     }
-    int_cuts.push_back(info); 
+    cuts.ints.push_back(info); 
   }
 
-  std::vector<SubTreeDoubleInfo> double_cuts; 
   int n_double_cuts = 0; 
   if (py_double_cuts)
     n_double_cuts = PyList_Size(py_double_cuts); 
@@ -133,8 +135,49 @@ PyObject* py_simple_prune(PyObject *self,
 		      " high and low must be floats"); 
       return NULL; 
     }
-    double_cuts.push_back(info); 
+    cuts.doubles.push_back(info); 
   }
+
+
+
+  int n_mask_cuts = 0; 
+  if (py_mask_cuts)
+    n_mask_cuts = PyList_Size(py_mask_cuts); 
+
+  if (PyErr_Occurred()) { 
+    return NULL; 
+  }
+  for (int cut_n = 0; cut_n < n_mask_cuts; cut_n++) { 
+    SubTreeUnsignedInfo info; 
+    PyObject* py_cut = PyList_GetItem(py_mask_cuts, cut_n); 
+    if (PySequence_Size(py_cut) != 3) { 
+      PyErr_SetString(PyExc_TypeError,
+		      "expect a list of tuples (name, value) for int_cuts"); 
+      return NULL; 
+    }
+    PyObject* py_name = PySequence_GetItem(py_cut, 0); 
+    info.name = PyString_AsString(py_name); 
+    if (PyErr_Occurred() ) { 
+      PyErr_SetString(PyExc_TypeError,
+		      "expect tuples (name, value) for int_cuts, name"
+		      " must be a string"); 
+      return NULL; 
+    }
+    PyObject* py_req = PySequence_GetItem(py_cut, 1); 
+    info.required = PyInt_AsUnsignedLongMask(py_req); 
+    PyObject* py_veto = PySequence_GetItem(py_cut, 2); 
+    info.veto = PyInt_AsUnsignedLongMask(py_veto); 
+    if (PyErr_Occurred() ) { 
+      PyErr_SetString(PyExc_TypeError,
+		      "expect tuples (name, required, veto) for mask_cuts"
+		      ", values must be unsigned ints"); 
+      return NULL; 
+    }
+    cuts.bits.push_back(info); 
+  }
+
+
+
 
   std::set<std::string> subset; 
   if (py_subset) { 
@@ -159,7 +202,7 @@ PyObject* py_simple_prune(PyObject *self,
   int return_code; 
   try { 
     return_code = simple_prune(file_name, tree_name, 
-			       int_cuts, double_cuts, 
+			       cuts, 
 			       subset, 
 			       output_file, 
 			       max_entries, 

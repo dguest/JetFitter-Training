@@ -29,12 +29,14 @@ std::pair<int,int> profile_fast(std::string file_name,
     throw std::runtime_error(file.GetName() + err); 
   }
   srand(0); 
+
   
   TTree* tree = dynamic_cast<TTree*>(file.Get(tree_name.c_str())); 
+
   if (!tree) { 
     std::string err = "%s in %s cannot be opened"; 
     std::string f = file.GetName(); 
-    std::string t = tree->GetName(); 
+    std::string t = tree_name.c_str(); 
     throw std::runtime_error( (boost::format(err) % t % f).str()); 
   }
   tree->SetBranchStatus("*",0); 
@@ -56,6 +58,8 @@ std::pair<int,int> profile_fast(std::string file_name,
     }
 
   }
+
+
 
   boost::ptr_vector<double> double_buffer; 
   boost::ptr_vector<int> int_buffer; 

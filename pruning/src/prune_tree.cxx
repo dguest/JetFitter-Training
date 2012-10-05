@@ -143,7 +143,7 @@ int simple_prune(std::string file_name,
   if (!out_file.IsOpen() || out_file.IsZombie()) { 
     throw std::runtime_error("can't create " + output_file_name); 
   }
-  TTree out_tree("SVTree","SVTree"); 
+  TTree out_tree(tree_name.c_str(),tree_name.c_str()); 
 
   
   for (IntBuffer::const_iterator itr = int_buffer.begin(); 

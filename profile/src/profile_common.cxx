@@ -41,9 +41,10 @@ Bitmask::Bitmask(unsigned* address, unsigned required, unsigned veto):
 
 bool Bitmask::test() const 
 {
-  bool pass_required = (*m_address & m_required == *m_address); 
+  bool pass_required = ( (*m_address & m_required) == m_required); 
   bool has_veto = (*m_address & m_veto); 
-  return pass_required && !has_veto; 
+  bool pass = (pass_required && !has_veto); 
+  return pass; 
 }
 
 IntCheck::IntCheck(int* address, int value): 

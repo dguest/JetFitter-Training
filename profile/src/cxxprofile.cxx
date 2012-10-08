@@ -112,6 +112,7 @@ PyObject* py_pro2d(PyObject *self,
   const char* tree_name; 
   PyObject* plots = 0; 
   PyObject* tag_leaves = 0; 
+  PyObject* py_masks = 0; 
   const char* output_file; 
   int max_entries = -1; 
   bool show_progress = false; 
@@ -121,13 +122,14 @@ PyObject* py_pro2d(PyObject *self,
     "out_file", 
     "plots", 
     "tags",
+    "masks", 
     "max_entries",
     "show_progress", 
     NULL};
     
   bool ok = PyArg_ParseTupleAndKeywords
     (args, keywds, 
-     "sssO|Oib:pro2d", 
+     "sssO|OOib:pro2d", 
      // I think python people argue about whether this should be 
      // a const char** or a char**
      const_cast<char**>(kwlist),
@@ -136,6 +138,7 @@ PyObject* py_pro2d(PyObject *self,
      &output_file, 
      &plots, 
      &tag_leaves, 
+     &py_masks, 
      &max_entries, 
      &show_progress); 
 
@@ -146,7 +149,7 @@ PyObject* py_pro2d(PyObject *self,
   std::vector<std::string> tag_leaves_vec = build_string_vec(tag_leaves); 
   if (PyErr_Occurred()) return NULL; 
 
-  std::vector<MaskInfo> masks; 
+  std::vector<MaskInfo> masks = build_mask_vec(py_masks); 
 
   unsigned options = opt::def_opt; 
   if (show_progress) options |= opt::show_progress; 
@@ -379,6 +382,52 @@ std::vector<double> build_double_vec(PyObject* list) {
       return vec; 
     }
     vec.push_back(the_double); 
+  }
+  return vec; 
+}
+
+std::vector<MaskInfo> build_mask_vec(PyObject* list) { 
+  std::vector<MaskInfo> vec; 
+  if (!list) return vec; 
+  int n_entries = PyList_Size(list); 
+  if (PyErr_Occurred() ) return vec; 
+  for (int n = 0; n < n_entries; n++) { 
+    PyObject* py_mask = PyList_GetItem(list, n); 
+
+    if (!PyDict_Check(py_mask) ) { 
+      PyErr_SetString(PyExc_IOError,"mask should be a list of dicts"); 
+    }
+
+    MaskInfo info; 
+    PyObject* py_name = PyDict_GetItemString(py_mask, "name"); 
+    if (!py_name) { 
+      PyErr_SetString(PyExc_IOError,"no 'name' in mask dict"); 
+      return vec; 
+    }
+    info.name = PyString_AsString(py_name); 
+    if (PyErr_Occurred() ) return vec; 
+    PyObject* py_leaf_name = PyDict_GetItemString(py_mask, "leaf_name"); 
+    if (!py_leaf_name) { 
+      PyErr_SetString(PyExc_IOError,"no 'leaf_name' in mask dict"); 
+      return vec; 
+    }
+    info.leaf_name = PyString_AsString(py_leaf_name); 
+    if (PyErr_Occurred() ) return vec; 
+    PyObject* py_accept = PyDict_GetItemString(py_mask, "accept_mask"); 
+    if (!py_accept) { 
+      PyErr_SetString(PyExc_IOError,"no 'accept_mask' in mask dict"); 
+      return vec; 
+    }
+    info.accept_mask = PyLong_AsUnsignedLongMask(py_accept); 
+    if (PyErr_Occurred() ) return vec; 
+    info.veto_mask = 0; 
+    PyObject* py_veto = PyDict_GetItemString(py_mask, "veto_mask"); 
+    if (py_veto) { 
+      info.veto_mask = PyLong_AsUnsignedLongMask(py_veto); 
+      if (PyErr_Occurred() ) return vec; 
+    }
+    vec.push_back(info); 
+    
   }
   return vec; 
 }

@@ -173,7 +173,7 @@ ProfileInfo pro_2d(std::string file_name,
     std::string hist_name = y_var_name + "_vs_" + x_var_name; 
 
     //TODO: make some way to define compound cuts
-    CutContainer used_cuts; 
+    std::map<std::string, ICut*> used_cuts; 
     used_cuts.insert(std::make_pair<std::string, ICut*>("",0)); 
     for (CutContainer::const_iterator itr = cuts.begin(); 
 	 itr != cuts.end(); itr++) { 
@@ -188,15 +188,21 @@ ProfileInfo pro_2d(std::string file_name,
 	cut_vector.push_back(cut_itr->second); 
       }
 
-      if (hists.count(hist_name) ) { 
-	throw std::runtime_error("attempted to redefine " + hist_name); 
+      std::string cut_hist_name = hist_name; 
+      if (cut_itr->first.size() > 0) { 
+	cut_hist_name.append("_" + cut_itr->first); 
       }
-      hists[hist_name] = new FilterHist2D(leaf_itr->first, leaf_itr->second, 
-					  double_buffer, cut_vector); 
+
+      if (hists.count(cut_hist_name) ) { 
+	throw std::runtime_error("attempted to redefine " + cut_hist_name); 
+      }
+      hists[cut_hist_name] = new FilterHist2D(leaf_itr->first, 
+					      leaf_itr->second, 
+					      double_buffer, cut_vector); 
 
       for (CheckBuffer::const_iterator check_itr = check_buffer.begin(); 
 	   check_itr != check_buffer.end(); check_itr++){ 
-	std::string filt_hist_name = hist_name + "_" + check_itr->first; 
+	std::string filt_hist_name = cut_hist_name + "_" + check_itr->first; 
 
 	if (hists.count(filt_hist_name) ) { 
 	  throw std::runtime_error("attempted to redefine" + filt_hist_name); 

@@ -60,10 +60,11 @@ bool Bitmask::test() const
   bool pass_required = ( (*m_address & m_required) == m_required); 
   bool has_veto = (*m_address & m_veto); 
   bool pass = (pass_required && !has_veto); 
+  bool pass_piggyback = true; 
   if (m_piggyback) { 
-    return m_piggyback->test(); 
+    pass_piggyback = m_piggyback->test();
   }
-  return pass; 
+  return pass && pass_piggyback; 
 }
 
 IntCheck::IntCheck(int* address, int value): 
@@ -90,10 +91,11 @@ void IntCheck::piggyback(ICut* piggyback) {
 bool IntCheck::test() const 
 {
   bool pass = (*m_address == m_value); 
+  bool pass_piggyback = true; 
   if (m_piggyback) { 
-    return m_piggyback->test(); 
+    pass_piggyback = m_piggyback->test(); 
   }
-  return pass; 
+  return pass && pass_piggyback; 
 }
 
 BitBuffer::~BitBuffer() 

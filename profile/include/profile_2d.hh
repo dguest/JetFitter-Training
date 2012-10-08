@@ -22,8 +22,7 @@ class FilterHist2D: public TH2D
 public: 
   FilterHist2D(const LeafInfo& x_info, const LeafInfo& y_info, 
 	       const DoubleBufferMap& buffer_locations, 
-	       std::vector<ICut*> cuts, 
-	       int* check_buffer = 0); 
+	       std::vector<ICut*> cuts); 
   ~FilterHist2D(); 
   int fill(); 
 private: 
@@ -34,7 +33,6 @@ private:
   
   double* m_x_buffer; 
   double* m_y_buffer; 
-  int* m_check_buffer;
 
   double* m_x_wt_buffer; 
   double* m_y_wt_buffer; 

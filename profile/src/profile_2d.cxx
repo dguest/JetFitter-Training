@@ -52,7 +52,9 @@ ProfileInfo pro_2d(std::string file_name,
     if (cuts.count(itr->name) ) { 
       cuts[itr->name]->piggyback(new IntCheck(address, itr->value)); 
     }
-    cuts[itr->name] = new IntCheck(address, itr->value); 
+    else{ 
+      cuts[itr->name] = new IntCheck(address, itr->value); 
+    }
 
   }
   for (CheckBuffer::const_iterator itr = 
@@ -79,7 +81,9 @@ ProfileInfo pro_2d(std::string file_name,
 					    itr->accept_mask, 
 					    itr->veto_mask)); 
     }
-    cuts[itr->name] = new Bitmask(address, itr->accept_mask, itr->veto_mask);
+    else { 
+      cuts[itr->name] = new Bitmask(address, itr->accept_mask, itr->veto_mask);
+    }
   }
   for (BitBuffer::const_iterator itr = bit_buffer.begin(); 
        itr != bit_buffer.end(); itr++) { 
@@ -259,12 +263,10 @@ Hists2D::~Hists2D() {
 
 FilterHist2D::FilterHist2D(const LeafInfo& x, const LeafInfo& y, 
 			   const DoubleBufferMap& buffer_locations, 
-			   std::vector<ICut*> cuts, 
-			   int* check_buffer): 
+			   std::vector<ICut*> cuts): 
   TH2D(boost::lexical_cast<std::string>(rand()).c_str(),"",
        x.n_bins, x.min, x.max, y.n_bins, y.min, y.max), 
   m_cuts(cuts), 
-  m_check_buffer(check_buffer), 
   m_x_wt_buffer(0), 
   m_y_wt_buffer(0)
 {
@@ -335,11 +337,6 @@ FilterHist2D& FilterHist2D::operator=(const FilterHist2D& in) {
 
 int FilterHist2D::fill()
 {
-  bool pass_check = true; 
-  if (m_check_buffer) { 
-    pass_check = *m_check_buffer; 
-  }
-  if (!pass_check) return 0;
 
   for (std::vector<ICut*>::const_iterator itr = m_cuts.begin(); 
        itr != m_cuts.end(); itr++) { 

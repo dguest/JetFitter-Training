@@ -19,6 +19,7 @@ ProfileInfo pro_2d(std::string file_name,
 		   std::string tree_name, 
 		   LeafInfoPairs plots, 
 		   std::vector<std::string> tag_leaves, 
+		   std::vector<MaskInfo> masks, 
 		   std::string output_file_name, 
 		   int max_entries, 
 		   const unsigned options){ 
@@ -39,7 +40,7 @@ ProfileInfo pro_2d(std::string file_name,
   }
   tree->SetBranchStatus("*",0); 
 
-  // typedef std::map<std::string,int*> CheckBuffer; 
+  // TODO: unify these cuts with the bit cuts below by replacing with IntCut
   CheckBuffer check_buffer; 
   for (std::vector<std::string>::const_iterator itr = tag_leaves.begin(); 
        itr != tag_leaves.end(); itr++){ 
@@ -54,7 +55,30 @@ ProfileInfo pro_2d(std::string file_name,
     if (error) { 
       throw std::runtime_error("could not find branch " + itr->first); 
     }
+  }
 
+  BitBuffer bit_buffer; 
+  CutContainer cuts; 
+  for (std::vector<MaskInfo>::const_iterator itr = masks.begin(); 
+       itr != masks.end(); itr++) { 
+    if (!bit_buffer.count(itr->leaf_name)) { 
+      bit_buffer[itr->leaf_name] = new unsigned; 
+    }
+    unsigned* address = bit_buffer[itr->leaf_name]; 
+
+    if (cuts.count(itr->name) ) { 
+      throw std::runtime_error("double defined cut " + itr->name); 
+    }
+    cuts[itr->name] = new Bitmask(address, itr->accept_mask, itr->veto_mask);
+  }
+  for (BitBuffer::const_iterator itr = bit_buffer.begin(); 
+       itr != bit_buffer.end(); itr++) { 
+    tree->SetBranchStatus(itr->first.c_str(), 1); 
+    bool error = tree->SetBranchAddress(itr->first.c_str(), itr->second); 
+    if (error) { 
+      throw std::runtime_error("could not find bitmask branch " + 
+			       itr->first); 
+    }
   }
 
   DoubleBufferMap double_buffer; 
@@ -119,6 +143,8 @@ ProfileInfo pro_2d(std::string file_name,
 
   }
 
+  std::vector<ICut*> no_cuts; 
+
   // std::vector<RangeCut> cuts; 
 
   int n_entries = tree->GetEntries(); 
@@ -146,23 +172,41 @@ ProfileInfo pro_2d(std::string file_name,
 
     std::string hist_name = y_var_name + "_vs_" + x_var_name; 
 
-    if (hists.count(hist_name) ) { 
-      throw std::runtime_error("attempted to redefine " + hist_name); 
+    //TODO: make some way to define compound cuts
+    CutContainer used_cuts; 
+    used_cuts.insert(std::make_pair<std::string, ICut*>("",0)); 
+    for (CutContainer::const_iterator itr = cuts.begin(); 
+	 itr != cuts.end(); itr++) { 
+      used_cuts.insert(*itr); 
     }
-    hists[hist_name] = new FilterHist2D(leaf_itr->first, leaf_itr->second, 
-					double_buffer); 
+    for (CutContainer::const_iterator cut_itr = used_cuts.begin(); 
+	 cut_itr != used_cuts.end(); cut_itr++) { 
 
-    for (CheckBuffer::const_iterator check_itr = check_buffer.begin(); 
-	 check_itr != check_buffer.end(); check_itr++){ 
-      std::string filt_hist_name = hist_name + "_" + check_itr->first; 
-
-      if (hists.count(filt_hist_name) ) { 
-	throw std::runtime_error("attempted to redefine" + filt_hist_name); 
+      // we would combine cuts here... 
+      std::vector<ICut*> cut_vector; 
+      if (cut_itr->second) { 
+	cut_vector.push_back(cut_itr->second); 
       }
 
-      hists[filt_hist_name] = new FilterHist2D
-	(leaf_itr->first, leaf_itr->second, 
-	 double_buffer,check_itr->second); 
+      if (hists.count(hist_name) ) { 
+	throw std::runtime_error("attempted to redefine " + hist_name); 
+      }
+      hists[hist_name] = new FilterHist2D(leaf_itr->first, leaf_itr->second, 
+					  double_buffer, cut_vector); 
+
+      for (CheckBuffer::const_iterator check_itr = check_buffer.begin(); 
+	   check_itr != check_buffer.end(); check_itr++){ 
+	std::string filt_hist_name = hist_name + "_" + check_itr->first; 
+
+	if (hists.count(filt_hist_name) ) { 
+	  throw std::runtime_error("attempted to redefine" + filt_hist_name); 
+	}
+
+	hists[filt_hist_name] = new FilterHist2D
+	  (leaf_itr->first, leaf_itr->second, 
+	   double_buffer, cut_vector, check_itr->second); 
+
+      }
     }
   }
 
@@ -212,9 +256,11 @@ Hists2D::~Hists2D() {
 
 FilterHist2D::FilterHist2D(const LeafInfo& x, const LeafInfo& y, 
 			   const DoubleBufferMap& buffer_locations, 
+			   std::vector<ICut*> cuts, 
 			   int* check_buffer): 
   TH2D(boost::lexical_cast<std::string>(rand()).c_str(),"",
        x.n_bins, x.min, x.max, y.n_bins, y.min, y.max), 
+  m_cuts(cuts), 
   m_check_buffer(check_buffer), 
   m_x_wt_buffer(0), 
   m_y_wt_buffer(0)
@@ -272,22 +318,6 @@ FilterHist2D::FilterHist2D(const LeafInfo& x, const LeafInfo& y,
 
 }
 
-FilterHist2D::FilterHist2D(int x_bins, double x_min, double x_max, 
-			   double* x_buffer,
-			   int y_bins, double y_min, double y_max, 
-			   double* y_buffer, 
-			   int* check_buffer, 
-			   double* x_wt_buffer, 
-			   double* y_wt_buffer):  
-  TH2D(boost::lexical_cast<std::string>(rand()).c_str(),"",
-       x_bins,x_min, x_max, y_bins, y_min, y_max), 
-  m_x_buffer(x_buffer), 
-  m_y_buffer(y_buffer), 
-  m_check_buffer(check_buffer), 
-  m_x_wt_buffer(x_wt_buffer), 
-  m_y_wt_buffer(y_wt_buffer)
-{
-}
 
 FilterHist2D::~FilterHist2D() { 
 }
@@ -307,6 +337,14 @@ int FilterHist2D::fill()
     pass_check = *m_check_buffer; 
   }
   if (!pass_check) return 0;
+
+  for (std::vector<ICut*>::const_iterator itr = m_cuts.begin(); 
+       itr != m_cuts.end(); itr++) { 
+    const ICut& cut = **itr; 
+    if (!cut.test()) { 
+      return 0; 
+    }
+  }
 
   // if there are weights, use this
   if (m_x_wt_buffer || m_y_wt_buffer) { 

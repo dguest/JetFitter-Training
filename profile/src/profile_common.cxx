@@ -31,3 +31,41 @@ bool is_in_range(const std::vector<RangeCut>& cuts)
   }
   return true; 
 }
+
+Bitmask::Bitmask(unsigned* address, unsigned required, unsigned veto): 
+  m_address(address), 
+  m_required(required), 
+  m_veto(veto) 
+{
+}
+
+bool Bitmask::test() const 
+{
+  bool pass_required = (*m_address & m_required == *m_address); 
+  bool has_veto = (*m_address & m_veto); 
+  return pass_required && !has_veto; 
+}
+
+IntCheck::IntCheck(int* address, int value): 
+  m_address(address), 
+  m_value(value)
+{
+}
+bool IntCheck::test() const 
+{
+  return *m_address == m_value; 
+}
+
+BitBuffer::~BitBuffer() 
+{
+  for (iterator itr = begin(); itr != end(); itr++) { 
+    delete itr->second; 
+  }
+}
+
+CutContainer::~CutContainer() 
+{
+  for (iterator itr = begin(); itr != end(); itr++) { 
+    delete itr->second; 
+  }
+}

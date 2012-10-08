@@ -15,6 +15,21 @@ struct LeafInfo
   std::vector<double> bin_bounds; 
 };
 
+struct TagInfo
+{
+  std::string name; 
+  std::string leaf_name; 
+  int value; 
+};
+ 
+struct MaskInfo
+{
+  std::string name; 
+  std::string leaf_name;
+  unsigned accept_mask; 
+  unsigned veto_mask; 
+};
+
 class RangeCut { 
 public: 
   RangeCut(double* value, double lower, double upper); 
@@ -33,5 +48,44 @@ public:
 
 bool is_in_range(const std::vector<RangeCut>&); 
 
+class ICut
+{
+public: 
+  virtual ~ICut() {}
+  virtual bool test() const = 0; 
+}; 
+
+class Bitmask : public ICut
+{
+public: 
+  Bitmask(unsigned* address, unsigned required, unsigned veto = 0); 
+  bool test() const; 
+private: 
+  unsigned* m_address; 
+  unsigned m_required; 
+  unsigned m_veto; 
+}; 
+
+class IntCheck: public ICut
+{
+public: 
+  IntCheck(int* address, int value = 1); 
+  bool test() const; 
+private: 
+  int* m_address; 
+  int m_value; 
+}; 
+
+class BitBuffer: public std::map<std::string, unsigned*> 
+{ 
+public: 
+  ~BitBuffer(); 
+}; 
+
+class CutContainer: public std::map<std::string, ICut*>
+{
+public: 
+  ~CutContainer(); 
+}; 
 
 #endif // profile_common_h

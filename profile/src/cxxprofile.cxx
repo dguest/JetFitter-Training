@@ -146,6 +146,8 @@ PyObject* py_pro2d(PyObject *self,
   std::vector<std::string> tag_leaves_vec = build_string_vec(tag_leaves); 
   if (PyErr_Occurred()) return NULL; 
 
+  std::vector<MaskInfo> masks; 
+
   unsigned options = opt::def_opt; 
   if (show_progress) options |= opt::show_progress; 
 
@@ -155,6 +157,7 @@ PyObject* py_pro2d(PyObject *self,
 			    tree_name, 
 			    leaf_info_pairs, 
 			    tag_leaves_vec, 
+			    masks, 
 			    output_file, 
 			    max_entries, 
 			    options); 

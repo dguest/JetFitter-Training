@@ -22,16 +22,16 @@ class FilterHist2D: public TH2D
 public: 
   FilterHist2D(const LeafInfo& x_info, const LeafInfo& y_info, 
 	       const DoubleBufferMap& buffer_locations, 
+	       std::vector<ICut*> cuts, 
 	       int* check_buffer = 0); 
-  FilterHist2D(int x_bins, double x_min, double x_max, double* x_buffer,
-	       int y_bins, double y_min, double y_max, double* y_buffer, 
-	       int* check_buffer = 0, 
-	       double* x_wt_buffer = 0, double* y_wt_buffer = 0); 
   ~FilterHist2D(); 
   int fill(); 
 private: 
   FilterHist2D(const FilterHist2D&); 
   FilterHist2D& operator=(const FilterHist2D&); 
+  
+  std::vector<ICut*>  m_cuts; 
+  
   double* m_x_buffer; 
   double* m_y_buffer; 
   int* m_check_buffer;
@@ -66,6 +66,7 @@ ProfileInfo pro_2d(std::string file,
 		   std::string tree, 
 		   LeafInfoPairs plots, 
 		   std::vector<std::string> tag_leaves, 
+		   std::vector<MaskInfo> masks, 
 		   std::string output_file_name, 
 		   int max_entries = -1, 
 		   const unsigned options = opt::def_opt); 

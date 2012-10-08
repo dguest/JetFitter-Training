@@ -53,27 +53,36 @@ class ICut
 public: 
   virtual ~ICut() {}
   virtual bool test() const = 0; 
+  virtual void piggyback(ICut*) = 0; 
 }; 
 
 class Bitmask : public ICut
 {
 public: 
   Bitmask(unsigned* address, unsigned required, unsigned veto = 0); 
+  ~Bitmask(); 
+  void piggyback(ICut*); 
   bool test() const; 
 private: 
   unsigned* m_address; 
   unsigned m_required; 
   unsigned m_veto; 
+
+  ICut* m_piggyback; 
 }; 
 
 class IntCheck: public ICut
 {
 public: 
   IntCheck(int* address, int value = 1); 
+  ~IntCheck(); 
+  void piggyback(ICut*); 
   bool test() const; 
 private: 
   int* m_address; 
   int m_value; 
+
+  ICut* m_piggyback; 
 }; 
 
 class BitBuffer: public std::map<std::string, unsigned*> 

@@ -50,7 +50,7 @@ ProfileInfo pro_2d(std::string file_name,
     }
     int* address = check_buffer[itr->leaf_name]; 
     if (cuts.count(itr->name) ) { 
-      throw std::runtime_error("double defined cut " + itr->name); 
+      cuts[itr->name]->piggyback(new IntCheck(address, itr->value)); 
     }
     cuts[itr->name] = new IntCheck(address, itr->value); 
 
@@ -75,7 +75,9 @@ ProfileInfo pro_2d(std::string file_name,
     unsigned* address = bit_buffer[itr->leaf_name]; 
 
     if (cuts.count(itr->name) ) { 
-      throw std::runtime_error("double defined cut " + itr->name); 
+      cuts[itr->name]->piggyback(new Bitmask(address, 
+					    itr->accept_mask, 
+					    itr->veto_mask)); 
     }
     cuts[itr->name] = new Bitmask(address, itr->accept_mask, itr->veto_mask);
   }

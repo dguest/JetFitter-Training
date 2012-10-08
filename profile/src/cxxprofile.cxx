@@ -451,6 +451,7 @@ std::vector<TagInfo> build_tag_vec(PyObject* list) {
 	info.name = *itr; 
 	info.leaf_name = *itr; 
 	info.value = 1; 
+	vec.push_back(info); 
       }
       return vec; 
     }

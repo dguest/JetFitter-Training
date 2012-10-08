@@ -35,8 +35,24 @@ bool is_in_range(const std::vector<RangeCut>& cuts)
 Bitmask::Bitmask(unsigned* address, unsigned required, unsigned veto): 
   m_address(address), 
   m_required(required), 
-  m_veto(veto) 
+  m_veto(veto), 
+  m_piggyback(0)
 {
+}
+
+Bitmask::~Bitmask() { 
+  if (m_piggyback) { 
+    delete m_piggyback; 
+  }
+}
+
+void Bitmask::piggyback(ICut* piggyback) { 
+  if (m_piggyback) { 
+    m_piggyback->piggyback(piggyback); 
+  }
+  else { 
+    m_piggyback = piggyback; 
+  }
 }
 
 bool Bitmask::test() const 
@@ -44,17 +60,40 @@ bool Bitmask::test() const
   bool pass_required = ( (*m_address & m_required) == m_required); 
   bool has_veto = (*m_address & m_veto); 
   bool pass = (pass_required && !has_veto); 
+  if (m_piggyback) { 
+    return m_piggyback->test(); 
+  }
   return pass; 
 }
 
 IntCheck::IntCheck(int* address, int value): 
   m_address(address), 
-  m_value(value)
+  m_value(value), 
+  m_piggyback(0)
 {
 }
+
+IntCheck::~IntCheck() {
+  if (m_piggyback) { 
+    delete m_piggyback; 
+  }
+}
+void IntCheck::piggyback(ICut* piggyback) { 
+  if (m_piggyback) { 
+    m_piggyback->piggyback(piggyback); 
+  }
+  else{ 
+    m_piggyback = piggyback; 
+  }
+}
+
 bool IntCheck::test() const 
 {
-  return *m_address == m_value; 
+  bool pass = (*m_address == m_value); 
+  if (m_piggyback) { 
+    return m_piggyback->test(); 
+  }
+  return pass; 
 }
 
 BitBuffer::~BitBuffer() 

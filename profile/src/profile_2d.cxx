@@ -182,7 +182,8 @@ ProfileInfo pro_2d(std::string file_name,
 
     std::string hist_name = y_var_name + "_vs_" + x_var_name; 
 
-    //TODO: make some way to define compound cuts
+    //TODO: compound cuts should have been solved by piggybacking
+    // remove the cut vector (we only need a pointer to one cut)
     std::map<std::string, ICut*> used_cuts; 
     used_cuts.insert(std::make_pair<std::string, ICut*>("",0)); 
     for (CutContainer::const_iterator itr = cuts.begin(); 

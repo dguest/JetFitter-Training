@@ -18,7 +18,7 @@
 ProfileInfo pro_2d(std::string file_name, 
 		   std::string tree_name, 
 		   LeafInfoPairs plots, 
-		   std::vector<std::string> tag_leaves, 
+		   std::vector<TagInfo> tag_leaves, 
 		   std::vector<MaskInfo> masks, 
 		   std::string output_file_name, 
 		   int max_entries, 
@@ -41,10 +41,19 @@ ProfileInfo pro_2d(std::string file_name,
   tree->SetBranchStatus("*",0); 
 
   // TODO: unify these cuts with the bit cuts below by replacing with IntCut
+  CutContainer cuts; 
   CheckBuffer check_buffer; 
-  for (std::vector<std::string>::const_iterator itr = tag_leaves.begin(); 
+  for (std::vector<TagInfo>::const_iterator itr = tag_leaves.begin(); 
        itr != tag_leaves.end(); itr++){ 
-    check_buffer[*itr] = new int; 
+    if (!check_buffer.count(itr->leaf_name)) { 
+      check_buffer[itr->leaf_name] = new int; 
+    }
+    int* address = check_buffer[itr->leaf_name]; 
+    if (cuts.count(itr->name) ) { 
+      throw std::runtime_error("double defined cut " + itr->name); 
+    }
+    cuts[itr->name] = new IntCheck(address, itr->value); 
+
   }
   for (CheckBuffer::const_iterator itr = 
 	 check_buffer.begin(); 
@@ -58,7 +67,6 @@ ProfileInfo pro_2d(std::string file_name,
   }
 
   BitBuffer bit_buffer; 
-  CutContainer cuts; 
   for (std::vector<MaskInfo>::const_iterator itr = masks.begin(); 
        itr != masks.end(); itr++) { 
     if (!bit_buffer.count(itr->leaf_name)) { 
@@ -199,20 +207,6 @@ ProfileInfo pro_2d(std::string file_name,
       hists[cut_hist_name] = new FilterHist2D(leaf_itr->first, 
 					      leaf_itr->second, 
 					      double_buffer, cut_vector); 
-
-      for (CheckBuffer::const_iterator check_itr = check_buffer.begin(); 
-	   check_itr != check_buffer.end(); check_itr++){ 
-	std::string filt_hist_name = cut_hist_name + "_" + check_itr->first; 
-
-	if (hists.count(filt_hist_name) ) { 
-	  throw std::runtime_error("attempted to redefine" + filt_hist_name); 
-	}
-
-	hists[filt_hist_name] = new FilterHist2D
-	  (leaf_itr->first, leaf_itr->second, 
-	   double_buffer, cut_vector, check_itr->second); 
-
-      }
     }
   }
 

@@ -146,10 +146,10 @@ PyObject* py_pro2d(PyObject *self,
 
   LeafInfoPairs leaf_info_pairs = build_plot2d_vec(plots); 
   if (PyErr_Occurred()) return NULL; 
-  std::vector<std::string> tag_leaves_vec = build_string_vec(tag_leaves); 
+  std::vector<TagInfo> tag_leaves_vec = build_tag_vec(tag_leaves); 
   if (PyErr_Occurred()) return NULL; 
-
   std::vector<MaskInfo> masks = build_mask_vec(py_masks); 
+  if (PyErr_Occurred()) return NULL; 
 
   unsigned options = opt::def_opt; 
   if (show_progress) options |= opt::show_progress; 
@@ -396,6 +396,7 @@ std::vector<MaskInfo> build_mask_vec(PyObject* list) {
 
     if (!PyDict_Check(py_mask) ) { 
       PyErr_SetString(PyExc_IOError,"mask should be a list of dicts"); 
+      return vec; 
     }
 
     MaskInfo info; 
@@ -426,6 +427,58 @@ std::vector<MaskInfo> build_mask_vec(PyObject* list) {
       info.veto_mask = PyLong_AsUnsignedLongMask(py_veto); 
       if (PyErr_Occurred() ) return vec; 
     }
+    vec.push_back(info); 
+    
+  }
+  return vec; 
+}
+
+std::vector<TagInfo> build_tag_vec(PyObject* list) { 
+  std::vector<TagInfo> vec; 
+  if (!list) return vec; 
+  int n_entries = PyList_Size(list); 
+  if (PyErr_Occurred() ) return vec; 
+  for (int n = 0; n < n_entries; n++) { 
+    PyObject* py_mask = PyList_GetItem(list, n); 
+
+    if (!PyDict_Check(py_mask) ) { 
+      std::vector<std::string> old_style_tags = build_string_vec(list); 
+      if (PyErr_Occurred()) return vec; 
+      for (std::vector<std::string>::const_iterator 
+	     itr = old_style_tags.begin(); 
+	   itr != old_style_tags.end(); itr++) { 
+	TagInfo info; 
+	info.name = *itr; 
+	info.leaf_name = *itr; 
+	info.value = 1; 
+      }
+      return vec; 
+    }
+
+    TagInfo info; 
+    PyObject* py_name = PyDict_GetItemString(py_mask, "name"); 
+    if (!py_name) { 
+      PyErr_SetString(PyExc_IOError,"no 'name' in tag dict"); 
+      return vec; 
+    }
+    info.name = PyString_AsString(py_name); 
+    if (PyErr_Occurred() ) return vec; 
+    PyObject* py_leaf_name = PyDict_GetItemString(py_mask, "leaf_name"); 
+    if (!py_leaf_name) { 
+      PyErr_SetString(PyExc_IOError,"no 'leaf_name' in tag dict"); 
+      return vec; 
+    }
+    info.leaf_name = PyString_AsString(py_leaf_name); 
+    if (PyErr_Occurred() ) return vec; 
+
+    PyObject* py_value = PyDict_GetItemString(py_mask, "value"); 
+    if (!py_value) { 
+      PyErr_SetString(PyExc_IOError,"no 'value' in tag dict"); 
+      return vec; 
+    }
+    info.value = PyLong_AsLong(py_value); 
+    if (PyErr_Occurred() ) return vec; 
+
     vec.push_back(info); 
     
   }

@@ -65,7 +65,7 @@ struct ProfileInfo {
 ProfileInfo pro_2d(std::string file, 
 		   std::string tree, 
 		   LeafInfoPairs plots, 
-		   std::vector<std::string> tag_leaves, 
+		   std::vector<TagInfo> tag_leaves, 
 		   std::vector<MaskInfo> masks, 
 		   std::string output_file_name, 
 		   int max_entries = -1, 

@@ -191,8 +191,8 @@ def _get_contour_order_and_lines(z_range):
 
     the_lines = np.arange(c_min, c_max, base_increment)
     
-    subset_in_range = (the_lines > z_min) & (the_lines < z_max)
-    return contour_order, the_lines[np.nonzero( subset_in_range)]
+    subset_in_range = (the_lines >= z_min) & (the_lines < z_max)
+    return contour_order, the_lines[ subset_in_range]
     
 
 def _overlay_rejrej(array_one, array_two,
@@ -254,8 +254,8 @@ def _overlay_rejrej(array_one, array_two,
 
     # cmap = mp.colors.Colormap('rainbow')
 
-    rel_min = np.min(eff_array[np.nonzero(np.isfinite(eff_array))])
-    rel_max = np.max(eff_array[np.nonzero(np.isfinite(eff_array))]) 
+    rel_min = np.min(eff_array[np.isfinite(eff_array)])
+    rel_max = np.max(eff_array[np.isfinite(eff_array)]) 
     if z_range: 
         rel_min, rel_max = z_range
 

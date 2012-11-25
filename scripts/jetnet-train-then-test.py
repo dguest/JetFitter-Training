@@ -169,7 +169,7 @@ def train_and_test(input_files,
 
     if not os.path.isfile(rds_path): 
         print '--- making flattened dataset for training ---'
-        flags = 'h' if not do_test else 'd'
+        flags = 'hr' if not do_test else 'd'
         pyprep.make_flat_ntuple(
             input_files = input_files, 
             weight_file = weight_file, 

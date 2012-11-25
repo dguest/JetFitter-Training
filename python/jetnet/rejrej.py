@@ -128,6 +128,14 @@ _tagger_bounds = {
     'logBuJetFitterCOMBNN': (-6, 12), 
     'logCbJetFitterCOMBNN': (-8, 4), 
     'logCuJetFitterCOMBNN': (-5, 8) , 
+    'logBcSv1Ip3d': (-5, 10), 
+    'logBuSv1Ip3d': (-6, 12), 
+    'logCbSv1Ip3d': (-8, 4), 
+    'logCuSv1Ip3d': (-5, 8) , 
+    'logBcSv1Ip3dRapVx': (-5, 10), 
+    'logBuSv1Ip3dRapVx': (-6, 12), 
+    'logCbSv1Ip3dRapVx': (-8, 4), 
+    'logCuSv1Ip3dRapVx': (-5, 8) , 
     }
 
 
@@ -153,8 +161,10 @@ class RejRejPlot(object):
                  bins = 2000, x_range = None, y_range = None, 
                  window_discrim = False, cache = 'cache', 
                  hist_list = 'hist_list.pkl', 
-                 parent_ntuple = 'perf_ntuple.root'): 
+                 parent_ntuple = 'perf_ntuple.root', 
+                 debug=False): 
 
+        self._debug = debug
         win_dir = 'window' if window_discrim else 'twocut'
         bins_name = 'bins{}'.format(bins)
         cache_path = os.path.join(cache, tagger, win_dir, bins_name, signal)
@@ -263,7 +273,8 @@ class RejRejPlot(object):
 
         with open(list_file,'w') as pkl: 
             cPickle.dump(hist_listing, pkl)
-        return False
+        if self._debug: 
+            print 'booked {} to {}'.format(this_hist_index, list_file)
 
     def _build_rejrej(self): 
         if not os.path.isfile(self._integrals_cache): 
@@ -355,8 +366,10 @@ class HistBuilder(object):
     """
 
     def __init__(self,requests_pickle, 
-                 tagger_bounds = _tagger_bounds): 
+                 tagger_bounds = _tagger_bounds, 
+                 permissive=False): 
         try: 
+            self._permissive = permissive
             self._initialize(requests_pickle, tagger_bounds)
         except BadTaggerError as bad: 
             with open(requests_pickle,'r') as pkl: 
@@ -417,13 +430,20 @@ class HistBuilder(object):
                 x_matches = []
                 y_matches = []
                 for t in all_taggers: 
-                    if 'log' + x_chars in t and short_tagger in t: 
+                    x_prefix = 'log' + x_chars
+                    short_x = t.replace(x_prefix,'')
+                    if x_prefix in t and short_x == short_tagger: 
                         x_matches.append(t)
-                    if 'log' + y_chars in t and short_tagger in t: 
+
+                    y_prefix = 'log' + y_chars
+                    short_y = t.replace(y_prefix,'')
+                    if y_prefix in t and short_y == short_tagger: 
                         y_matches.append(t)
+
                 if len(x_matches) != 1 or len(y_matches) != 1: 
+
                     raise BadTaggerError(
-                        "taggers {} {} match {}".format(
+                        "taggers {} {} match {} {}".format(
                             x_matches, y_matches, short_tagger, signal), 
                         id_tuple)
                 x_tagger = x_matches[0]
@@ -516,7 +536,6 @@ class HistBuilder(object):
             plots = input_list, 
             tags = _tags, 
             show_progress = True)
-        
             
         with open(self._requests_pickle) as pkl: 
             status_dict = cPickle.load(pkl)

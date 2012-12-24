@@ -47,20 +47,22 @@ PY_LDFLAGS += $(PY_LIB)
 PY_LDFLAGS += -shared
 
 # ---- define objects
-TOBJ        := JetFactory.o
+# TOBJ        := JetFactory.o
 T_DICTS     := $(TOBJ:.o=Dict.o)
-GEN_OBJ     := CtupleMaker.o SmartChain.o
+GEN_OBJ     := JetFactory.o
+# GEN_OBJ     += CtupleMaker.o SmartChain.o
 # EXE_OBJ     := $(GEN_OBJ) $(T_DICTS) $(TOBJ)
 PYLIB_OBJ   := $(GEN_OBJ) $(T_DICTS) $(TOBJ)
 
 PY_OBJ       := _ctuple_maker.o
 
-ALLOBJ       := $(GEN_OBJ) $(PY_OBJ)
+ALLOBJ       := $(GEN_OBJ) #$(PY_OBJ)
 
 OUT_LIB      := ../python/jetnet/_ctuple_maker.so
 ALLOUTPUT    := $(OUT_LIB)
 
 all: $(ALLOUTPUT) 
+test: JetFactory.o
 
 $(OUT_LIB): $(PYLIB_OBJ:%=$(BIN)/%) $(PY_OBJ:%=$(BIN)/%)
 	@mkdir -p python/susy

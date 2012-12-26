@@ -47,9 +47,9 @@ PY_LDFLAGS += $(PY_LIB)
 PY_LDFLAGS += -shared
 
 # ---- define objects
-# TOBJ        := JetFactory.o
+TOBJ        := JetFactory.o
 T_DICTS     := $(TOBJ:.o=Dict.o)
-GEN_OBJ     := JetFactory.o
+GEN_OBJ     := #JetFactory.o
 # GEN_OBJ     += CtupleMaker.o SmartChain.o
 # EXE_OBJ     := $(GEN_OBJ) $(T_DICTS) $(TOBJ)
 PYLIB_OBJ   := $(GEN_OBJ) $(T_DICTS) $(TOBJ)

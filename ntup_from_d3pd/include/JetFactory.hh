@@ -36,21 +36,21 @@ private:
 // these guys are owned by JetFactory
 struct JetCollectionBuffer { 
   int n; 
-  std::vector<double>* pt; 
-  std::vector<double>* eta; 
-  std::vector<double>* phi; 
-  std::vector<double>* e; 
+  std::vector<float>* pt; 
+  std::vector<float>* eta; 
+  std::vector<float>* phi; 
+  std::vector<float>* e; 
 
-  std::vector<double>* jfc_pu; 
-  std::vector<double>* jfc_pc; 
-  std::vector<double>* jfc_pb; 
+  std::vector<float>* jfc_pu; 
+  std::vector<float>* jfc_pc; 
+  std::vector<float>* jfc_pb; 
 
-  std::vector<double>* cnn_pu; 
-  std::vector<double>* cnn_pc; 
-  std::vector<double>* cnn_pb; 
-  
-  std::vector<double>* mv1; 
-  std::vector<double>* mv1c; 
+  std::vector<float>* cnn_pu; 
+  std::vector<float>* cnn_pc; 
+  std::vector<float>* cnn_pb; 
+
+  std::vector<float>* mv1; 
+  std::vector<float>* mv1c; 
   
 }; 
 
@@ -61,11 +61,18 @@ public:
   void add_collection(std::string collection); 
   std::vector<Jet> jets(std::string collection) const; 
 private: 
-  void set_branch(std::string name, void* branch); 
+  template<typename T> void set_branch(std::string name, T* branch); 
+  void set_branch_without_zeroing(std::string name, void* branch); 
   typedef std::map<std::string, JetCollectionBuffer*> BufferContainer; 
   TChain* m_chain; 
   BufferContainer m_buffers; 
   std::set<std::string> m_set_branches; 
 }; 
+
+template<typename T> 
+void JetFactory::set_branch(std::string name, T* branch) { 
+  *branch = 0; 
+  set_branch_without_zeroing(name, branch); 
+}
 
 #endif 

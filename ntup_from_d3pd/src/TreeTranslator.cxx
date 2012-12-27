@@ -45,21 +45,26 @@ void TreeTranslator::translate(std::vector<std::string> d3pd) {
   init_chain(d3pd); 
   m_factory = new JetFactory(m_in_chain); 
   m_factory->add_collection(m_collection); 
-  
+
   int n_entries = m_in_chain->GetEntries(); 
-  n_entries = std::min(n_entries, 10); 
   int one_percent = n_entries /  100; 
+  n_entries = std::min(n_entries, 10); 
+
   for (int evt_n = 0; evt_n < n_entries; evt_n++) { 
     if (evt_n % one_percent == 0 || evt_n == n_entries - 1 ) { 
       std::cout << boost::format("\r%i of %i (%.1f%%) processed") % 
-	(evt_n + 1) % n_entries % ( (evt_n + 1) / one_percent); 
+    	(evt_n + 1) % n_entries % ( (evt_n + 1) / one_percent); 
       std::cout.flush(); 
     }
+
+    std::cout << "here is evt " << evt_n << std::endl; 
+
+    m_in_chain->GetEntry(evt_n); 
     
     std::vector<Jet> jets = m_factory->jets(m_collection); 
     for (std::vector<Jet>::const_iterator itr = jets.begin(); 
-	 itr != jets.end(); itr++) { 
-      printf("pt: %f", itr->Pt()); 
+    	 itr != jets.end(); itr++) { 
+
     }
 
   }

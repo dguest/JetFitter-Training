@@ -115,7 +115,7 @@ $(DEP)/%.d: %.cxx
 
 # clean
 .PHONY : clean rmdep
-CLEANLIST     = *~ *.o *.o~ *.d core 
+CLEANLIST     = *~ *.o *.o~ *.d core test
 clean:
 	rm -fr $(CLEANLIST) $(CLEANLIST:%=$(BIN)/%) $(CLEANLIST:%=$(DEP)/%)
 	rm -fr $(BIN) $(ALLOUTPUT) $(DICT)

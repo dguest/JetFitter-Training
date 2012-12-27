@@ -64,7 +64,7 @@ void JetFactory::add_collection(std::string collection) {
   
   set_branch("jet_" + collection + "_n", &b.n); 
   set_branch("jet_" + collection + "_pt", &b.pt); 
-  set_branch("jet_" + collection + "_eta", &b.eta); 
+  set_branch("jet_" + collection + "_eta", &b.eta);  
   set_branch("jet_" + collection + "_phi", &b.phi); 
   set_branch("jet_" + collection + "_E", &b.e); 
 
@@ -96,7 +96,7 @@ std::vector<Jet> JetFactory::jets(std::string collection) const {
   return jets; 
 }
 
-void JetFactory::set_branch(std::string name, void* branch) { 
+void JetFactory::set_branch_without_zeroing(std::string name, void* branch) { 
   if (m_set_branches.count(name) != 0) { 
     throw std::runtime_error(name + " was set twice"); 
   }

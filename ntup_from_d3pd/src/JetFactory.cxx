@@ -6,7 +6,7 @@
 #include "TChain.h"
 
 
-Jet::Jet(JetCollectionBuffer* buffer, int d3pd_index) 
+Jet::Jet(const JetCollectionBuffer* buffer, int d3pd_index) 
 { 
   set_kinematics(buffer, d3pd_index); 
   set_jfc(buffer, d3pd_index); 
@@ -62,12 +62,38 @@ void JetFactory::add_collection(std::string collection) {
   m_buffers[collection] = new JetCollectionBuffer; 
   JetCollectionBuffer& b = *m_buffers[collection]; 
   
-  set_branch("jet_" + collection + "_pt", b.pt); 
-  set_branch("jet_" + collection + "_eta", b.eta); 
-  set_branch("jet_" + collection + "_phi", b.phi); 
-  set_branch("jet_" + collection + "_e", b.e); 
+  set_branch("jet_" + collection + "_n", &b.n); 
+  set_branch("jet_" + collection + "_pt", &b.pt); 
+  set_branch("jet_" + collection + "_eta", &b.eta); 
+  set_branch("jet_" + collection + "_phi", &b.phi); 
+  set_branch("jet_" + collection + "_E", &b.e); 
+
+  std::string jfc_comp = "_flavor_component_jfitc"; 
+  set_branch("jet_" + collection + jfc_comp + "_pu", &b.jfc_pu); 
+  set_branch("jet_" + collection + jfc_comp + "_pc", &b.jfc_pc); 
+  set_branch("jet_" + collection + jfc_comp + "_pb", &b.jfc_pb); 
+
+  std::string cnn_comp = "_flavor_component_jfitcomb"; 
+  set_branch("jet_" + collection + cnn_comp + "_pu", &b.cnn_pu); 
+  set_branch("jet_" + collection + cnn_comp + "_pc", &b.cnn_pc); 
+  set_branch("jet_" + collection + cnn_comp + "_pb", &b.cnn_pb); 
+
+  set_branch("jet_" + collection + "_flavor_weight_MV1", &b.mv1); 
+    
+}
+
+std::vector<Jet> JetFactory::jets(std::string collection) const { 
+  if (m_buffers.count(collection) == 0) { 
+    throw std::runtime_error("jet collection " + collection + 
+			     " has not been set"); 
+  }
+  const JetCollectionBuffer* d3pd_jets = m_buffers.find(collection)->second; 
   
-  
+  std::vector<Jet> jets; 
+  for (int jet_n = 0; jet_n < d3pd_jets->n; jet_n++) { 
+    jets.push_back(Jet(d3pd_jets, jet_n)); 
+  }
+  return jets; 
 }
 
 void JetFactory::set_branch(std::string name, void* branch) { 

@@ -20,7 +20,7 @@ enum Tagger {
 class Jet : public TLorentzVector
 { 
 public: 
-  Jet(JetCollectionBuffer*, int); 
+  Jet(const JetCollectionBuffer*, int); 
   double anti_b(Tagger) const; 
   double anti_u(Tagger) const; 
 private: 
@@ -35,6 +35,7 @@ private:
 
 // these guys are owned by JetFactory
 struct JetCollectionBuffer { 
+  int n; 
   std::vector<double>* pt; 
   std::vector<double>* eta; 
   std::vector<double>* phi; 

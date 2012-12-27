@@ -49,9 +49,8 @@ PY_LDFLAGS += -shared
 # ---- define objects
 TOBJ        := JetFactory.o
 T_DICTS     := $(TOBJ:.o=Dict.o)
-GEN_OBJ     := #JetFactory.o
-# GEN_OBJ     += CtupleMaker.o SmartChain.o
-# EXE_OBJ     := $(GEN_OBJ) $(T_DICTS) $(TOBJ)
+GEN_OBJ     := TreeTranslator.o
+EXE_OBJ     := $(GEN_OBJ) $(T_DICTS) $(TOBJ) test.o
 PYLIB_OBJ   := $(GEN_OBJ) $(T_DICTS) $(TOBJ)
 
 PY_OBJ       := _ctuple_maker.o
@@ -62,10 +61,13 @@ OUT_LIB      := ../python/jetnet/_ctuple_maker.so
 ALLOUTPUT    := $(OUT_LIB)
 
 all: $(ALLOUTPUT) 
-test: JetFactory.o
+
+test: $(EXE_OBJ:%=$(BIN)/%) 
+	@echo "linking $^ --> $@"
+	@$(CXX) -o $@ $^ $(LIBS) $(LDFLAGS)
 
 $(OUT_LIB): $(PYLIB_OBJ:%=$(BIN)/%) $(PY_OBJ:%=$(BIN)/%)
-	@mkdir -p python/susy
+	@mkdir -p ../python/jetnet
 	@echo "linking $^ --> $@"
 	@$(CXX) -o $@ $^ $(LIBS) $(PY_LDFLAGS)
 
@@ -78,11 +80,11 @@ $(BIN)/_%.o: _%.cxx
 	@$(CXX) -c $(CXXFLAGS) $(PY_FLAGS) $< -o $@ 
 
 # root dictionary generation 
-$(DICT)/%Dict.cxx: %.h LinkDef.hh
+$(DICT)/%Dict.cxx: %.hh LinkDef.hh
 	@echo making dict $@
 	@mkdir -p $(DICT)
 	@rm -f $(DICT)/$*Dict.h $(DICT)/$*Dict.cxx 
-	@rootcint $@ -c $(INC)/$*.h	
+	@rootcint $@ -c $(INC)/$*.hh
 	@sed -i 's,#include "$(INC)/\(.*\)",#include "\1",g' $(DICT)/$*Dict.h
 
 $(BIN)/%Dict.o: $(DICT)/%Dict.cxx 

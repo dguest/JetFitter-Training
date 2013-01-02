@@ -12,6 +12,8 @@
 #include "TFile.h"
 #include "TChain.h"
 #include "TTree.h"
+#include "TROOT.h"
+
 
 TreeTranslator::TreeTranslator(std::string in_chain_name, 
 			       std::string out_file_name, 
@@ -42,13 +44,16 @@ void TreeTranslator::add_collection(std::string collection) {
 }
 
 void TreeTranslator::translate(std::vector<std::string> d3pd) { 
+
+  // standard reminder that ROOT is a pile of shit
+  gROOT->ProcessLine("#include <vector>"); 
+
   init_chain(d3pd); 
   m_factory = new JetFactory(m_in_chain); 
   m_factory->add_collection(m_collection); 
 
   int n_entries = m_in_chain->GetEntries(); 
   int one_percent = n_entries /  100; 
-  n_entries = std::min(n_entries, 10); 
 
   for (int evt_n = 0; evt_n < n_entries; evt_n++) { 
     if (evt_n % one_percent == 0 || evt_n == n_entries - 1 ) { 
@@ -56,8 +61,6 @@ void TreeTranslator::translate(std::vector<std::string> d3pd) {
     	(evt_n + 1) % n_entries % ( (evt_n + 1) / one_percent); 
       std::cout.flush(); 
     }
-
-    std::cout << "here is evt " << evt_n << std::endl; 
 
     m_in_chain->GetEntry(evt_n); 
     

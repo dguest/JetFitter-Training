@@ -24,6 +24,8 @@ public:
   double cnn_anti_u; 
   double mv1_anti_b; 
   double mv1_anti_u; 
+  double mv1c_anti_b; 
+  double mv1c_anti_u; 
 private: 
   void init_tree(); 
   void set_flavor_branches(int flavor); 

@@ -40,6 +40,9 @@ void PerfNtupleBuilder::init_tree() {
   m_out_tree->Branch("antiUMv1", &mv1_anti_u); 
   m_out_tree->Branch("antiBMv1", &mv1_anti_b); 
 
+  m_out_tree->Branch("antiUMv1c", &mv1c_anti_u); 
+  m_out_tree->Branch("antiBMv1c", &mv1c_anti_b); 
+
   m_out_tree->Branch("JetPt", &pt); 
   m_out_tree->Branch("JetEta", &eta); 
   m_out_tree->Branch("Flavour", &flavor); 

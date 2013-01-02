@@ -86,6 +86,10 @@ void TreeTranslator::copy_taggers(const Jet& jet,
 
   builder->mv1_anti_b = jet.anti_b(MV1); 
   builder->mv1_anti_u = jet.anti_u(MV1); 
+
+  builder->mv1c_anti_b = jet.anti_b(MV1C); 
+  builder->mv1c_anti_u = jet.anti_u(MV1C); 
+
 }
 
 void TreeTranslator::init_chain(std::vector<std::string> d3pds) { 

@@ -2,3 +2,7 @@
 
 # the .so file should be a link, which we can save
 !*.so
+
+# but we're going to assume the newer python interfaces are the real lib
+_*.so
+

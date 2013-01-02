@@ -1,4 +1,5 @@
 #include "JetFactory.hh"
+#include "Mv1c.hh"
 #include <cassert> 
 #include <stdexcept>
 #include <boost/format.hpp>
@@ -12,6 +13,7 @@ Jet::Jet(const JetCollectionBuffer* buffer, int d3pd_index)
   set_jfc(buffer, d3pd_index); 
   set_cnn(buffer, d3pd_index); 
   set_mv1(buffer, d3pd_index); 
+  set_mv1c(buffer, d3pd_index); 
 
   m_truth_flavor = buffer->truth_flavor->at(d3pd_index); 
 }
@@ -56,6 +58,21 @@ void Jet::set_mv1(const JetCollectionBuffer* buffer, int index) {
   m_anti_b[MV1] = -buffer->mv1->at(index); 
 }
 
+void Jet::set_mv1c(const JetCollectionBuffer* buffer, int index) { 
+  double ip3d = buffer->ip3d->at(index); 
+  double sv1 = buffer->sv1->at(index); 
+  double pu = buffer->cnn_pu->at(index); 
+  double pc = buffer->cnn_pc->at(index); 
+  double pb = buffer->cnn_pb->at(index); 
+
+  double pt = buffer->pt->at(index); 
+  double eta = buffer->eta->at(index); 
+
+  double mv1c = mv1cEval(ip3d, sv1, pu, pc, pb, pt, eta); 
+
+  m_anti_u[MV1C] = mv1c; 
+  m_anti_b[MV1C] = -mv1c; 
+}
 
 JetFactory::JetFactory(TChain* chain) : 
   m_chain(chain)
@@ -94,6 +111,9 @@ void JetFactory::add_collection(std::string collection) {
   set_branch("jet_" + collection + cnn_comp + "_pb", &b.cnn_pb); 
 
   set_branch("jet_" + collection + "_flavor_weight_MV1", &b.mv1); 
+
+  set_branch("jet_" + collection + "_flavor_weight_SV1", &b.sv1); 
+  set_branch("jet_" + collection + "_flavor_weight_IP3D", &b.ip3d); 
     
 }
 

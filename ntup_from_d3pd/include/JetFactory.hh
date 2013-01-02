@@ -29,6 +29,7 @@ private:
   void set_jfc(const JetCollectionBuffer* buffer, int index); 
   void set_cnn(const JetCollectionBuffer* buffer, int index); 
   void set_mv1(const JetCollectionBuffer* buffer, int index); 
+  void set_mv1c(const JetCollectionBuffer* buffer, int index); 
 
   std::map<Tagger, double> m_anti_u; 
   std::map<Tagger, double> m_anti_b; 
@@ -55,7 +56,11 @@ struct JetCollectionBuffer {
   std::vector<float>* cnn_pb; 
 
   std::vector<float>* mv1; 
-  std::vector<float>* mv1c; 
+  // std::vector<float>* mv1c; 
+  
+  // B-tagging idiots decided to make us all compute mv1c by hand 
+  std::vector<float>* sv1; 
+  std::vector<float>* ip3d; 
   
 }; 
 

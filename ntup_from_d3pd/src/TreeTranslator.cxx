@@ -1,5 +1,6 @@
 #include "TreeTranslator.hh"
 #include "JetFactory.hh"
+#include "PerfNtupleBuilder.hh"
 
 #include <string> 
 #include <vector> 
@@ -17,20 +18,19 @@ TreeTranslator::TreeTranslator(std::string in_chain_name,
 			       std::string out_tree): 
   m_collection(""), 
   m_in_chain_name(in_chain_name), 
-  m_out_ntuple(0), 
-  m_out_file(0), 
+  m_ntuple_builder(0), 
   m_factory(0), 
   m_in_chain(0)
 { 
   if (out_file_name.size() != 0) { 
-    m_out_file = new TFile(out_file_name.c_str(), "recreate"); 
-    m_out_ntuple = new TTree(out_tree.c_str(), out_tree.c_str()); 
+    m_ntuple_builder = new PerfNtupleBuilder(out_file_name.c_str(), 
+					     out_tree); 
   }
 }
 
 TreeTranslator::~TreeTranslator() { 
   delete m_in_chain; 
-  delete m_out_file; 
+  delete m_ntuple_builder; 
   delete m_factory; 
 }
 
@@ -64,11 +64,28 @@ void TreeTranslator::translate(std::vector<std::string> d3pd) {
     std::vector<Jet> jets = m_factory->jets(m_collection); 
     for (std::vector<Jet>::const_iterator itr = jets.begin(); 
     	 itr != jets.end(); itr++) { 
+      m_ntuple_builder->pt = itr->Pt(); 
+      m_ntuple_builder->eta = itr->Eta(); 
+      m_ntuple_builder->flavor = itr->truth_flavor(); 
 
+      copy_taggers(*itr, m_ntuple_builder); 
+      m_ntuple_builder->write_entry(); 
     }
 
   }
 
+}
+
+void TreeTranslator::copy_taggers(const Jet& jet, 
+				  PerfNtupleBuilder* builder) const { 
+  builder->jfc_anti_b = jet.anti_b(JFC); 
+  builder->jfc_anti_u = jet.anti_u(JFC); 
+
+  builder->cnn_anti_b = jet.anti_b(COMBNN); 
+  builder->cnn_anti_u = jet.anti_u(COMBNN); 
+
+  builder->mv1_anti_b = jet.anti_b(MV1); 
+  builder->mv1_anti_u = jet.anti_u(MV1); 
 }
 
 void TreeTranslator::init_chain(std::vector<std::string> d3pds) { 

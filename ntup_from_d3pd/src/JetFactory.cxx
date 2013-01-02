@@ -12,8 +12,21 @@ Jet::Jet(const JetCollectionBuffer* buffer, int d3pd_index)
   set_jfc(buffer, d3pd_index); 
   set_cnn(buffer, d3pd_index); 
   set_mv1(buffer, d3pd_index); 
+
+  m_truth_flavor = buffer->truth_flavor->at(d3pd_index); 
 }
 
+double Jet::anti_b(Tagger tagger) const { 
+  assert(m_anti_b.count(tagger) == 1); 
+  return m_anti_b.find(tagger)->second; 
+}
+double Jet::anti_u(Tagger tagger) const { 
+  assert(m_anti_u.count(tagger) == 1); 
+  return m_anti_u.find(tagger)->second; 
+}
+int Jet::truth_flavor() const { 
+  return m_truth_flavor; 
+}
 
 void Jet::set_kinematics(const JetCollectionBuffer* buffer, int index) { 
   double pt = buffer->pt->at(index); 
@@ -67,6 +80,8 @@ void JetFactory::add_collection(std::string collection) {
   set_branch("jet_" + collection + "_eta", &b.eta);  
   set_branch("jet_" + collection + "_phi", &b.phi); 
   set_branch("jet_" + collection + "_E", &b.e); 
+
+  set_branch("jet_" + collection + "_flavor_truth_label", &b.truth_flavor); 
 
   std::string jfc_comp = "_flavor_component_jfitc"; 
   set_branch("jet_" + collection + jfc_comp + "_pu", &b.jfc_pu); 

@@ -6,9 +6,9 @@
 #include <boost/noncopyable.hpp>
 
 class TChain; 
-class TTree; 
-class TFile; 
+class PerfNtupleBuilder; 
 class JetFactory; 
+class Jet; 
 
 class TreeTranslator : public boost::noncopyable 
 {
@@ -21,11 +21,11 @@ public:
   void translate(std::vector<std::string> d3pds); 
 private: 
   void init_chain(std::vector<std::string> d3pds); 
+  void copy_taggers(const Jet&, PerfNtupleBuilder*) const; 
   std::string m_collection; 
   std::string m_in_chain_name; 
 
-  TTree* m_out_ntuple; // owned by m_out_file
-  TFile* m_out_file; 
+  PerfNtupleBuilder* m_ntuple_builder; 
   JetFactory* m_factory; 
   TChain* m_in_chain; 
 }; 

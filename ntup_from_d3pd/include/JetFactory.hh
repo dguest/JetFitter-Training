@@ -23,6 +23,7 @@ public:
   Jet(const JetCollectionBuffer*, int); 
   double anti_b(Tagger) const; 
   double anti_u(Tagger) const; 
+  int truth_flavor() const; 
 private: 
   void set_kinematics(const JetCollectionBuffer* buffer, int index); 
   void set_jfc(const JetCollectionBuffer* buffer, int index); 
@@ -31,6 +32,8 @@ private:
 
   std::map<Tagger, double> m_anti_u; 
   std::map<Tagger, double> m_anti_b; 
+
+  int m_truth_flavor; 
 }; 
 
 // these guys are owned by JetFactory
@@ -40,6 +43,8 @@ struct JetCollectionBuffer {
   std::vector<float>* eta; 
   std::vector<float>* phi; 
   std::vector<float>* e; 
+
+  std::vector<int>* truth_flavor; 
 
   std::vector<float>* jfc_pu; 
   std::vector<float>* jfc_pc; 

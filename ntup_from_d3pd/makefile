@@ -49,7 +49,7 @@ PY_LDFLAGS += -shared
 # ---- define objects
 TOBJ        := JetFactory.o
 T_DICTS     := $(TOBJ:.o=Dict.o)
-GEN_OBJ     := TreeTranslator.o
+GEN_OBJ     := TreeTranslator.o PerfNtupleBuilder.o Mv1c.o
 EXE_OBJ     := $(GEN_OBJ) $(T_DICTS) $(TOBJ) test.o
 PYLIB_OBJ   := $(GEN_OBJ) $(T_DICTS) $(TOBJ)
 

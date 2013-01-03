@@ -81,6 +81,7 @@ void TreeTranslator::translate(std::vector<std::string> d3pd) {
       m_ntuple_builder->write_entry(); 
     }
   } // end of event loop 
+  std::cout << std::endl; 
 }
 
 void TreeTranslator::set_float(std::string name, float value) { 

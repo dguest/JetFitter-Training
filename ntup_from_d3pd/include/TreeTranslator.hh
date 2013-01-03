@@ -5,14 +5,11 @@
 #include <string> 
 #include <boost/noncopyable.hpp>
 
+
 class TChain; 
 class PerfNtupleBuilder; 
 class JetFactory; 
 class Jet; 
-
-namespace trans { 
-  const unsigned skip_taus = 1u << 0; 
-}
 
 class TreeTranslator : public boost::noncopyable 
 {

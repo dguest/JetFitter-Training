@@ -1,6 +1,7 @@
 #include "TreeTranslator.hh"
 #include "JetFactory.hh"
 #include "PerfNtupleBuilder.hh"
+#include "TopLevelOptions.hh"
 
 #include <string> 
 #include <vector> 
@@ -30,8 +31,7 @@ TreeTranslator::TreeTranslator(std::string in_chain_name,
   m_flags(flags)
 { 
   if (out_file_name.size() != 0) { 
-    m_ntuple_builder = new PerfNtupleBuilder(out_file_name.c_str(), 
-					     out_tree); 
+    m_ntuple_builder = new PerfNtupleBuilder(out_file_name, out_tree, flags); 
   }
 }
 
@@ -140,7 +140,7 @@ bool TreeTranslator::is_good_jet(const Jet& jet) const {
   }
 
   bool good_truth = true; 
-  if (m_flags & trans::skip_taus) { 
+  if (m_flags & topt::skip_taus) { 
     if (jet.truth_flavor() == 15) { 
       good_truth = false; 
     }

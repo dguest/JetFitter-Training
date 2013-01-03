@@ -12,7 +12,8 @@ class PerfNtupleBuilder : public boost::noncopyable
 { 
 public: 
   PerfNtupleBuilder(std::string out_file_name = "", 
-		    std::string out_tree_name = "SVTree"); 
+		    std::string out_tree_name = "SVTree", 
+		    unsigned flags = 0); 
   ~PerfNtupleBuilder(); 
   void write_entry(); 
   double pt; 
@@ -34,6 +35,7 @@ private:
   int m_light; 
   TFile* m_out_file; 
   TTree* m_out_tree; 
+  const unsigned m_flags; 
 }; 
 
 #endif // PERF_NTUPLE_BUILDER_H

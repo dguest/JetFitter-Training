@@ -9,7 +9,7 @@ limits = {
     'max_pt': 200*GeV, 
     'max_abs_eta': 2.5, 
     }
-flags = 'u'
+flags = 'ufm'
 
 if __name__ == '__main__': 
     ctuple_maker.ntup_from_d3pd(

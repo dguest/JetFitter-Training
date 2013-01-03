@@ -1,4 +1,5 @@
 #include "PerfNtupleBuilder.hh"
+#include "TopLevelOptions.hh"
 #include <stdexcept> 
 #include <boost/format.hpp>
 
@@ -7,9 +8,11 @@
 #include "TTree.h"
 
 PerfNtupleBuilder::PerfNtupleBuilder(std::string out_file_name, 
-				     std::string out_tree_name): 
+				     std::string out_tree_name, 
+				     unsigned flags): 
   m_out_file(0), 
-  m_out_tree(0)
+  m_out_tree(0), 
+  m_flags(flags)
 {
   if (out_tree_name.size() != 0) { 
     m_out_file = new TFile(out_file_name.c_str(), "recreate"); 
@@ -37,11 +40,18 @@ void PerfNtupleBuilder::init_tree() {
   m_out_tree->Branch("logCuJetFitterCOMBNN", &cnn_anti_u); 
   m_out_tree->Branch("logCbJetFitterCOMBNN", &cnn_anti_b); 
 
-  m_out_tree->Branch("antiUMv1", &mv1_anti_u); 
-  m_out_tree->Branch("antiBMv1", &mv1_anti_b); 
+  if (m_flags & topt::save_mv1_branches) { 
+    m_out_tree->Branch("antiUMv1", &mv1_anti_u); 
+    m_out_tree->Branch("antiBMv1", &mv1_anti_b); 
 
-  m_out_tree->Branch("antiUMv1c", &mv1c_anti_u); 
-  m_out_tree->Branch("antiBMv1c", &mv1c_anti_b); 
+    m_out_tree->Branch("antiUMv1c", &mv1c_anti_u); 
+    m_out_tree->Branch("antiBMv1c", &mv1c_anti_b); 
+  }
+
+  if (m_flags & topt::fab_tag) { 
+    m_out_tree->Branch("logCuFab", &mv1_anti_u); 
+    m_out_tree->Branch("logCbFab", &mv1c_anti_b); 
+  }
 
   m_out_tree->Branch("JetPt", &pt); 
   m_out_tree->Branch("JetEta", &eta); 

@@ -15,6 +15,8 @@ def ntup_from_d3pd(input_files, input_tree, jet_collection, output_file,
 
     Flags: 
         u: skip taus
+        f: fabrizios silly tagger (mv1 plus mv1c)
+        m: save extra mv1 branches (mv1 and mv1c)
     """
     _ntup_from_d3pd(input_files, input_tree, jet_collection, 
                     output_file, limits, flags)

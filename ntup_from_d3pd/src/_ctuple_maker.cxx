@@ -7,6 +7,7 @@
 #include <stdexcept>
 
 #include "TreeTranslator.hh"
+#include "TopLevelOptions.hh"
 
 static std::vector<std::string> inpt_vec_from_list(PyObject* list); 
 static void feed_dict(TreeTranslator&, PyObject*); 
@@ -94,8 +95,10 @@ static void feed_dict(TreeTranslator& translator, PyObject* dict) {
 }
 
 static unsigned parse_flags(const char* str) { 
-  using namespace trans; 
+  using namespace topt; 
   unsigned flags = 0; 
   if (strchr(str, 'u')) flags |= skip_taus; 
+  if (strchr(str, 'f')) flags |= fab_tag; 
+  if (strchr(str, 'm')) flags |= save_mv1_branches; 
   return flags; 
 }

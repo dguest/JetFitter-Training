@@ -17,7 +17,8 @@
 
 TreeTranslator::TreeTranslator(std::string in_chain_name, 
 			       std::string out_file_name, 
-			       std::string out_tree): 
+			       std::string out_tree, 
+			       unsigned flags): 
   m_collection(""), 
   m_in_chain_name(in_chain_name), 
   m_ntuple_builder(0), 
@@ -25,7 +26,8 @@ TreeTranslator::TreeTranslator(std::string in_chain_name,
   m_in_chain(0), 
   m_min_pt(0.0), 
   m_max_pt(-1.0), 
-  m_max_abs_eta(-1.0)
+  m_max_abs_eta(-1.0), 
+  m_flags(flags)
 { 
   if (out_file_name.size() != 0) { 
     m_ntuple_builder = new PerfNtupleBuilder(out_file_name.c_str(), 
@@ -135,6 +137,13 @@ bool TreeTranslator::is_good_jet(const Jet& jet) const {
   if (m_max_abs_eta > 0) { 
     good_eta = fabs(jet.Eta()) < m_max_abs_eta; 
   }
-  return good_eta && good_pt; 
+
+  bool good_truth = true; 
+  if (m_flags & trans::skip_taus) { 
+    if (jet.truth_flavor() == 15) { 
+      good_truth = false; 
+    }
+  }
+  return good_eta && good_pt && good_truth; 
   
 }

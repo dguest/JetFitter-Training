@@ -19,7 +19,8 @@ class TreeTranslator : public boost::noncopyable
 public: 
   TreeTranslator(std::string in_tree_name, 
 		 std::string out_file_name = "", 
-		 std::string out_tree = "SVTree"); 
+		 std::string out_tree = "SVTree", 
+		 unsigned flags = 0); 
   ~TreeTranslator(); 
   void add_collection(std::string collection); 
   void translate(std::vector<std::string> d3pds); 
@@ -38,6 +39,8 @@ private:
   float m_min_pt; 
   float m_max_pt; 
   float m_max_abs_eta; 
+
+  unsigned m_flags; 
 }; 
 
 #endif 

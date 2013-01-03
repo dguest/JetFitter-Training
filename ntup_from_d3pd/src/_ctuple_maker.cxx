@@ -8,7 +8,9 @@
 
 #include "TreeTranslator.hh"
 
+static std::vector<std::string> inpt_vec_from_list(PyObject* list); 
 static void feed_dict(TreeTranslator&, PyObject*); 
+static unsigned parse_flags(const char*); 
 
 static PyObject* ntup_from_d3pd(PyObject *self, 
 				PyObject *args)
@@ -18,25 +20,20 @@ static PyObject* ntup_from_d3pd(PyObject *self,
   const char* jet_collection = ""; 
   const char* output_file = ""; 
   PyObject* floats_dict = 0; 
+  const char* flags = "";
 
   bool ok = PyArg_ParseTuple
-    (args,"Osss|O:ctuple_maker", &py_input_files, &input_tree, 
-     &jet_collection, &output_file, &floats_dict); 
+    (args,"Osss|Os:ctuple_maker", &py_input_files, &input_tree, 
+     &jet_collection, &output_file, &floats_dict, &flags); 
   if (!ok) return NULL;
 
-  int n_files = PyList_Size(py_input_files); 
+  std::vector<std::string> input_files = inpt_vec_from_list(py_input_files); 
   if (PyErr_Occurred()) return NULL; 
 
-  std::vector<std::string> input_files; 
-  for (int n = 0; n < n_files; n++) { 
-    PyObject* py_file_name = PyList_GetItem(py_input_files, n); 
-    std::string file_name = PyString_AsString(py_file_name); 
-    if (PyErr_Occurred()) return NULL; 
-    input_files.push_back(file_name);     
-  }
+  unsigned bits = parse_flags(flags); 
 
   try { 
-    TreeTranslator translator(input_tree, output_file); 
+    TreeTranslator translator(input_tree, output_file, "SVTree", bits); 
     translator.add_collection(jet_collection); 
     feed_dict(translator, floats_dict); 
     if (PyErr_Occurred()) return NULL; 
@@ -67,6 +64,20 @@ extern "C" {
 
 }
 
+static std::vector<std::string> inpt_vec_from_list(PyObject* list){ 
+  std::vector<std::string> input_files; 
+  int n_files = PyList_Size(list); 
+
+  if (PyErr_Occurred()) return input_files; 
+
+  for (int n = 0; n < n_files; n++) { 
+    PyObject* py_file_name = PyList_GetItem(list, n); 
+    std::string file_name = PyString_AsString(py_file_name); 
+    if (PyErr_Occurred()) return input_files; 
+    input_files.push_back(file_name);     
+  }
+  return input_files; 
+}
 
 static void feed_dict(TreeTranslator& translator, PyObject* dict) { 
   if (dict) { 
@@ -80,4 +91,11 @@ static void feed_dict(TreeTranslator& translator, PyObject* dict) {
       translator.set_float(key, value); 
     }
   }
+}
+
+static unsigned parse_flags(const char* str) { 
+  using namespace trans; 
+  unsigned flags = 0; 
+  if (strchr(str, 'u')) flags |= skip_taus; 
+  return flags; 
 }

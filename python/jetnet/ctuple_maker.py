@@ -4,7 +4,7 @@ provides a python interface to the ntup_from_d3pd function
 from _ctuple_maker import _ntup_from_d3pd
 
 def ntup_from_d3pd(input_files, input_tree, jet_collection, output_file, 
-                   limits={}): 
+                   limits={}, flags=''): 
     """
     very thin python wrapper for the ntuple builder. 
 
@@ -12,6 +12,9 @@ def ntup_from_d3pd(input_files, input_tree, jet_collection, output_file,
         -min_pt
         -max_pt
         -max_abs_eta
+
+    Flags: 
+        u: skip taus
     """
     _ntup_from_d3pd(input_files, input_tree, jet_collection, 
-                    output_file, limits)
+                    output_file, limits, flags)

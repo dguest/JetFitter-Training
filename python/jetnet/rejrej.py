@@ -119,6 +119,8 @@ def _get_rejrej_array(flat_eff, flat_x, flat_y, x_range=None, y_range=None):
 # TODO: autogenerate this? 
 _tagger_bounds = {
     'discriminatorMV1': (0,1), 
+    'antiUMv1': (0,1), 
+    'antiBMv1': (-1,0), 
     'discriminatorMV2': (-1.5,1), 
     'logBcCOMBNN_SVPlus_rapLxy':(-5, 10), 
     'logBuCOMBNN_SVPlus_rapLxy':(-6, 12) , 
@@ -136,6 +138,10 @@ _tagger_bounds = {
     'logBuSv1Ip3dRapVx': (-6, 12), 
     'logCbSv1Ip3dRapVx': (-8, 4), 
     'logCuSv1Ip3dRapVx': (-5, 8) , 
+    'logBcJetFitterCharm': (-5, 10), 
+    'logBuJetFitterCharm': (-6, 12), 
+    'logCbJetFitterCharm': (-8, 4), 
+    'logCuJetFitterCharm': (-5, 8) , 
     }
 
 

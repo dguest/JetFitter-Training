@@ -8,6 +8,8 @@
 
 #include "TreeTranslator.hh"
 
+static void feed_dict(TreeTranslator&, PyObject*); 
+
 static PyObject* ntup_from_d3pd(PyObject *self, 
 				PyObject *args)
 {
@@ -15,10 +17,11 @@ static PyObject* ntup_from_d3pd(PyObject *self,
   const char* input_tree = ""; 
   const char* jet_collection = ""; 
   const char* output_file = ""; 
+  PyObject* floats_dict = 0; 
 
   bool ok = PyArg_ParseTuple
-    (args,"Osss:ctuple_maker", &py_input_files, &input_tree, 
-     &jet_collection, &output_file); 
+    (args,"Osss|O:ctuple_maker", &py_input_files, &input_tree, 
+     &jet_collection, &output_file, &floats_dict); 
   if (!ok) return NULL;
 
   int n_files = PyList_Size(py_input_files); 
@@ -35,6 +38,8 @@ static PyObject* ntup_from_d3pd(PyObject *self,
   try { 
     TreeTranslator translator(input_tree, output_file); 
     translator.add_collection(jet_collection); 
+    feed_dict(translator, floats_dict); 
+    if (PyErr_Occurred()) return NULL; 
     translator.translate(input_files); 
   }
   catch (std::runtime_error e) { 
@@ -63,3 +68,16 @@ extern "C" {
 }
 
 
+static void feed_dict(TreeTranslator& translator, PyObject* dict) { 
+  if (dict) { 
+    PyObject* py_key; 
+    PyObject* py_value; 
+    int pos = 0; 
+    while (PyDict_Next(dict, &pos, &py_key, &py_value)) { 
+      std::string key = PyString_AsString(py_key); 
+      double value = PyFloat_AsDouble(py_value); 
+      if (PyErr_Occurred()) return; 
+      translator.set_float(key, value); 
+    }
+  }
+}

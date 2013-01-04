@@ -49,8 +49,8 @@ void PerfNtupleBuilder::init_tree() {
   }
 
   if (m_flags & topt::fab_tag) { 
-    m_out_tree->Branch("logCuFab", &mv1_anti_u); 
-    m_out_tree->Branch("logCbFab", &mv1c_anti_b); 
+    m_out_tree->Branch("logCuMvcomb", &mv1_anti_u); 
+    m_out_tree->Branch("logCbMvcomb", &mv1c_anti_b); 
   }
 
   m_out_tree->Branch("JetPt", &pt); 

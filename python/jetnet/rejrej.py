@@ -121,6 +121,8 @@ _tagger_bounds = {
     'discriminatorMV1': (0,1), 
     'antiUMv1': (0,1), 
     'antiBMv1': (-1,0), 
+    'logCuMvcomb': (0,1), 
+    'logCbMvcomb': (-1,0), 
     'discriminatorMV2': (-1.5,1), 
     'logBcCOMBNN_SVPlus_rapLxy':(-5, 10), 
     'logBuCOMBNN_SVPlus_rapLxy':(-6, 12) , 

@@ -33,6 +33,21 @@ def _get_bins(file_name, hist_name):
 
     return bins
 
+def _get_hist_ranges(file_name, hist_name): 
+    """
+    """
+    from ROOT import TFile
+    root_file = TFile(file_name)
+    
+    hist = root_file.Get(hist_name)
+    if not hist: 
+        raise IOError('no {} found in {}'.format(hist_name, file_name))
+    x_range = (hist.GetXaxis().GetBinLowEdge(1), 
+               hist.GetXaxis().GetBinUpEdge(hist.GetNbinsX()))
+    y_range = (hist.GetYaxis().GetBinLowEdge(1), 
+               hist.GetYaxis().GetBinUpEdge(hist.GetNbinsX()))
+    return (x_range, y_range)
+
 def _get_integrals_fast(bins): 
     """
     much faster and simpler way to compute integrals, uses numpy cumsum
@@ -146,6 +161,47 @@ _tagger_bounds = {
     'logCuJetFitterCharm': (-5, 8) , 
     }
 
+class DisplayCut(object): 
+    """
+    Keeps track of one set of cuts which will be mapped onto the 
+    rejrej plane. 
+    """
+    def __init__(self, cut1, cut2): 
+        self._cut_1 = x_cut
+        self._cut_2 = y_cut
+
+        self._xyz = None
+        self._cut_ranges = None
+
+    def place(self, sig, bg_x, bg_y, cut_1_range, cut_2_range): 
+        """
+        calculates x,y,z coordinates (rej x, rej y, eff)
+        
+        NOTE: make sure the eff, rej_x, rej_y arrays are integrated
+        """
+        assert bg_x.shape == bg_y.shape
+        npts_1, npts_2 = bg_x.shape
+
+        c1_bin_bounds = np.linspace(*cut_1_range, num=(npts_1 + 1))
+        c1_bin = np.digitize([self._cut_1], c1_bin_bounds) - 1
+
+        c2_bin_bounds = np.linspace(*cut_2_range, num=(npts_2 + 1))
+        c2_bin = np.digitize([self._cut_2], c2_bin_bounds) - 1
+              
+        eff = sig[c1_bin, c2_bin] / sig[-1, -1]
+
+        def get_rej(bkg_array): 
+            return bkg_array[-1,-1] / bkg_array[c1_bin, c2_bin]
+        rej_x, rej_y = [get_rej(ar) for ar in [bg_x, bg_y]]
+
+        self._xyz = rej_x, rej_y, eff
+        self._cut_ranges = (cut_1_range, cut_2_range)
+
+    @property
+    def xyz(self): 
+        if self._xyz is None: 
+            raise AttributeError("you haven't calculated xyz yet")
+        return self._xyz
 
 class RejRejPlot(object): 
     """
@@ -185,6 +241,7 @@ class RejRejPlot(object):
         self._x_range = x_range
         self._y_range = y_range
         self._window_discrim = window_discrim
+        self._cuts_to_display = []
 
         self._id = (tagger, bins, signal, window_discrim)
 
@@ -328,6 +385,39 @@ class RejRejPlot(object):
         with open(self._rejrej_pickle,'w') as pkl: 
             print 'saving {}'.format(self._rejrej_pickle)
             cPickle.dump(out_dict,pkl)
+
+    def add_display_cut(self, x_cut, y_cut): 
+        if not os.path.isfile(self._integrals_cache): 
+            self._build_integrals()
+        print 'adding cut at {}, {} for {}'.format(
+            x_cut, y_cut, self._tagger)
+
+        integrals = {}
+
+        with h5py.File(self._integrals_cache) as data: 
+            for name in data: 
+                integrals[name] = np.array(data[name])
+
+        sig = self._signal
+        flav_x, flav_y = [t for t in _tags if t != sig]
+
+        the_cut = DisplayCut(x_cut, y_cut)
+        the_cut.place(integrals[sig], integrals[flav_x], integrals[flav_y], 
+                      
+
+        old_warn_set = np.seterr(divide = 'ignore') 
+        rej_x = integrals[flav_x].max() / integrals[flav_x]
+        rej_y = integrals[flav_y].max() / integrals[flav_y]
+        np.seterr(**old_warn_set)
+        
+        eff = eff.flatten()
+        rej_x = rej_x.flatten()
+        rej_y = rej_y.flatten()
+        
+        eff_array, x_range, y_range = _get_rejrej_array(
+            eff,rej_x, rej_y, 
+            x_range=self._x_range, y_range=self._y_range)
+
     
     def _build_integrals(self): 
         """

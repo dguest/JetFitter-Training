@@ -294,13 +294,16 @@ class RejRejPlot(object):
         """
         if not os.path.isfile(self._rejrej_pickle): 
             self._build_rejrej()
-                
-        else: 
+            return self._rejrej_pickle
+
+        try: 
             mismatch = self._check_plot_mismatch()
             if mismatch > 1e-3: 
                 print 'found range mismatch in {}, rebinning'.format(
                     self._rejrej_pickle)
                 self._build_rejrej()
+        except KeyError: 
+            self._build_rejrej()
 
         return self._rejrej_pickle
 

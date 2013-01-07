@@ -353,7 +353,7 @@ def _overlay_rejrej(array_one, array_two,
     for cut in cuts_to_display:
         x, y, z = cut.xyz
         print cut.xyz
-        ax_log.plot([x],[y],'ro')
+        ax_log.plot([x],[y],'mo')
         fmt_dict = dict(cut1=cut.cut1, cut2=cut.cut2, eff=z)
         ax_log.annotate(cut.plot_string.format(**fmt_dict), (x,y))
 

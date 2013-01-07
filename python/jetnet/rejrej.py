@@ -167,8 +167,8 @@ class DisplayCut(object):
     rejrej plane. 
     """
     def __init__(self, cut1, cut2): 
-        self._cut_1 = x_cut
-        self._cut_2 = y_cut
+        self._cut_1 = cut1
+        self._cut_2 = cut2
 
         self._xyz = None
         self._cut_ranges = None
@@ -187,11 +187,15 @@ class DisplayCut(object):
 
         c2_bin_bounds = np.linspace(*cut_2_range, num=(npts_2 + 1))
         c2_bin = np.digitize([self._cut_2], c2_bin_bounds) - 1
+
+        if any(b < 0 for b in [c1_bin, c2_bin]): 
+            raise ValueError("can't put a cut in the underflow bin")
               
-        eff = sig[c1_bin, c2_bin] / sig[-1, -1]
+        eff = float(sig[c1_bin, c2_bin] / sig.max())
 
         def get_rej(bkg_array): 
-            return bkg_array[-1,-1] / bkg_array[c1_bin, c2_bin]
+            array_val = bkg_array.max() / bkg_array[c1_bin, c2_bin]
+            return float(array_val)
         rej_x, rej_y = [get_rej(ar) for ar in [bg_x, bg_y]]
 
         self._xyz = rej_x, rej_y, eff
@@ -202,6 +206,14 @@ class DisplayCut(object):
         if self._xyz is None: 
             raise AttributeError("you haven't calculated xyz yet")
         return self._xyz
+    
+    @property
+    def cut1(self): 
+        return self._cut_1
+
+    @property
+    def cut2(self): 
+        return self._cut_2
 
 class RejRejPlot(object): 
     """
@@ -221,6 +233,9 @@ class RejRejPlot(object):
     Uses: _get_rejrej_array, _get_bins, _get_integrals_fast
 
     """
+
+    _default_point_string = '({cut1},{cut2}) $\epsilon$ = {eff:.2g}'
+
     def __init__(self, tagger = 'JetFitterCOMBNN', signal = 'charm', 
                  bins = 2000, x_range = None, y_range = None, 
                  window_discrim = False, cache = 'cache', 
@@ -380,44 +395,50 @@ class RejRejPlot(object):
             'tagger': self._tagger, 
             'bins': self._bins, 
             'window_cut': self._window_discrim, 
+            'cuts_to_display': self._cuts_to_display, 
             }
         
         with open(self._rejrej_pickle,'w') as pkl: 
             print 'saving {}'.format(self._rejrej_pickle)
             cPickle.dump(out_dict,pkl)
 
-    def add_display_cut(self, x_cut, y_cut): 
+    def add_display_cut(self, x_cut, y_cut, 
+                        plot_string=_default_point_string): 
+        """
+        """
+
         if not os.path.isfile(self._integrals_cache): 
             self._build_integrals()
-        print 'adding cut at {}, {} for {}'.format(
-            x_cut, y_cut, self._tagger)
 
         integrals = {}
+        ranges = {}
 
         with h5py.File(self._integrals_cache) as data: 
             for name in data: 
                 integrals[name] = np.array(data[name])
+                atr = data[name].attrs
+                x_range = (atr['x_min'], atr['x_max'])
+                y_range = (atr['y_min'], atr['y_max'])
+                ranges[name] = (x_range, y_range)
 
         sig = self._signal
         flav_x, flav_y = [t for t in _tags if t != sig]
 
         the_cut = DisplayCut(x_cut, y_cut)
+        the_cut.plot_string = plot_string
         the_cut.place(integrals[sig], integrals[flav_x], integrals[flav_y], 
-                      
+                      *ranges[sig])
+        self._cuts_to_display.append(the_cut)
 
-        old_warn_set = np.seterr(divide = 'ignore') 
-        rej_x = integrals[flav_x].max() / integrals[flav_x]
-        rej_y = integrals[flav_y].max() / integrals[flav_y]
-        np.seterr(**old_warn_set)
-        
-        eff = eff.flatten()
-        rej_x = rej_x.flatten()
-        rej_y = rej_y.flatten()
-        
-        eff_array, x_range, y_range = _get_rejrej_array(
-            eff,rej_x, rej_y, 
-            x_range=self._x_range, y_range=self._y_range)
-
+        out_dict = {'cuts_to_display': self._cuts_to_display}
+        if os.path.isfile(self._rejrej_pickle): 
+            with open(self._rejrej_pickle) as pkl: 
+                out_dict = cPickle.load(pkl)
+            out_dict['cuts_to_display'] = self._cuts_to_display
+            
+        with open(self._rejrej_pickle,'w') as pkl: 
+            print 'updating', self._rejrej_pickle
+            cPickle.dump(out_dict,pkl)
     
     def _build_integrals(self): 
         """
@@ -427,6 +448,7 @@ class RejRejPlot(object):
         the_root_file, hists = self._check_hist_list()
             
         int_dict = {}
+        ranges_dict = {}
         for hist in hists: 
             print 'loading {} in {}'.format(hist, the_root_file)
             try: 
@@ -447,10 +469,19 @@ class RejRejPlot(object):
             assert tag in _tags, '{} not found in {}'.format(tag, _tags)
             int_dict[tag] = integral
 
+            ranges_dict[tag] = _get_hist_ranges(the_root_file, hist)
+
+
         with h5py.File(self._integrals_cache,'w') as hfile: 
             for name, hist in int_dict.iteritems(): 
                 hfile.create_dataset(name, data=hist, compression='gzip')
-                                     
+                x_range, y_range = ranges_dict[name]
+
+                hfile[name].attrs['x_min'] = x_range[0]
+                hfile[name].attrs['x_max'] = x_range[1]
+
+                hfile[name].attrs['y_min'] = y_range[0]
+                hfile[name].attrs['y_max'] = y_range[1]
 
 
 class HistBuilder(object): 

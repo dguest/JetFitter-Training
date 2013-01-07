@@ -348,6 +348,14 @@ def _overlay_rejrej(array_one, array_two,
     ax_log.set_ylabel('{} rejection'.format(array_one['y_bg']))
     ax_log.grid(True)
 
+    cuts_to_display = (array_one['cuts_to_display'] + 
+                       array_two['cuts_to_display'])
+    for cut in cuts_to_display:
+        x, y, z = cut.xyz
+        print cut.xyz
+        ax_log.plot([x],[y],'ro')
+        fmt_dict = dict(cut1=cut.cut1, cut2=cut.cut2, eff=z)
+        ax_log.annotate(cut.plot_string.format(**fmt_dict), (x,y))
 
     ax_log.set_aspect(new_aspect)
     ax_log.set_position(position)

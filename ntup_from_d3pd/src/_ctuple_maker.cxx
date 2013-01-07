@@ -84,7 +84,7 @@ static void feed_dict(TreeTranslator& translator, PyObject* dict) {
   if (dict) { 
     PyObject* py_key; 
     PyObject* py_value; 
-    int pos = 0; 
+    Py_ssize_t pos = 0; 
     while (PyDict_Next(dict, &pos, &py_key, &py_value)) { 
       std::string key = PyString_AsString(py_key); 
       double value = PyFloat_AsDouble(py_value); 

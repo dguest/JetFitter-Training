@@ -364,11 +364,7 @@ class RejRejPlot(object):
             self._build_integrals()
         print 'building rejrej plot for', self._tagger
 
-        integrals = {}
-
-        with h5py.File(self._integrals_cache) as data: 
-            for name in data: 
-                integrals[name] = np.array(data[name])
+        integrals, ranges = self._get_integrals_and_ranges()
 
         sig = self._signal
         eff = integrals[sig] / integrals[sig].max()
@@ -408,21 +404,11 @@ class RejRejPlot(object):
     def add_display_cut(self, x_cut, y_cut, 
                         plot_string=_default_point_string): 
         """
+        adds a point to the rejrej plot. 
+        FIXME: the x_cut, y_cut names are a misnomer: these are actually
+        cut1 and cut2
         """
-
-        if not os.path.isfile(self._integrals_cache): 
-            self._build_integrals()
-
-        integrals = {}
-        ranges = {}
-
-        with h5py.File(self._integrals_cache) as data: 
-            for name in data: 
-                integrals[name] = np.array(data[name])
-                atr = data[name].attrs
-                x_range = (atr['x_min'], atr['x_max'])
-                y_range = (atr['y_min'], atr['y_max'])
-                ranges[name] = (x_range, y_range)
+        integrals, ranges = self._get_integrals_and_ranges()
 
         sig = self._signal
         flav_x, flav_y = [t for t in _tags if t != sig]
@@ -442,6 +428,91 @@ class RejRejPlot(object):
         with open(self._rejrej_pickle,'w') as pkl: 
             print 'updating', self._rejrej_pickle
             cPickle.dump(out_dict,pkl)
+
+    def _get_integrals_and_ranges(self): 
+
+        if not os.path.isfile(self._integrals_cache): 
+            self._build_integrals()
+
+        integrals = {}
+        ranges = {}
+
+        with h5py.File(self._integrals_cache) as data: 
+            for name in data: 
+                integrals[name] = np.array(data[name])
+                atr = data[name].attrs
+                x_range = (atr['x_min'], atr['x_max'])
+                y_range = (atr['y_min'], atr['y_max'])
+                ranges[name] = (x_range, y_range)
+
+        return integrals, ranges
+
+    def get_cut1_with_rejection(self, rejection=2.0): 
+        """
+        calculates the cut where we get a specified rejection 
+
+        assumes no cut on the second variable
+        """
+
+        integrals, ranges = self._get_integrals_and_ranges()
+
+        sig = self._signal
+        flav_x, flav_y = [t for t in _tags if t != sig]
+
+        eff = integrals[sig][:,0] / integrals[sig][:,0].max()
+        bg_eff = integrals[flav_x][:,0] / integrals[flav_x][:,0].max()
+
+        bg_offset = bg_eff - (1.0 / rejection)
+        crossover_bins = np.where(bg_offset[:-1] * bg_offset[1:] < 0.0 )
+        if len(crossover_bins) == 0: 
+            raise ValueError('rejection value of {} can\'t be found'.format(
+                    rejection))
+        elif len(crossover_bins) > 1: 
+            raise ValueError("found multiple crossover points: {}".format(
+                    crossover_bins))
+        
+        n_bins = len(bg_eff)
+        crossover_values = np.linspace(*ranges[flav_x][0], 
+                                        num=(n_bins + 1))[1:-1]
+        
+        value = crossover_values[crossover_bins[0][0]]
+        return value
+
+    def get_cut2_with_rejection(self, rejection=2.0, cut1_value=0): 
+        """
+        calculates the cut where we get a specified rejection 
+
+        assumes no cut on the second variable
+        """
+
+        integrals, ranges = self._get_integrals_and_ranges()
+
+        sig = self._signal
+        flav_x, flav_y = [t for t in _tags if t != sig]
+
+        n_bins_x = integrals[flav_x].shape[0]
+        cut1_bin_converter = BinValueCnv(n_bins_x,ranges[flav_x][0])
+        x_bin = cut1_bin_converter.bin_from_value(cut1_value)
+
+        eff = integrals[sig][x_bin,:] / integrals[sig][x_bin,:].max()
+        bg_eff = np.squeeze(integrals[flav_y][x_bin,:] / 
+                  integrals[flav_y][x_bin,:].max())
+        print bg_eff.shape
+
+        bg_offset = bg_eff - (1.0 / rejection)
+        crossover_bins = np.where(bg_offset[:-1] * bg_offset[1:] < 0.0 )
+        if len(crossover_bins) == 0: 
+            raise ValueError('rejection value of {} can\'t be found'.format(
+                    rejection))
+        elif len(crossover_bins) > 1: 
+            raise ValueError("found multiple crossover points: {}".format(
+                    crossover_bins))
+        
+        n_bins = len(bg_eff)
+        crossover_values = np.linspace(*ranges[flav_y][1], 
+                                        num=(n_bins + 1))[1:-1]
+        return crossover_values[crossover_bins[0][0]]
+        
     
     def _build_integrals(self): 
         """
@@ -675,6 +746,28 @@ class HistBuilder(object):
         status_dict['built'].update(built_hists)
         with open(self._requests_pickle,'w') as pkl: 
             cPickle.dump(status_dict, pkl)
+
+class BinValueCnv(object): 
+    """
+    no undeflow or overflow bins
+    """
+    def __init__(self, n_bins, bin_ranges): 
+        self._n_bins = n_bins
+        self._low = bin_ranges[0]
+        self._high = bin_ranges[1]
+        
+    def low_value_from_bin(self, bin_number): 
+        bin_divisions = np.linspace(self._low, self._high, 
+                                    num=(self._n_bins + 1))
+        return bin_divisions[bin_number]
+    def bin_from_value(self, value): 
+        bin_bounds = np.linspace(self._low, self._high, 
+                                 num=(self._n_bins + 1))
+        the_bin = np.digitize([value], bin_bounds) - 1
+
+        if the_bin < 0: 
+            raise ValueError("can't put a cut in the underflow bin")
+        return the_bin
 
 class BadTaggerError(LookupError): 
     """

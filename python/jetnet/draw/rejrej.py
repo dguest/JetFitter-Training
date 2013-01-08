@@ -348,8 +348,8 @@ def _overlay_rejrej(array_one, array_two,
     ax_log.set_ylabel('{} rejection'.format(array_one['y_bg']))
     ax_log.grid(True)
 
-    cuts_to_display = (array_one['cuts_to_display'] + 
-                       array_two['cuts_to_display'])
+    cuts_to_display = (array_one['cuts_to_display'])
+                       # array_two['cuts_to_display'])
     for cut in cuts_to_display:
         x, y, z = cut.xyz
         print cut.xyz

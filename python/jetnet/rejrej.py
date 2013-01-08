@@ -173,6 +173,8 @@ class DisplayCut(object):
         self._xyz = None
         self._cut_ranges = None
 
+        self.point_type = 'mo'
+
     def place(self, sig, bg_x, bg_y, cut_1_range, cut_2_range): 
         """
         calculates x,y,z coordinates (rej x, rej y, eff)
@@ -234,7 +236,7 @@ class RejRejPlot(object):
 
     """
 
-    _default_point_string = '({cut1},{cut2}) $\epsilon$ = {eff:.2g}'
+    _default_point_string = '({cut1},{cut2}) $\epsilon$:{eff:.3g}'
 
     def __init__(self, tagger = 'JetFitterCOMBNN', signal = 'charm', 
                  bins = 2000, x_range = None, y_range = None, 
@@ -402,7 +404,8 @@ class RejRejPlot(object):
             cPickle.dump(out_dict,pkl)
 
     def add_display_cut(self, x_cut, y_cut, 
-                        plot_string=_default_point_string): 
+                        plot_string=_default_point_string, 
+                        ann_opts={}): 
         """
         adds a point to the rejrej plot. 
         FIXME: the x_cut, y_cut names are a misnomer: these are actually
@@ -415,6 +418,7 @@ class RejRejPlot(object):
 
         the_cut = DisplayCut(x_cut, y_cut)
         the_cut.plot_string = plot_string
+        the_cut.ann_opts = ann_opts
         the_cut.place(integrals[sig], integrals[flav_x], integrals[flav_y], 
                       *ranges[sig])
         self._cuts_to_display.append(the_cut)
@@ -497,7 +501,6 @@ class RejRejPlot(object):
         eff = integrals[sig][x_bin,:] / integrals[sig][x_bin,:].max()
         bg_eff = np.squeeze(integrals[flav_y][x_bin,:] / 
                   integrals[flav_y][x_bin,:].max())
-        print bg_eff.shape
 
         bg_offset = bg_eff - (1.0 / rejection)
         crossover_bins = np.where(bg_offset[:-1] * bg_offset[1:] < 0.0 )

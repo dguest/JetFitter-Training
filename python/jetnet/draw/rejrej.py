@@ -143,7 +143,8 @@ def _maximize_efficiency(eff_array):
 def plot_overlay(new_pickle, old_pickle , out_name, 
                  do_rel = False, z_range=None, do_contour=False, 
                  do_equal_contour=False, 
-                 do_abs_contour=False): 
+                 do_abs_contour=False, 
+                 extra_points=[]): 
     """
     overlay two rejrej plots. The difference shown will be the first 
     plot relative to the second. 
@@ -153,11 +154,19 @@ def plot_overlay(new_pickle, old_pickle , out_name,
     with open(new_pickle) as pkl: 
         new_plot = cPickle.load(pkl)
 
+    extra_cuts = []
+    for plot in extra_points: 
+        with open(plot) as pkl: 
+            extra_points_plot = cPickle.load(pkl)
+        for cut in extra_points_plot['cuts_to_display']: 
+            extra_cuts.append(cut)
+
     _overlay_rejrej(
         array_one=new_plot, array_two=old_plot, 
         do_rel=do_rel, out_name=out_name, z_range=z_range, 
         do_contour=do_contour, do_abs_contour=do_abs_contour, 
-        do_equal_contour=do_equal_contour)
+        do_equal_contour=do_equal_contour, 
+        extra_cuts=extra_cuts)
 
 def _get_contour_order_and_lines(z_range): 
     """
@@ -201,7 +210,8 @@ def _overlay_rejrej(array_one, array_two,
                     do_contour = False, 
                     do_abs_contour = False, 
                     do_equal_contour = False, 
-                    z_range = None):     
+                    z_range = None, 
+                    extra_cuts=[]):     
 
     if do_contour and do_abs_contour: 
         warnings.warn("can't do both abs_contour and contour, "
@@ -348,14 +358,18 @@ def _overlay_rejrej(array_one, array_two,
     ax_log.set_ylabel('{} rejection'.format(array_one['y_bg']))
     ax_log.grid(True)
 
-    cuts_to_display = (array_one['cuts_to_display'])
-                       # array_two['cuts_to_display'])
+    cuts_to_display = array_one['cuts_to_display'] 
+    for cut in extra_cuts:
+        cut.point_type = 'wo'
+        cuts_to_display.append(cut)
+
     for cut in cuts_to_display:
         x, y, z = cut.xyz
-        print cut.xyz
-        ax_log.plot([x],[y],'mo')
+        # print cut.xyz
+        ax_log.plot([x],[y],cut.point_type)
         fmt_dict = dict(cut1=cut.cut1, cut2=cut.cut2, eff=z)
-        ax_log.annotate(cut.plot_string.format(**fmt_dict), (x,y))
+        ax_log.annotate(cut.plot_string.format(**fmt_dict), (x,y), 
+                        **cut.ann_opts)
 
     ax_log.set_aspect(new_aspect)
     ax_log.set_position(position)
